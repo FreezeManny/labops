@@ -1,7 +1,5 @@
-from ty_extensions import Unknown
 from models.inputConf.YamlRoot import YamlRoot
 from models.inputConf.hosts import Host
-
 
 def findAll(config: YamlRoot) -> list[Host]:
     if config.hosts is None:

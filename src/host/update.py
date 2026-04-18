@@ -1,5 +1,4 @@
 from ansible_runner.runner import Runner
-from ty_extensions import Unknown
 from models.inputConf.hosts import Host
 from models.inputConf.hosts import OSType
 from models.inputConf.creds import Creds
