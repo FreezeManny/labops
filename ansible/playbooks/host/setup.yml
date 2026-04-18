@@ -1,0 +1,4 @@
+
+- import_playbook: setup/debian.yml
+- import_playbook: setup/redhat.yml
+- import_playbook: setup/alpine.yml

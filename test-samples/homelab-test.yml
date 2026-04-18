@@ -1,0 +1,18 @@
+settings:
+  default_creds:
+    username: ansible
+    ssh_key_path: "~/.ssh/id_homelab"
+
+hosts:
+  test-system-debian:
+    os: debian
+    ip: 10.0.10.42
+
+  test-system-alpine:
+    os: alpine
+    ip: 10.0.10.43
+
+  
+  test-system-redhat:
+    os: redhat
+    ip: 10.0.10.44

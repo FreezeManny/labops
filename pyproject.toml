@@ -1,0 +1,31 @@
+[project]
+name = "homelab-manager"
+version = "0.1.0"
+description = "YAML Based homelab Manager"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "ansible-core>=2.20.4",
+    "ansible-runner>=2.4.3",
+    "pydantic>=2.13.0",
+    "pyyaml>=6.0.3",
+    "typer>=0.24.1",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "ruff>=0.15.11",
+    "ty>=0.0.31",
+]
+
+# To install Hook: uv run pre-commit install
+[tool.ruff.lint]
+select = ["ANN"]  # requires type annotations on all functions
+
+[tool.ty.environment]
+python = ".venv"
+[tool.ty.rules]
+unresolved-reference = "error"
+invalid-assignment = "error"
+call-non-callable = "error"

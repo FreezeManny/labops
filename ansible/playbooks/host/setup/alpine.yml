@@ -1,0 +1,18 @@
+---
+- name: Setup user with passwordless permissions
+  hosts: all
+  become: true
+  gather_facts: false
+
+  pre_tasks:
+    - name: Ensure python3 and sudo are installed via raw
+      ansible.builtin.raw: apk update && apk add python3 sudo
+      changed_when: false
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+  tasks:
+
+    - name: Import common setup tasks
+      ansible.builtin.import_tasks: setup-common.yml

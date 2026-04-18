@@ -1,0 +1,26 @@
+- name: Ensure user exists
+  ansible.builtin.user:
+    name: "{{ new_username }}"
+    groups: "{{ new_user_groups | default([]) }}"
+    append: true
+    shell: /bin/sh
+    create_home: true
+    state: present
+    password: "*"
+    update_password: on_create
+
+- name: Add SSH public key for user
+  ansible.posix.authorized_key:
+    user: "{{ new_username }}"
+    state: present
+    key: "{{ ssh_public_key }}"
+
+- name: Allow passwordless sudo for user
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ new_username }}-nopasswd"
+    content: |
+      {{ new_username }} ALL=(root) NOPASSWD: ALL
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s

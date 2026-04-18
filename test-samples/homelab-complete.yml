@@ -1,0 +1,100 @@
+settings:
+  default_creds:
+    username: root
+    passwd: changeme
+    #ssh_key_path: xxxxx
+  dns:
+    local_dns_suffix: .lab
+    pihole_location: 10.0.10.5 
+  proxy:
+    proxy_suffix: .mfritz.top
+    proxy_location: 10.0.10.6
+
+hosts:
+  cprox:
+    type: proxmox
+    os: debian
+    ip: 10.0.10.3
+    lxc:
+      wireguard:
+        ip: 10.0.10.2
+        os: alpine
+        vmid: 100
+      tailscale:
+        ip: 10.0.20.3
+        os: alpine
+        vmid: 101
+      docker:
+        ip: 10.0.10.6
+        os: debian
+        vmid: 102
+        docker_stack:
+          nginx-proxy-manager:
+            config_path: "./docker/nginx/"
+            web_services:
+              app:
+                port: 81
+                proxy_name: nginx
+          nebula-sync:
+            config_path: "./docker/nebula-sync/"
+          dfs-aip-interface:
+            config_path: "./docker/homeassistant/"
+            web_services:
+            dfs-aip:
+              port: 8081
+              proxy_name: dfs-aip
+
+      home:
+        ip: 10.0.10.10
+        os: debian
+        vmid: 103
+        docker_stack:
+          homeassistant:
+            config_path: "./docker/homeassistant/"
+            web_services:
+              esphome:
+                port: 6052
+              homeassistant:
+                port: 8123
+                proxy_name: home
+              zigbee2mqtt:
+                port: 8080
+                proxy_name: z2mqtt
+
+      pihole:
+        ip: 10.0.10.5
+        os: debian
+        vmid: 105
+        web_services:
+          admin-panel:
+            port: 8080
+            proxy_name: pihole
+
+    vm:
+      fr24-radar:
+        os: debian
+        ip: 10.0.50.149
+          # for later -> Add option to add dncp
+          # dhcp-reserve: # for later
+          #  ip: 10.0.30.5
+          #  mac: FF:FF:FF:FF:FF:FF
+
+  test-system:
+    os: debian
+    ip: 10.0.10.42
+
+  tmp-pi:
+    os: debian
+    ip: 10.0.10.254
+    # for later -> Add option to add dncp
+    # type: dhcp
+  lifeboat:
+    type: bare-metal
+    os: debian
+    ip: 10.0.10.9
+    web_services:
+      pihole:
+        port: 8080
+        proxy_name: pihole2
+      
+

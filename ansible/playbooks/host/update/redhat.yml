@@ -1,0 +1,10 @@
+---
+- name: Update RedHat-based systems
+  hosts: redhat_servers
+  become: yes
+  tasks:
+    - name: Update cache and upgrade all packages using dnf
+      dnf:
+        name: "*"
+        state: latest
+        update_cache: yes

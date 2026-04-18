@@ -1,0 +1,43 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/python
+{
+	"name": "Python 3",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "mcr.microsoft.com/devcontainers/python:3-3.14-trixie",
+	"runArgs": [
+    "--network=host"
+  ],
+	"features": {
+		"ghcr.io/devcontainers/features/sshd:1": {},
+		"ghcr.io/va-h/devcontainers-features/uv:1": {},
+		"ghcr.io/guiyomh/features/just:0": {}
+	},
+
+	// Mount local SSH keys to target, so connection can be tested in devcontainer
+	"mounts": [
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/id_homelab,target=/home/vscode/.ssh/id_homelab,type=bind,readonly",
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/id_homelab.pub,target=/home/vscode/.ssh/id_homelab.pub,type=bind,readonly"
+	],
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "pip3 install --user -r requirements.txt",
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+"customizations": {
+    "vscode": {
+      "extensions": [
+        "astral-sh.ty",
+        "charliermarsh.ruff"
+      ]
+    }
+  }
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}

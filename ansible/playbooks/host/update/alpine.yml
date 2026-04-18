@@ -1,0 +1,9 @@
+---
+- name: Update Alpine Linux systems
+  hosts: alpine_servers
+  become: yes
+  tasks:
+    - name: Update apk cache and upgrade all packages
+      apk:
+        update_cache: yes
+        upgrade: yes

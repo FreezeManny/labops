@@ -1,0 +1,9 @@
+---
+- name: Update Debian-based systems
+  hosts: debian_servers
+  become: yes
+  tasks:
+    - name: Update apt cache and safely upgrade all packages
+      apt:
+        update_cache: yes
+        upgrade: dist
