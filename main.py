@@ -249,5 +249,8 @@ def vm_list(
 
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
-if __name__ == "__main__":
+def main() -> None:
     app()
+
+if __name__ == "__main__":
+    main()

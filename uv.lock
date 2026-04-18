@@ -188,7 +188,7 @@ wheels = [
 [[package]]
 name = "homelab-manager"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "ansible-core" },
     { name = "ansible-runner" },
