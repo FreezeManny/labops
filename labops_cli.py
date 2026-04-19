@@ -1,6 +1,5 @@
 from pathlib import Path
 from models.inputConf.YamlRoot import YamlRoot
-from cfgv import validate
 import typer
 from rich.console import Console
 
