@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/FreezeManny/labops/compare/labops-v0.1.5...labops-v0.1.6) (2026-04-19)
+
+
+### Bug Fixes
+
+* Renamed CLI from lops to labops ([128d98c](https://github.com/FreezeManny/labops/commit/128d98c35350b5a2e3dffe5dda5acbf69e7caf6e))
+
 ## [0.1.5](https://github.com/FreezeManny/labops/compare/labops-v0.1.4...labops-v0.1.5) (2026-04-19)
 
 
