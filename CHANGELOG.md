@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/FreezeManny/labops/compare/labops-v0.1.3...labops-v0.1.4) (2026-04-19)
+
+
+### Bug Fixes
+
+* updated cli-text ([5dfeefc](https://github.com/FreezeManny/labops/commit/5dfeefcdf0b3e31bafde56408a090798a423db48))
+
 ## [0.1.3](https://github.com/FreezeManny/labops/compare/labops-v0.1.2...labops-v0.1.3) (2026-04-19)
 
 
