@@ -9,6 +9,17 @@ import src.vm as vm
 
 app = typer.Typer(help="Manage virtual machines.", no_args_is_help=True)
 
+@app.command("setup")
+def host_setup(
+    target: str = typer.Argument(
+        ..., help="Host name or IP address as defined in the homelab config."),
+) -> None:
+    """[bold]Set up[/bold] a host (initial provisioning)."""
+    model: YamlRoot = get_model()
+    hosts = resolve_targets(model, target, False,
+                            vm.find,vm.findAll, label="host")
+    vm.setup(hosts[0], model.settings.default_creds)
+
 @app.command("update")
 def vm_update(
     target: Optional[str] = typer.Argument(
