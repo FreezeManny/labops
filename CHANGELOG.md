@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/FreezeManny/labops/compare/labops-v0.2.0...labops-v0.2.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* removed not needed import ([9d25a09](https://github.com/FreezeManny/labops/commit/9d25a0975c4aad51e1c58752c6153e1a30e6bf6a))
+* removed not needed import ([198ecb8](https://github.com/FreezeManny/labops/commit/198ecb8154c1d723adc3abfb663448199403b3a0))
+
 ## [0.2.0](https://github.com/FreezeManny/labops/compare/labops-v0.1.6...labops-v0.2.0) (2026-04-19)
 
 
