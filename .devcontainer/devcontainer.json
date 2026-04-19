@@ -34,7 +34,8 @@
     "vscode": {
       "extensions": [
         "astral-sh.ty",
-        "charliermarsh.ruff"
+        "charliermarsh.ruff",
+		"skellock.just"
       ]
     }
   }
