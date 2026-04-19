@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/FreezeManny/labops/compare/labops-v0.1.4...labops-v0.1.5) (2026-04-19)
+
+
+### Documentation
+
+* added readme ([0de3501](https://github.com/FreezeManny/labops/commit/0de35013d0ca357201a8f93e3416d9cb772d412b))
+
 ## [0.1.4](https://github.com/FreezeManny/labops/compare/labops-v0.1.3...labops-v0.1.4) (2026-04-19)
 
 
