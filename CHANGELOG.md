@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/FreezeManny/labops/compare/labops-v0.1.1...labops-v0.1.2) (2026-04-19)
+
+
+### Bug Fixes
+
+* update uv.lock ([5140fab](https://github.com/FreezeManny/labops/commit/5140fab45bee0f1dfafcf39ec2b05a49c099efc3))
+
 ## [0.1.1](https://github.com/FreezeManny/labops/compare/labops-v0.1.0...labops-v0.1.1) (2026-04-19)
 
 
