@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/FreezeManny/labops/compare/labops-v0.1.6...labops-v0.2.0) (2026-04-19)
+
+
+### Features
+
+* added vm setup (same as host) ([f58a908](https://github.com/FreezeManny/labops/commit/f58a908d3bd50437fcc1395276742ba67c21fa40))
+* CLI Refactor to have single, shared model loader ([5890d00](https://github.com/FreezeManny/labops/commit/5890d001ffe1514fd63fe17bfef86d8932d92fa2))
+
+
+### Bug Fixes
+
+* modified VM Table ([414749d](https://github.com/FreezeManny/labops/commit/414749d62d8831b64dd60b6fdd2029eac5aa23da))
+
 ## [0.1.6](https://github.com/FreezeManny/labops/compare/labops-v0.1.5...labops-v0.1.6) (2026-04-19)
 
 
