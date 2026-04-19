@@ -5,7 +5,10 @@
     "packages": {
         ".": {
             "package-name": "labops",
-            "release-type": "python"
+            "release-type": "python",
+            "extra-files": [
+                "pyproject.toml"
+            ]
         }
     }
 }
