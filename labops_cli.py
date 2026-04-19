@@ -15,7 +15,7 @@ import src.vm as vm
 # ─── App & sub-apps ───────────────────────────────────────────────────────────
 
 app = typer.Typer(
-    help="[bold cyan]Homelab Management CLI[/bold cyan] — manage hosts, docker stacks, DNS and proxy from a single YAML.",
+    help="[bold cyan]Homelab Management CLI[/bold cyan] — manage hosts, (docker stacks, DNS and proxy) from a single YAML.",
     rich_markup_mode="rich",
     no_args_is_help=True,
 )
