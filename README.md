@@ -1,6 +1,6 @@
-# Homelab Manager (lops)
+![Labops - A declarative, YAML-based homelab manager](img/Cover.png)
 
-A declarative, YAML-based homelab manager. `lops` is a CLI tool designed to simplify, automate, and standardize the setup, configuration, and maintenance of your homelab infrastructure utilizing simple configuration files and powerful backend automation.
+A declarative, YAML-based homelab manager. `labops` is a CLI tool designed to simplify, automate, and standardize the setup, configuration, and maintenance of your homelab infrastructure utilizing simple configuration files and powerful backend automation.
 
 ## Features
 
@@ -16,7 +16,7 @@ A declarative, YAML-based homelab manager. `lops` is a CLI tool designed to simp
 
 ## How it Works
 
-`labops` (invoked as `lops`) acts as a bridge between simple, human-readable YAML configurations and powerful Ansible Commands. 
+`labops` acts as a bridge between simple, human-readable YAML configurations and powerful Ansible Commands. 
 
 1. **Configuration parsing:** It reads a declarative `.yml` inventory representing your homelab layout, target servers, credentials, and settings.
 2. **Validation:** It validates the YAML structure and data format to stop misconfigurations early.
@@ -31,18 +31,18 @@ pipx install labops
 #or
 pip install labops
 ```
-*Since `lops` is a standalone CLI tool, using [pipx](https://pipx.pypa.io/) is highly recommended to isolate its dependencies*
+*Since `labops` is a standalone CLI tool, using [pipx](https://pipx.pypa.io/) is highly recommended to isolate its dependencies*
 
 ## Usage
 
-Once installed, the `lops` command becomes available. Point it to your YAML configuration file (e.g., `test-samples/homelab-complete.yml`):
+Once installed, the `labops` command becomes available. Point it to your YAML configuration file (e.g., `test-samples/homelab-complete.yml`):
 
 ```bash
 # View all available CLI commands
-lops --help
+labops --help
 
 # Example: Run a setup routine for all hosts
-lops host update all
+labops host update all
 ```
 
 ## Development & Building
@@ -58,14 +58,14 @@ To start developing locally without installing system-level dependencies:
 3. Once the container is running and your terminal is open, sync the dependencies and activate the virtual environment:
 
 ```bash
-# Create the virtual environment and install dependencies + the lops CLI
+# Create the virtual environment and install dependencies + the labops CLI
 uv sync
 
 # Activate the virtual environment
 source .venv/bin/activate
 
 # Now you can run the CLI
-lops --help
+labops --help
 ```
 
 ### 2. Building the Package

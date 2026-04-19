@@ -20,7 +20,7 @@ build-backend = "hatchling.build"
 packages = ["src", "models", "labops_cli.py"]
 
 [project.scripts]
-lops = "labops_cli:main"
+labops = "labops_cli:main"
 
 [dependency-groups]
 dev = [
