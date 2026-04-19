@@ -1,6 +1,6 @@
 runner    := "uv run labops_cli.py"
 system    := "redhat"
-test_conf := "./test-samples/homelab-test.yml"
+test_conf := "./test-samples/homelab-complete.yml"
 
 # In normal use no --file is needed — the CLI walks up from cwd and finds
 # homelab.yml automatically, just like `docker compose` finds compose.yml.

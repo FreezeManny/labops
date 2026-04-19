@@ -165,15 +165,15 @@ COMMANDS_WITHOUT_CONFIG = {"validate"}
 def root_callback(
     ctx:     typer.Context,
     file:    FileOpt = None,
-    #dry_run: DryRunOpt = False,
-    #verbose: VerboseOpt = False,
+    # dry_run: DryRunOpt = False,
+    # verbose: VerboseOpt = False,
 ) -> None:
     """
     Global options — applied to every sub-command.
     [dim]--dry-run and --verbose are forwarded to Ansible where relevant.[/dim]
     """
-    #state.dry_run = dry_run
-    #state.verbose = verbose
+    # state.dry_run = dry_run
+    # state.verbose = verbose
 
     if ctx.invoked_subcommand in COMMANDS_WITHOUT_CONFIG:
         return
@@ -197,7 +197,7 @@ def validate(
     [bold]Validate[/bold] a homelab YAML — auto-discovered if not specified.
     """
     try:
-        path = resolve_config(file)
+        path: Path = resolve_config(file)
         console.print(f"[dim]Validating: {path}[/dim]")
         load_homelab_model(path)
         typer.secho("✔  Validation successful!", fg=typer.colors.GREEN)
@@ -234,8 +234,8 @@ def host_update(
     Run [bold]apt upgrade[/bold] on a target host or all hosts.
     [dim]Respects global --dry-run and --verbose.[/dim]
     """
-    model = get_model()
-    hosts = resolve_targets(model, target, all, host.find,
+    model: YamlRoot = get_model()
+    hosts: list[Host] = resolve_targets(model, target, all, host.find,
                             host.findAll, label="host")
     host.update(hosts, model.settings.default_creds)
 
@@ -243,7 +243,7 @@ def host_update(
 @host_app.command("list")
 def host_list() -> None:
     """[bold]List[/bold] all hosts defined in the config."""
-    model = get_model()
+    model: YamlRoot = get_model()
     if not model.hosts:
         console.print("[dim]No hosts defined.[/dim]")
         raise typer.Exit(0)
@@ -277,15 +277,15 @@ def vm_update(
     Run [bold]apt upgrade[/bold] on a target VM or all VMs.
     [dim]Respects global --dry-run and --verbose.[/dim]
     """
-    model = get_model()
-    vms = resolve_targets(model, target, all, vm.find, vm.findAll, label="VM")
+    model: YamlRoot = get_model()
+    vms: list[Host] = resolve_targets(model, target, all, vm.find, vm.findAll, label="VM")
     vm.update(vms, model.settings.default_creds)
 
 
 @vm_app.command("list")
 def vm_list() -> None:
     """[bold]List[/bold] all VMs defined in the config."""
-    model = get_model()
+    model: YamlRoot = get_model()
     if not model.hosts:
         console.print("[dim]No hosts defined, so no VMs.[/dim]")
         raise typer.Exit(0)
@@ -307,7 +307,7 @@ def vm_list() -> None:
     table.add_column("IP Address", style="yellow")
 
     for name, v in all_vms.items():
-        table.add_row(name, str(v.type), str(v.os), str(v.ip))
+        table.add_row(name, str(v.type), str(v.os)+" (in VM)", str(v.ip))
 
     console.print(table)
 
