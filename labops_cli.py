@@ -8,6 +8,7 @@ from rich.table import Table
 
 from src.utils.yaml_validator import validate_yaml
 from models.inputConf.YamlRoot import YamlRoot
+from models.inputConf.creds import Creds
 
 import src.host as host
 import src.vm as vm
@@ -67,7 +68,7 @@ def load_raw_yaml(path: str) -> dict:
 
 def load_homelab_model(path: str) -> YamlRoot:
     raw_yaml = load_raw_yaml(path)
-    model = validate_yaml(raw_yaml, path)
+    model: YamlRoot | None = validate_yaml(raw_yaml, path)
     if not model:
         typer.secho("✘  Validation failed.", fg=typer.colors.RED)
         raise typer.Exit(1)
@@ -130,22 +131,22 @@ def host_update(
     Run [bold]apt upgrade[/bold] on a target or all hosts (bare-metal, LXC, VM).
     """
     if target:
-        inputConf = load_homelab_model(config)
-        hosts = host.find(inputConf, [target])
+        inputConf: YamlRoot = load_homelab_model(config)
+        hosts: list[Host] = host.find(inputConf, [target])
         if not hosts:
             typer.secho(f"✘ Host '{target}' not found.", fg=typer.colors.RED)
             raise typer.Exit(1)
         else:
-            default_creds = inputConf.settings.default_creds
+            default_creds: Creds = inputConf.settings.default_creds
             host.update(hosts, default_creds)
     elif all:
-        inputConf = load_homelab_model(config)
-        hosts = host.findAll(inputConf)
+        inputConf: YamlRoot = load_homelab_model(config)
+        hosts: list[Host] = host.findAll(inputConf)
         if not hosts:
             typer.secho(f"✘ No Host found.", fg=typer.colors.RED)
             raise typer.Exit(1)
         else:
-            default_creds = inputConf.settings.default_creds
+            default_creds: Creds = inputConf.settings.default_creds
             host.update(hosts, default_creds)
     else:
         typer.secho("✘ Please provide a target hostname/IP, or use the --all flag.", fg=typer.colors.RED)
@@ -158,7 +159,7 @@ def host_list(
     """
     [bold]List[/bold] all hosts defined in the configuration.
     """
-    inputConf = load_homelab_model(config)
+    inputConf: YamlRoot = load_homelab_model(config)
 
     if not inputConf.hosts:
         console.print("[dim]No hosts defined.[/dim]")
@@ -207,7 +208,7 @@ def vm_update(
             typer.secho(f"✘ No VM found.", fg=typer.colors.RED)
             raise typer.Exit(1)
         else:
-            default_creds = inputConf.settings.default_creds
+            default_creds: Creds = inputConf.settings.default_creds
             vm.update(vms, default_creds)
     else:
         typer.secho("✘ Please provide a target VM/IP, or use the --all flag.", fg=typer.colors.RED)
@@ -220,7 +221,7 @@ def vm_list(
     """
     [bold]List[/bold] all VMs defined in the configuration.
     """
-    inputConf = load_homelab_model(config)
+    inputConf: YamlRoot = load_homelab_model(config)
 
     if not inputConf.hosts:
         console.print("[dim]No hosts defined, so no VMs.[/dim]")
