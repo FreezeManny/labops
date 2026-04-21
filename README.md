@@ -7,10 +7,10 @@ A declarative, YAML-based homelab manager. `labops` is a CLI tool designed to si
 ### Current Capabilities
 - **Declarative YAML Configuration**: Define your complete homelab environment comprehensively using simple YAML configuration files.
 - **Host Management**: Automated setup, initialization, and system updates for a variety of host operating systems (Alpine, Debian, RedHat) powered by integrated Ansible playbooks.
+- **Proxmox LXC**: Update Proxmox Linux Containers (LXC) natively (through Proxmox Root Host)
 
 ### Roadmap & Future Scope
 - **Docker Stack Management**: Seamlessly deploy, spin up, and manage Docker Compose stacks across your nodes.
-- **Proxmox LXC**: Update Proxmox Linux Containers (LXC) natively.
 - **DNS Automation**: Automated updating of internal DNS records.
 - **Reverse Proxy Orchestration**: Manage, update, and automate reverse proxy routes
 

@@ -11,7 +11,7 @@ from src.cli.validate import app as validate_app
 
 # ------------- APP -----------------
 app = typer.Typer(
-    help="[bold cyan]LabOPS CLI[/bold cyan] — manage homelab hosts, VMs and more from a single YAML.",
+    help="[bold cyan]LabOPS CLI[/bold cyan] — manage homelab hosts, LXCs, VMs and more from a single YAML.",
     rich_markup_mode="rich",
     no_args_is_help=True,
 )
