@@ -3,7 +3,7 @@ from pydantic import ValidationError
 import os
 from pathlib import Path
 
-from models.inputConf.YamlRoot import YamlRoot
+from models.input_conf.yaml_root import YamlRoot
 
 
 def validate_yaml(raw: Dict[str, Any], rootPath: str) -> Optional[YamlRoot]:

@@ -4,8 +4,8 @@ from pathlib import Path
 from rich.table import Table
 
 from src.cli.core import ConfigError, get_model, console
-from models.inputConf.YamlRoot import YamlRoot
-from models.inputConf.hosts import Host
+from models.input_conf.yaml_root import YamlRoot
+from models.input_conf.hosts import Host
 
 app = typer.Typer(help="Validate configuration.")
 

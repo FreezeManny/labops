@@ -1,6 +1,6 @@
 from src.utils.ansible_runner import run_playbook
-from models.inputConf.YamlRoot import YamlRoot
-from models.inputConf.hosts import Host, LXC
+from models.input_conf.yaml_root import YamlRoot
+from models.input_conf.hosts import Host, LXC
 
 def findAll(config: YamlRoot) -> list[tuple[Host, LXC]]:
     """Returns a list of all LXCs found inside Proxmox hosts in the Yaml config."""

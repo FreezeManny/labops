@@ -2,7 +2,7 @@ from pydantic import BaseModel, FilePath,  model_validator
 from typing import Optional
 from ipaddress import IPv4Address
 
-from models.inputConf.creds import Creds
+from models.input_conf.creds import Creds
 
 class Dns(BaseModel):
     local_dns_suffix: str

@@ -2,8 +2,8 @@ from ansible_runner.runner import Runner
 from pathlib import Path
 import getpass
 
-from models.inputConf.hosts import Host
-from models.inputConf.creds import Creds
+from models.input_conf.hosts import Host
+from models.input_conf.creds import Creds
 from src.utils.ansible_runner import run_playbook
 
 def setup(host: Host, default_creds: Creds) -> None:

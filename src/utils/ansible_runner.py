@@ -34,5 +34,6 @@ def run_playbook(playbook: str, inventory: dict, extravars: Optional[dict] = Non
     
     if cmdline:
         kwargs["cmdline"] = " ".join(cmdline)
-
-    return ansible_runner.run(**kwargs)
+        
+    runner = ansible_runner.run(**kwargs)
+    return runner

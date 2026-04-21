@@ -1,5 +1,5 @@
 from pathlib import Path
-from models.inputConf.YamlRoot import YamlRoot
+from models.input_conf.yaml_root import YamlRoot
 import typer
 from rich.console import Console
 

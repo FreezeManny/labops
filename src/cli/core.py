@@ -5,7 +5,7 @@ import typer
 import yaml
 from rich.console import Console
 from src.utils.yaml_validator import validate_yaml
-from models.inputConf.YamlRoot import YamlRoot
+from models.input_conf.yaml_root import YamlRoot
 
 # ─── Shared state ─────────────────────────────────────────────────────────────
 

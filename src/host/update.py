@@ -1,7 +1,7 @@
 from ansible_runner.runner import Runner
-from models.inputConf.hosts import Host
-from models.inputConf.hosts import OSType
-from models.inputConf.creds import Creds
+from models.input_conf.hosts import Host
+from models.input_conf.hosts import OSType
+from models.input_conf.creds import Creds
 from src.utils.ansible_runner import run_playbook
 
 def update(hosts: list[Host], default_creds: Creds) -> None:

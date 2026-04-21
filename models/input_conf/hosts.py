@@ -2,7 +2,7 @@ from pydantic import BaseModel, model_validator, DirectoryPath
 from typing import Optional, Dict, Any, Literal
 from ipaddress import IPv4Address
 
-from models.inputConf.creds import Creds
+from models.input_conf.creds import Creds
 
 OSType = Literal["debian", "alpine", "redhat"]
 HostType = Literal["bare-metal", "proxmox"]
