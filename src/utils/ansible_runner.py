@@ -6,7 +6,7 @@ from typing import Optional
 project_root: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 playbook_root: str = os.path.join(project_root, "ansible", "playbooks")
 
-def run_playbook(playbook: str, inventory: dict, extravars: Optional[dict] = None) -> Runner:
+def run_playbook(playbook: str, inventory: dict, extravars: Optional[dict] = None, dry_run: bool = False, verbose: bool = False) -> Runner:
     """
     Wrapper for ansible_runner.run with standard application settings.
     """
@@ -25,15 +25,15 @@ def run_playbook(playbook: str, inventory: dict, extravars: Optional[dict] = Non
     if extravars:
         kwargs["extravars"] = extravars
 
-    from src.cli.core import state
     cmdline = []
-    if getattr(state, "dry_run", False):
+    if dry_run:
         cmdline.append("--check")
-    if getattr(state, "verbose", False):
+    if verbose:
         cmdline.append("-v")
     
     if cmdline:
         kwargs["cmdline"] = " ".join(cmdline)
         
     runner = ansible_runner.run(**kwargs)
+    return runner
     return runner

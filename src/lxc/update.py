@@ -2,7 +2,7 @@ from src.utils.ansible_runner import run_playbook
 from models.input_conf.hosts import Host, LXC
 from models.input_conf.creds import Creds
 
-def update(proxmox_lxc_pairs: list[tuple[Host, LXC]], default_creds: Creds) -> None:
+def update(proxmox_lxc_pairs: list[tuple[Host, LXC]], default_creds: Creds, dry_run: bool = False, verbose: bool = False) -> None:
     """
     Builds a dynamic ansible inventory from the Yaml config and proxies the 
     commands via community.proxmox.proxmox_pct_remote inside community OS groups.
@@ -39,4 +39,4 @@ def update(proxmox_lxc_pairs: list[tuple[Host, LXC]], default_creds: Creds) -> N
             
         inventory["all"]["children"][group_name]["hosts"][lxc_obj.name] = host_vars
 
-    run_playbook(playbook="lxc/update.yml", inventory=inventory)
+    run_playbook(playbook="lxc/update.yml", inventory=inventory, dry_run=dry_run, verbose=verbose)

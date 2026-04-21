@@ -2,7 +2,7 @@ from typing import Optional
 import typer
 from rich.table import Table
 
-from src.cli.core import get_model, resolve_targets, console
+from src.cli.core import get_model, resolve_targets, console, state
 from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.hosts import Host
 import src.host as host
@@ -18,7 +18,7 @@ def host_setup(
     model: YamlRoot = get_model()
     hosts = resolve_targets(model, target, False,
                             host.find, host.findAll, label="host")
-    host.setup(hosts[0], model.settings.default_creds)
+    host.setup(hosts[0], model.settings.default_creds, dry_run=state.dry_run, verbose=state.verbose)
 
 @app.command("update")
 def host_update(
@@ -33,7 +33,7 @@ def host_update(
     model: YamlRoot = get_model()
     hosts: list[Host] = resolve_targets(model, target, all, host.find,
                             host.findAll, label="host")
-    host.update(hosts, model.settings.default_creds)
+    host.update(hosts, model.settings.default_creds, dry_run=state.dry_run, verbose=state.verbose)
 
 @app.command("list")
 def host_list() -> None:

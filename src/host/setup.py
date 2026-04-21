@@ -6,7 +6,7 @@ from models.input_conf.hosts import Host
 from models.input_conf.creds import Creds
 from src.utils.ansible_runner import run_playbook
 
-def setup(host: Host, default_creds: Creds) -> None:
+def setup(host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool = False) -> None:
     creds: Creds = host.creds or default_creds
 
     if not creds.ssh_key_path:
@@ -65,7 +65,9 @@ def setup(host: Host, default_creds: Creds) -> None:
     r: Runner = run_playbook(
         playbook=f"host/setup.yml",
         inventory=inventory,
-        extravars=extravars
+        extravars=extravars,
+        dry_run=dry_run,
+        verbose=verbose
     )
 
     if r.rc == 0:

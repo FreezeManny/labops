@@ -4,7 +4,7 @@ from models.input_conf.hosts import OSType
 from models.input_conf.creds import Creds
 from src.utils.ansible_runner import run_playbook
 
-def update(hosts: list[Host], default_creds: Creds) -> None:
+def update(hosts: list[Host], default_creds: Creds, dry_run: bool = False, verbose: bool = False) -> None:
     # Group hosts by OS to run the correct playbooks
     hosts_by_os: dict[OSType, list[Host]] = {}
     for host in hosts:
@@ -43,7 +43,9 @@ def update(hosts: list[Host], default_creds: Creds) -> None:
     
     r: Runner = run_playbook(
         playbook="host/update.yml",
-        inventory=inventory
+        inventory=inventory,
+        dry_run=dry_run,
+        verbose=verbose
     )
     
     if r.rc == 0:

@@ -3,7 +3,7 @@ from typing import Optional
 import typer
 from rich.table import Table
 
-from src.cli.core import get_model, resolve_targets, console
+from src.cli.core import get_model, resolve_targets, console, state
 from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.hosts import LXC, Host
 import src.lxc as lxc
@@ -50,4 +50,4 @@ def execute_update(
     targets: list[tuple[Host, LXC]] = resolve_targets(model, target, all, lxc.find,lxc.findAll, label="LXC")
     
     # Pass them directly to the Ansible builder
-    lxc.update(targets, model.settings.default_creds)
+    lxc.update(targets, model.settings.default_creds, dry_run=state.dry_run, verbose=state.verbose)
