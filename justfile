@@ -1,7 +1,8 @@
 runner    := "uv run labops_cli.py"
-system    := "redhat"
-test_conf := "./test-samples/homelab-complete.yml"
+system    := "debian"
+test_conf := "./test-samples/homelab-test.yml"
 
+test-args := ""
 # In normal use no --file is needed — the CLI walks up from cwd and finds
 # homelab.yml automatically, just like `docker compose` finds compose.yml.
 # Test recipes pass --file explicitly to point at the sample config.
@@ -35,25 +36,43 @@ vm-update system=system:
 vm-update-all:
 	{{runner}} vm update --all
 
+lxc-list:
+	{{runner}} lxc list
+
+lxc-update system=system:
+	{{runner}} lxc update {{system}}
+
+lxc-update-all:
+	{{runner}} lxc update --all
+
 # ── Test recipes (explicit --file override) ───────────────────────────────────
 
 test-validate:
-	{{runner}} --file {{test_conf}} validate
+	{{runner}} {{test-args}} --file {{test_conf}} validate
 
 test-host-list:
-	{{runner}} --file {{test_conf}} host list
+	{{runner}} {{test-args}} --file {{test_conf}} host list
 
 test-host-setup:
-	{{runner}} --file {{test_conf}} host setup test-system-{{system}}
+	{{runner}} {{test-args}} --file {{test_conf}} host setup test-system-{{system}}
 
 test-host-update:
-	{{runner}} --file {{test_conf}} host update test-system-{{system}}
+	{{runner}} {{test-args}} --file {{test_conf}} host update test-system-{{system}}
 
 test-host-update-all:
-	{{runner}} --file {{test_conf}} host update --all
+	{{runner}} {{test-args}} --file {{test_conf}} host update --all
 
 test-vm-list:
-	{{runner}} --file {{test_conf}} vm list
+	{{runner}} {{test-args}} --file {{test_conf}} vm list
 
 test-vm-update-all:
-	{{runner}} --file {{test_conf}} vm update --all
+	{{runner}} {{test-args}} --file {{test_conf}} vm update --all
+
+test-lxc-list:
+	{{runner}} {{test-args}} --file {{test_conf}} lxc list
+	
+test-lxc-update:
+	{{runner}} {{test-args}} --file {{test_conf}} lxc update test-system-{{system}}
+
+test-lxc-update-all:
+	{{runner}} {{test-args}} --file {{test_conf}} lxc update --all

@@ -1,0 +1,10 @@
+- name: Update Alpine LXCs
+  hosts: alpine_servers
+  gather_facts: false
+  tasks:
+    - name: Update apk cache and upgrade packages
+      community.general.apk:
+        update_cache: yes
+        upgrade: yes
+      register: apk_result
+      changed_when: apk_result.changed

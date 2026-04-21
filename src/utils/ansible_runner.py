@@ -25,4 +25,14 @@ def run_playbook(playbook: str, inventory: dict, extravars: Optional[dict] = Non
     if extravars:
         kwargs["extravars"] = extravars
 
+    from src.cli.core import state
+    cmdline = []
+    if getattr(state, "dry_run", False):
+        cmdline.append("--check")
+    if getattr(state, "verbose", False):
+        cmdline.append("-v")
+    
+    if cmdline:
+        kwargs["cmdline"] = " ".join(cmdline)
+
     return ansible_runner.run(**kwargs)

@@ -1,0 +1,10 @@
+- name: Update RedHat/CentOS LXCs
+  hosts: redhat_servers
+  gather_facts: false
+  tasks:
+    - name: Upgrade all packages via dnf
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+      register: dnf_result
+      changed_when: dnf_result.changed

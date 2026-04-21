@@ -4,15 +4,22 @@ settings:
     ssh_key_path: "~/.ssh/id_homelab"
 
 hosts:
-  test-system-debian:
+  cprox:
+    type: proxmox
     os: debian
-    ip: 10.0.10.42
+    ip: 10.0.10.3
+    lxc:
+      test-system-debian:
+        os: debian
+        ip: 10.0.10.42
+        vmid: 113
 
-  test-system-alpine:
-    os: alpine
-    ip: 10.0.10.43
-
-  
-  test-system-redhat:
-    os: redhat
-    ip: 10.0.10.44
+      test-system-alpine:
+        os: alpine
+        ip: 10.0.10.43
+        vmid: 114
+      
+      test-system-redhat:
+        os: redhat
+        ip: 10.0.10.44
+        vmid: 115

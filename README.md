@@ -1,4 +1,4 @@
-![Labops - A declarative, YAML-based homelab manager](img/Cover.png)
+![#Labops - A declarative, YAML-based homelab manager](img/Cover.png)
 
 A declarative, YAML-based homelab manager. `labops` is a CLI tool designed to simplify, automate, and standardize the setup, configuration, and maintenance of your homelab infrastructure utilizing simple configuration files and powerful backend automation.
 
