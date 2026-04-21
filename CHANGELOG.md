@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/FreezeManny/labops/compare/labops-v0.3.0...labops-v0.3.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* ansible directory not in built package ([33bc327](https://github.com/FreezeManny/labops/commit/33bc32740934daed8827c9d1c30a7a1d7e38b4bc))
+
 ## [0.3.0](https://github.com/FreezeManny/labops/compare/labops-v0.2.1...labops-v0.3.0) (2026-04-21)
 
 
