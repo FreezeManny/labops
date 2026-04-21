@@ -20,6 +20,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src", "models", "labops_cli.py"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"ansible" = "ansible"
+
 [project.scripts]
 labops = "labops_cli:main"
 
