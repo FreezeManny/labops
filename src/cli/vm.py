@@ -42,23 +42,28 @@ def vm_list() -> None:
         console.print("[dim]No hosts defined, so no VMs.[/dim]")
         raise typer.Exit(0)
 
-    all_vms = {}
-    for h in model.hosts.values():
+    vms_with_host = []
+    for host_name, h in model.hosts.items():
         if h.vm:
-            all_vms.update(h.vm)
+            for vm_name, v in h.vm.items():
+                vms_with_host.append((host_name, vm_name, v))
 
-    if not all_vms:
+    if not vms_with_host:
         console.print("[dim]No VMs defined.[/dim]")
         raise typer.Exit(0)
 
     table = Table(title="Homelab VMs", show_header=True,
                   header_style="bold blue")
-    table.add_column("Name",       style="cyan")
-    table.add_column("Type",       style="magenta")
+    table.add_column("Host",       style="magenta")
+    table.add_column("VM Name",    style="cyan")
+    table.add_column("Type",       style="cyan")
     table.add_column("OS",         style="green")
     table.add_column("IP Address", style="yellow")
 
-    for name, v in all_vms.items():
-        table.add_row(name, str(v.type) + "(in VM)", str(v.os), str(v.ip))
+    current_host = None
+    for host_name, vm_name, v in vms_with_host:
+        host_display = host_name if host_name != current_host else "╰─> "
+        table.add_row(host_display, vm_name, str(v.type) + " (in VM)", str(v.os), str(v.ip))
+        current_host = host_name
 
     console.print(table)

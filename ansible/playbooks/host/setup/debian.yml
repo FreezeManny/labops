@@ -1,6 +1,6 @@
 ---
 - name: Setup user with passwordless permissions
-  hosts: all
+  hosts: debian_servers
   become: true
   gather_facts: false
 
@@ -14,4 +14,4 @@
 
   tasks:
     - name: Import common setup tasks
-      ansible.builtin.import_tasks: setup-common.yml
+      ansible.builtin.import_tasks: common.yml

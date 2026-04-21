@@ -1,3 +1,5 @@
 # requirements.yml
 collections:
-  - name: community.general #needed for apk
+  - name: community.general
+  - name: community.proxmox
+  - name: ansible.posix
