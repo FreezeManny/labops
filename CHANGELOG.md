@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/FreezeManny/labops/compare/labops-v0.2.1...labops-v0.3.0) (2026-04-21)
+
+
+### Features
+
+* Added better yaml validation ([5eb983b](https://github.com/FreezeManny/labops/commit/5eb983b7cf76468b2b43447eceaeb5a482c222b5))
+* Added LXC-Updater via Remote pct host connection ([a7fbf83](https://github.com/FreezeManny/labops/commit/a7fbf83885f2deb1162ed1f1a9dac6e8059d3142))
+
+
+### Bug Fixes
+
+* host source setup ([d45f5f2](https://github.com/FreezeManny/labops/commit/d45f5f2f572b1244c5f0ac2d7c131747066ee8c5))
+* Removed unused ty_extension Import ([425c044](https://github.com/FreezeManny/labops/commit/425c044188d3e9597f594059c00637e117a682bc))
+* typing ([9d35418](https://github.com/FreezeManny/labops/commit/9d35418088ce61e605d3cface5dc1543d3223d39))
+
 ## [0.2.1](https://github.com/FreezeManny/labops/compare/labops-v0.2.0...labops-v0.2.1) (2026-04-19)
 
 
