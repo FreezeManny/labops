@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/FreezeManny/labops/compare/labops-v0.3.1...labops-v0.3.2) (2026-04-21)
+
+
+### Bug Fixes
+
+* Added LXC to Readme ([abb1910](https://github.com/FreezeManny/labops/commit/abb1910e8d427d93125ee81c062debe906f60d43))
+
 ## [0.3.1](https://github.com/FreezeManny/labops/compare/labops-v0.3.0...labops-v0.3.1) (2026-04-21)
 
 
