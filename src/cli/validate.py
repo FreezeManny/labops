@@ -3,7 +3,7 @@ import typer
 from pathlib import Path
 from rich.table import Table
 
-from src.cli.core import ConfigError, get_model, resolve_targets,resolve_config, load_homelab_model, console, FileOpt
+from src.cli.core import ConfigError, get_model, console
 from models.inputConf.YamlRoot import YamlRoot
 from models.inputConf.hosts import Host
 

@@ -45,8 +45,8 @@ def host_list() -> None:
 
     table = Table(title="Homelab Hosts", show_header=True,
                   header_style="bold blue")
-    table.add_column("Name",       style="cyan")
-    table.add_column("Type",       style="magenta")
+    table.add_column("Host",       style="magenta")
+    table.add_column("Type",       style="cyan")
     table.add_column("OS",         style="green")
     table.add_column("IP Address", style="yellow")
 
