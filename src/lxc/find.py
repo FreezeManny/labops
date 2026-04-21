@@ -1,10 +1,11 @@
+from ty_extensions import Unknown
 from src.utils.ansible_runner import run_playbook
 from models.inputConf.YamlRoot import YamlRoot
 from models.inputConf.hosts import Host, LXC
 
 def findAll(config: YamlRoot) -> list[tuple[Host, LXC]]:
     """Returns a list of all LXCs found inside Proxmox hosts in the Yaml config."""
-    results = []
+    results: list[tuple[Host, LXC]] = []
     if config.hosts is None:
         return results
         
@@ -16,7 +17,7 @@ def findAll(config: YamlRoot) -> list[tuple[Host, LXC]]:
 
 def find(config: YamlRoot, targets: list[str]) -> list[tuple[Host, LXC]]:
     """Find specific LXCs defined in the Yaml config by Name, IP, or VMID."""
-    results = []
+    results: list[tuple[Host, LXC]] = []
     if config.hosts is None:
         return results
         
