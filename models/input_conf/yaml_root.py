@@ -6,13 +6,15 @@ from .lxc import LXC
 from .vm import VM
 from .web_services import WebService
 from .docker import Docker, StackEntry
-from models.input_conf.host import Host
-from models.input_conf.settings import Settings
-from models.input_conf.custom_types import StrictModel
+from .host import Host
+from .settings import Settings
+from .custom_types import StrictModel
+from .unmanaged import Unmanaged
 
 class YamlRoot(StrictModel):
     settings: Settings
     hosts: Optional[Dict[str, Host]] = None
+    unmanaged: Optional[Dict[str, Unmanaged]]
 
     @model_validator(mode="after")
     def propagate_host_names(self) -> "YamlRoot":
