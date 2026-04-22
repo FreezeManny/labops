@@ -1,10 +1,12 @@
 
-from pydantic import BaseModel, model_validator, field_validator, FilePath
+from pydantic import model_validator, field_validator, FilePath
 from typing import Optional, Dict, Any, Literal
 import os
 import typer
 
-class Creds(BaseModel):
+from .custom_types import StrictModel
+
+class Creds(StrictModel):
     username: str
     passwd: Optional[str] = None
     ssh_key_path: Optional[FilePath] = None

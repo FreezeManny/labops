@@ -1,4 +1,4 @@
-from pydantic import BaseModel, DirectoryPath, model_validator
+from pydantic import DirectoryPath, model_validator
 from ipaddress import IPv4Address
 from typing import Optional, Dict
 
@@ -6,10 +6,10 @@ from .creds import Creds
 from .web_services import WebServices
 from .docker import Docker
 
-from .custom_types import OSType
+from .custom_types import OSType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 
-class LXC(BaseModel):
+class LXC(StrictModel):
     name: str = ""
     ip: IPv4Address
     os: OSType

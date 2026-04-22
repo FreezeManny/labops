@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_validator
+from pydantic import model_validator
 from typing import Optional, Dict, Any
 from ipaddress import IPv4Address
 
@@ -8,8 +8,9 @@ from .web_services import WebService
 from .docker import Docker, StackEntry
 from models.input_conf.host import Host
 from models.input_conf.settings import Settings
+from models.input_conf.custom_types import StrictModel
 
-class YamlRoot(BaseModel):
+class YamlRoot(StrictModel):
     settings: Settings
     hosts: Optional[Dict[str, Host]] = None
 

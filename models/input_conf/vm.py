@@ -1,5 +1,5 @@
 
-from pydantic import BaseModel, model_validator, DirectoryPath
+from pydantic import model_validator, DirectoryPath
 from typing import Optional, Dict, Any, Literal
 from ipaddress import IPv4Address
 
@@ -7,10 +7,10 @@ from .creds import Creds
 from .web_services import WebServices
 from .docker import Docker
 from .lxc import LXC
-from .custom_types import OSType, HostType
+from .custom_types import OSType, HostType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 
-class VM(BaseModel):
+class VM(StrictModel):
     name: str = ""
     type: HostType = "bare-metal"
     os: OSType
