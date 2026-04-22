@@ -10,6 +10,12 @@ test-args := ""
 pre-commit:
 	uv run pre-commit run --all-files
 
+build: 
+	uv build
+
+local-install:
+	pipx install --force $(ls -t dist/*.whl | head -n1) --force
+
 # ── Normal usage (auto-discovers homelab.yml from cwd) ────────────────────────
 
 validate:
