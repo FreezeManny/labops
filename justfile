@@ -1,6 +1,6 @@
 runner    := "uv run labops_cli.py"
 system    := "debian"
-test_conf := "./test-samples/homelab-test.yml"
+test_conf := "./test-samples/homelab-complete.yml"
 
 test-args := ""
 # In normal use no --file is needed — the CLI walks up from cwd and finds

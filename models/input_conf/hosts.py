@@ -2,21 +2,12 @@ from pydantic import BaseModel, model_validator, DirectoryPath
 from typing import Optional, Dict, Any, Literal
 from ipaddress import IPv4Address
 
-from models.input_conf.creds import Creds
+from .creds import Creds
+from .web_services import WebServices
+from .docker import Docker
 
 OSType = Literal["debian", "alpine", "redhat"]
 HostType = Literal["bare-metal", "proxmox"]
-
-
-class WebService(BaseModel):
-    port: int
-    proxy_name: Optional[str] = None
-
-
-class DockerStack(BaseModel):
-    config_path: DirectoryPath
-    web_services: Optional[Dict[str, WebService]] = None
-
 
 class LXC(BaseModel):
     name: str = ""
@@ -24,8 +15,8 @@ class LXC(BaseModel):
     os: OSType
     vmid: int
     creds: Optional[Creds] = None
-    web_services: Optional[Dict[str, WebService]] = None
-    docker_stack: Optional[Dict[str, DockerStack]] = None
+    web_services: Optional[WebServices] = None
+    docker: Optional[Docker] = None
 
 class Host(BaseModel):
     name: str = ""
@@ -35,7 +26,7 @@ class Host(BaseModel):
     creds: Optional[Creds] = None
     lxc: Optional[Dict[str, LXC]] = None
     vm: Optional[Dict[str, "Host"]] = None ## CHECK THIS
-    web_services: Optional[Dict[str, WebService]] = None
+    web_services: Optional[WebServices] = None
 
     @model_validator(mode="after")
     def check_proxmox_support(self) -> "Host":

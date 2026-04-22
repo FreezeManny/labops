@@ -28,39 +28,38 @@ hosts:
         ip: 10.0.10.6
         os: debian
         vmid: 102
-        docker_stack:
+        docker:
           root_path: "/home/manuel"
           stacks:
             nginx-proxy-manager:
               config_path: "./docker/nginx/"
               web_services:
-                app:
+                - proxy_name: nginx
                   port: 81
-                  proxy_name: nginx
             nebula-sync:
               config_path: "./docker/nebula-sync/"
             dfs-aip-interface:
               config_path: "./docker/homeassistant/"
               web_services:
-              dfs-aip:
-                port: 8081
-                proxy_name: dfs-aip
+                - proxy_name: dfs-aip
+                  port: 8081
 
       home:
         ip: 10.0.10.10
         os: debian
         vmid: 103
-        docker_stack:
+        docker:
           root_path: "/home/manuel"
-          homeassistant:
-            config_path: "./docker/homeassistant/"
-            web_services:
-              - proxy_name: esphome
-                port: 6052
-              - proxy_name: home
-                port: 8123
-              - proxy_name: z2mqtt
-                port: 8080
+          stacks:
+            homeassistant:
+              config_path: "./docker/homeassistant/"
+              web_services:
+                - proxy_name: esphome
+                  port: 6052
+                - proxy_name: home
+                  port: 8123
+                - proxy_name: z2mqtt
+                  port: 8080
 
       pihole:
         ip: 10.0.10.5
@@ -90,6 +89,6 @@ hosts:
     web_services:
       - proxy_name: pihole2
         port: 8080
-        
-      
+
+
 
