@@ -7,6 +7,13 @@ test-args := ""
 # homelab.yml automatically, just like `docker compose` finds compose.yml.
 # Test recipes pass --file explicitly to point at the sample config.
 
+# ----------- DEVCONTAINER ------
+container-start:
+	devcontainer up --workspace-folder .
+	
+container-attach:
+	devcontainer exec --workspace-folder . bash
+
 pre-commit:
 	uv run pre-commit run --all-files
 

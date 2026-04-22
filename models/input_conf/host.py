@@ -18,7 +18,7 @@ class Host(BaseModel):
     creds: Optional[Creds] = None
     lxc: Optional[LXCs] = None
     vm: Optional[VMs] = None
-    docker: Optional[Docker]
+    docker: Optional[Docker] = None
     web_services: Optional[WebServices] = None
 
     @model_validator(mode="after")
