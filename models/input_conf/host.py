@@ -8,6 +8,7 @@ from .docker import Docker
 from .lxc import LXCs
 from .vm import VMs
 from .custom_types import HostType, OSType
+from .common_validators.web_services import check_duplicate_ws_ports
 
 class Host(BaseModel):
     name: str = ""
@@ -17,6 +18,7 @@ class Host(BaseModel):
     creds: Optional[Creds] = None
     lxc: Optional[LXCs] = None
     vm: Optional[VMs] = None
+    docker: Optional[Docker]
     web_services: Optional[WebServices] = None
 
     @model_validator(mode="after")
@@ -43,6 +45,9 @@ class Host(BaseModel):
                 all_ids.add(vm_obj.vmid)
         return self
 
+    @model_validator(mode="after")
+    def check_duplicate_ws_ports(self) -> "Host":
+        return check_duplicate_ws_ports(self)
 
     @model_validator(mode="after")
     def propagate_lxc_vm_names(self) -> "Host":
