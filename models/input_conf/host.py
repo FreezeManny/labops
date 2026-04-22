@@ -33,16 +33,21 @@ class Host(BaseModel):
     @model_validator(mode="after")
     def check_duplicate_vmid(self) -> "Host":
         all_ids: set[int] = set()
+        errors: list[str] = []
         if self.lxc:
             for lxc_obj in self.lxc.values():
                 if lxc_obj.vmid in all_ids:
-                    raise ValueError(f"Duplicate vmid found: {lxc_obj.vmid}")
-                all_ids.add(lxc_obj.vmid)
+                    errors.append(f"Duplicate vmid found: {lxc_obj.vmid}")
+                else:
+                    all_ids.add(lxc_obj.vmid)
         if self.vm:
             for vm_obj in self.vm.values():
                 if vm_obj.vmid in all_ids:
-                    raise ValueError(f"Duplicate vmid found: {vm_obj.vmid}")
-                all_ids.add(vm_obj.vmid)
+                    errors.append(f"Duplicate vmid found: {vm_obj.vmid}")
+                else:
+                    all_ids.add(vm_obj.vmid)
+        if errors:
+            raise ValueError("\n".join(errors))
         return self
 
     @model_validator(mode="after")
