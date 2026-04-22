@@ -11,6 +11,16 @@ settings:
     proxy_location: 10.0.10.6
 
 hosts:
+  proxmox_test:
+    type: proxmox
+    os: debian
+    ip: 10.0.10.4
+    lxc:
+      wireguard:
+        ip: 10.0.10.8
+        os: alpine
+        vmid: 101
+
   cprox:
     type: proxmox
     os: debian
@@ -34,7 +44,7 @@ hosts:
             nginx-proxy-manager:
               config_path: "./docker/nginx/"
               web_services:
-                - proxy_name: nginx
+                - proxy_name: home
                   port: 81
             nebula-sync:
               config_path: "./docker/nebula-sync/"

@@ -24,14 +24,16 @@ class YamlRoot(BaseModel):
     def validate_unique_ips(self) -> "YamlRoot":
 
         all_ips: set[IPv4Address] = set()
+        errors: list[str] = []
 
         def check_ips(node: object) -> None:
             # Check for an 'ip' attribute of type IPv4Address
             ip : IPv4Address | None = getattr(node, "ip", None)
             if isinstance(ip, IPv4Address):
                 if ip in all_ips:
-                    raise ValueError(f"Duplicate IP address found across configuration: '{ip}'")
-                all_ips.add(ip)
+                    errors.append(f"Duplicate IP address found across configuration: '{ip}'")
+                else:
+                    all_ips.add(ip)
             # Check for lxc and vm attributes that are dict-like
             lxc: LXC | None = getattr(node, "lxc", None)
             if isinstance(lxc, dict):
@@ -45,61 +47,41 @@ class YamlRoot(BaseModel):
         if self.hosts:
             for host in self.hosts.values():
                 check_ips(host)
-                
+
+        if errors:
+            raise ValueError("\n".join(errors))
+
         return self
 
     @model_validator(mode="after")
-    def validate_unique_names(self) -> "YamlRoot":
-        all_names = set()
-        if self.hosts:
-            for k, host in self.hosts.items():
-                if k in all_names:
-                    raise ValueError(f"Duplicate name found across configuration: '{k}'")
-                all_names.add(k)
-
-                if host.lxc:
-                    for lxc_name in host.lxc.keys():
-                        if lxc_name in all_names:
-                            raise ValueError(f"Duplicate name found across configuration: '{lxc_name}'")
-                        all_names.add(lxc_name)
-                
-                if host.vm:
-                    for vm_name in host.vm.keys():
-                        if vm_name in all_names:
-                            raise ValueError(f"Duplicate name found across configuration: '{vm_name}'")
-                        all_names.add(vm_name)
-        return self
-
-    @model_validator(mode="after")
-    def validate_unique_proxy_names(self) -> "YamlRoot":
-        """
-        Ensures all web_services.proxy_name values are unique across the entire configuration (hosts, lxc, vm, docker stacks).
-        """
+    def validate_unique_names_and_proxy_names(self) -> "YamlRoot":
+        all_names: set[str] = set()
         all_proxy_names: set[str] = set()
+        errors: list[str] = []
+
         def check_proxy_names(node: object) -> None:
-            # Check for web_services
-            web_services : WebService | None = getattr(node, "web_services", None)
+            web_services: WebService | None = getattr(node, "web_services", None)
             if web_services:
                 for ws in getattr(web_services, "root", []):
-                    proxy_name : str| None= getattr(ws, "proxy_name", None)
+                    proxy_name: str | None = getattr(ws, "proxy_name", None)
                     if proxy_name:
                         if proxy_name in all_proxy_names:
-                            raise ValueError(f"Duplicate proxy_name found across configuration: '{proxy_name}'")
-                        all_proxy_names.add(proxy_name)
-            # Check for docker stacks
-            docker :Docker | None= getattr(node, "docker", None)
+                            errors.append(f"Duplicate proxy_name found across configuration: '{proxy_name}'")
+                        else:
+                            all_proxy_names.add(proxy_name)
+            docker: Docker | None = getattr(node, "docker", None)
             if docker:
                 stacks: dict[str, StackEntry] = getattr(docker, "stacks", {})
                 for stack in stacks.values():
                     stack_ws: WebService | None = getattr(stack, "web_services", None)
                     if stack_ws:
                         for ws in getattr(stack_ws, "root", []):
-                            proxy_name: str | None = getattr(ws, "proxy_name", None)
+                            proxy_name = getattr(ws, "proxy_name", None)
                             if proxy_name:
                                 if proxy_name in all_proxy_names:
-                                    raise ValueError(f"Duplicate proxy_name found across configuration: '{proxy_name}'")
-                                all_proxy_names.add(proxy_name)
-            # Check for lxc and vm recursively
+                                    errors.append(f"Duplicate proxy_name found across configuration: '{proxy_name}'")
+                                else:
+                                    all_proxy_names.add(proxy_name)
             lxc: LXC | None = getattr(node, "lxc", None)
             if isinstance(lxc, dict):
                 for lxc_node in lxc.values():
@@ -110,6 +92,29 @@ class YamlRoot(BaseModel):
                     check_proxy_names(vm_node)
 
         if self.hosts:
-            for host in self.hosts.values():
+            for k, host in self.hosts.items():
+                if k in all_names:
+                    errors.append(f"Duplicate name found across configuration: '{k}'")
+                else:
+                    all_names.add(k)
+
+                if host.lxc:
+                    for lxc_name in host.lxc.keys():
+                        if lxc_name in all_names:
+                            errors.append(f"Duplicate name found across configuration: '{lxc_name}'")
+                        else:
+                            all_names.add(lxc_name)
+
+                if host.vm:
+                    for vm_name in host.vm.keys():
+                        if vm_name in all_names:
+                            errors.append(f"Duplicate name found across configuration: '{vm_name}'")
+                        else:
+                            all_names.add(vm_name)
+
                 check_proxy_names(host)
+
+        if errors:
+            raise ValueError("\n".join(errors))
+
         return self

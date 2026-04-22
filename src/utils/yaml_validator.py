@@ -27,12 +27,14 @@ def validate_yaml(raw: Dict[str, Any], rootPath: str) -> Optional[YamlRoot]:
             location = ".".join(str(loc) for loc in error.get('loc', []))
             
             # Clean up the redundant Pydantic prefix
-            msg = error.get('msg', '').replace('Value error, ', '')
+            raw_msg = error.get('msg', '').replace('Value error, ', '')
             
-            if location:
-                error_messages.append(f"[bold yellow]{location}[/bold yellow]: [red]{msg}[/red]")
-            else:
-                error_messages.append(f"[red]{msg}[/red]")
+            # A single validator may raise multiple newline-separated errors
+            for msg in raw_msg.split("\n"):
+                if location:
+                    error_messages.append(f"[bold yellow]{location}[/bold yellow]: [red]{msg}[/red]")
+                else:
+                    error_messages.append(f"[red]{msg}[/red]")
                 
         formatted_errors = "\n".join(f"• {msg}" for msg in error_messages)
         

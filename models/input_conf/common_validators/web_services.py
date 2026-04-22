@@ -7,13 +7,15 @@ T = TypeVar("T")
 
 def check_duplicate_ws_ports(obj: T) -> T:
     all_ports: set[int] = set()
+    errors: list[str] = []
 
     web_services: WebService | None = getattr(obj, "web_services", None)
     if web_services:
         for ws in web_services.root:
             if ws.port in all_ports:
-                raise ValueError(f"Duplicate port found: {ws.port}")
-            all_ports.add(ws.port)
+                errors.append(f"Duplicate port found: {ws.port}")
+            else:
+                all_ports.add(ws.port)
 
     docker: Docker | None = getattr(obj, "docker", None)
     if docker:
@@ -22,7 +24,11 @@ def check_duplicate_ws_ports(obj: T) -> T:
             if stack_ws:
                 for ws in stack_ws.root:
                     if ws.port in all_ports:
-                        raise ValueError(f"Duplicate port found: {ws.port}")
-                    all_ports.add(ws.port)
+                        errors.append(f"Duplicate port found: {ws.port}")
+                    else:
+                        all_ports.add(ws.port)
+
+    if errors:
+        raise ValueError("\n".join(errors))
 
     return obj
