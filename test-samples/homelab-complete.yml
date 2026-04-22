@@ -15,9 +15,8 @@ hosts:
     type: proxmox
     os: debian
     ip: 10.0.10.4
-    ipv6: asdf
     lxc:
-      wireguard:
+      wireguard-2:
         ip: 10.0.10.8
         os: alpine
         vmid: 101
@@ -27,7 +26,7 @@ hosts:
     os: debian
     ip: 10.0.10.3
     web_services:
-      - proxy_name: home
+      - proxy_name: cprox
         port: 82
     lxc:
       wireguard:
@@ -48,7 +47,7 @@ hosts:
             nginx-proxy-manager:
               config_path: "./docker/nginx/"
               web_services:
-                - proxy_name: home
+                - proxy_name: nginx
                   port: 81
             nebula-sync:
               config_path: "./docker/nebula-sync/"
@@ -105,5 +104,11 @@ hosts:
       - proxy_name: pihole2
         port: 8080
 
-
-
+unmanaged:
+  nas:
+    ip: 10.0.10.4
+    web_services:
+      - proxy_name: nas
+        port: 80
+      - proxy_name: sync
+        port: 20910
