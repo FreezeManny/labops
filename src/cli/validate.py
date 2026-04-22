@@ -9,7 +9,7 @@ from models.input_conf.host import Host
 
 app = typer.Typer(help="Validate configuration.")
 
-@app.callback()
+@app.callback(invoke_without_command=True)
 def validate(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand:
         return
