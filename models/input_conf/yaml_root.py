@@ -64,8 +64,45 @@ class YamlRoot(StrictModel):
         return self
 
     @model_validator(mode="after")
-    def validate_unique_names_and_proxy_names(self) -> "YamlRoot":
+    def validate_unique_names(self) -> "YamlRoot":
         all_names: set[str] = set()
+        errors: list[str] = []
+
+        if self.hosts:
+            for k, host in self.hosts.items():
+                if k in all_names:
+                    errors.append(f"Duplicate name found across configuration: '{k}'")
+                else:
+                    all_names.add(k)
+
+                if host.lxc:
+                    for lxc_name in host.lxc.keys():
+                        if lxc_name in all_names:
+                            errors.append(f"Duplicate name found across configuration: '{lxc_name}'")
+                        else:
+                            all_names.add(lxc_name)
+
+                if host.vm:
+                    for vm_name in host.vm.keys():
+                        if vm_name in all_names:
+                            errors.append(f"Duplicate name found across configuration: '{vm_name}'")
+                        else:
+                            all_names.add(vm_name)
+
+        if self.unmanaged:
+            for k in self.unmanaged.keys():
+                if k in all_names:
+                    errors.append(f"Duplicate name found across configuration: '{k}'")
+                else:
+                    all_names.add(k)
+
+        if errors:
+            raise ValueError("\n".join(errors))
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_unique_proxy_names(self) -> "YamlRoot":
         all_proxy_names: set[str] = set()
         errors: list[str] = []
 
@@ -102,34 +139,11 @@ class YamlRoot(StrictModel):
                     check_proxy_names(vm_node)
 
         if self.hosts:
-            for k, host in self.hosts.items():
-                if k in all_names:
-                    errors.append(f"Duplicate name found across configuration: '{k}'")
-                else:
-                    all_names.add(k)
-
-                if host.lxc:
-                    for lxc_name in host.lxc.keys():
-                        if lxc_name in all_names:
-                            errors.append(f"Duplicate name found across configuration: '{lxc_name}'")
-                        else:
-                            all_names.add(lxc_name)
-
-                if host.vm:
-                    for vm_name in host.vm.keys():
-                        if vm_name in all_names:
-                            errors.append(f"Duplicate name found across configuration: '{vm_name}'")
-                        else:
-                            all_names.add(vm_name)
-
+            for host in self.hosts.values():
                 check_proxy_names(host)
 
         if self.unmanaged:
-            for k, node in self.unmanaged.items():
-                if k in all_names:
-                    errors.append(f"Duplicate name found across configuration: '{k}'")
-                else:
-                    all_names.add(k)
+            for node in self.unmanaged.values():
                 check_proxy_names(node)
 
         if errors:
