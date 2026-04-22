@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.0](https://github.com/FreezeManny/labops/compare/labops-v0.3.2...labops-v0.4.0) (2026-04-22)
+
+
+### Features
+
+* add devcontainer commands and initialize docker attribute in Host model ([0838b09](https://github.com/FreezeManny/labops/commit/0838b099ecae1f0c51ac21b469234c561fae02a2))
+* add validation for duplicate web service ports in host, lxc, and vm models ([683dd75](https://github.com/FreezeManny/labops/commit/683dd7537fb2028064316f19137b243bdf4c202a))
+* added duplicate VMID Validation for proxmox host and lxc ([cb6d35a](https://github.com/FreezeManny/labops/commit/cb6d35ad07cafd7843c56c42cde98380600e0e41))
+* added proxy name duplication check ([c68baf6](https://github.com/FreezeManny/labops/commit/c68baf6d4bbc90ab4d217784fb324c16d3acb33e))
+* changed docker and webservice structure ([10a6da9](https://github.com/FreezeManny/labops/commit/10a6da94e1d6ddf0a6ba432243ee17412ed4af76))
+* Changed LXC Structure ([95b9615](https://github.com/FreezeManny/labops/commit/95b9615dc99e9747ccff7b2be2c2b8c0833c74c9))
+* enhance YAML validation by adding unique IP address check ([f9ecfdf](https://github.com/FreezeManny/labops/commit/f9ecfdf390b501832ec73bed8c2e761c2ce21662))
+* Improve error handling for duplicate ports, VM IDs, and IP addresses in validators ([5fb8aa4](https://github.com/FreezeManny/labops/commit/5fb8aa427e57aeb56afc1bc754a5e41fd43679ba))
+* Pretty output for one error ([6a570f0](https://github.com/FreezeManny/labops/commit/6a570f02d58ce9f0d0736968e8b0f1b3ce1e3166))
+
+
+### Bug Fixes
+
+* fixed validate ([e8d229f](https://github.com/FreezeManny/labops/commit/e8d229fa831bf3611f4680ce8205658b68adbf27))
+
 ## [0.3.2](https://github.com/FreezeManny/labops/compare/labops-v0.3.1...labops-v0.3.2) (2026-04-21)
 
 
