@@ -18,16 +18,16 @@ def validate_yaml(raw: Dict[str, Any], rootPath: str) -> Optional[YamlRoot]:
     model = None
     try:
         # model_validate is the standard Pydantic V2 way to load from dictionaries
-        model = YamlRoot.model_validate(raw) 
+        model: YamlRoot = YamlRoot.model_validate(raw) 
         
     except ValidationError as e:
         error_messages = []
         for error in e.errors():
             # Extract the exact path of the failure (e.g., hosts.cprox)
-            location = ".".join(str(loc) for loc in error.get('loc', []))
+            location: str = ".".join(str(loc) for loc in error.get('loc', []))
             
             # Clean up the redundant Pydantic prefix
-            raw_msg = error.get('msg', '').replace('Value error, ', '')
+            raw_msg: str = error.get('msg', '').replace('Value error, ', '')
             
             # A single validator may raise multiple newline-separated errors
             for msg in raw_msg.split("\n"):
