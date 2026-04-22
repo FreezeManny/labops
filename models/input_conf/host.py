@@ -16,7 +16,7 @@ class Host(BaseModel):
     ip: IPv4Address
     creds: Optional[Creds] = None
     lxc: Optional[LXCs] = None
-    vm: Optional[VMs] = None ## CHECK THIS
+    vm: Optional[VMs] = None
     web_services: Optional[WebServices] = None
 
     @model_validator(mode="after")
@@ -29,15 +29,31 @@ class Host(BaseModel):
         return self
 
     @model_validator(mode="after")
+    def check_duplicate_vmid(self) -> "Host":
+        all_ids: set[int] = set()
+        if self.lxc:
+            for lxc_obj in self.lxc.values():
+                if lxc_obj.vmid in all_ids:
+                    raise ValueError(f"Duplicate vmid found: {lxc_obj.vmid}")
+                all_ids.add(lxc_obj.vmid)
+        if self.vm:
+            for vm_obj in self.vm.values():
+                if vm_obj.vmid in all_ids:
+                    raise ValueError(f"Duplicate vmid found: {vm_obj.vmid}")
+                all_ids.add(vm_obj.vmid)
+        return self
+
+
+    @model_validator(mode="after")
     def propagate_lxc_vm_names(self) -> "Host":
         # Inject the dictionary key as the 'name' attribute for child LXCs
         if self.lxc:
             for k, v in self.lxc.items():
-                v.name = k
+                v.name: str = k
                 
         # Inject the dictionary key as the 'name' attribute for child VMs
         if self.vm:
             for k, v in self.vm.items():
-                v.name = k
+                v.name: str = k
                 
         return self
