@@ -1,14 +1,27 @@
 runner    := "uv run labops_cli.py"
 system    := "debian"
-test_conf := "./test-samples/homelab-test.yml"
+test_conf := "./test-samples/homelab-complete.yml"
 
 test-args := ""
 # In normal use no --file is needed — the CLI walks up from cwd and finds
 # homelab.yml automatically, just like `docker compose` finds compose.yml.
 # Test recipes pass --file explicitly to point at the sample config.
 
+# ----------- DEVCONTAINER ------
+container-start:
+	devcontainer up --workspace-folder .
+	
+container-attach:
+	devcontainer exec --workspace-folder . bash
+
 pre-commit:
 	uv run pre-commit run --all-files
+
+build: 
+	uv build
+
+local-install:
+	pipx install --force $(ls -t dist/*.whl | head -n1) --force
 
 # ── Normal usage (auto-discovers homelab.yml from cwd) ────────────────────────
 

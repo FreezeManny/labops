@@ -1,5 +1,6 @@
 from src.utils.ansible_runner import run_playbook
-from models.input_conf.hosts import Host, LXC
+from models.input_conf.host import Host
+from models.input_conf.lxc import LXC
 from models.input_conf.creds import Creds
 
 def update(proxmox_lxc_pairs: list[tuple[Host, LXC]], default_creds: Creds, dry_run: bool = False, verbose: bool = False) -> None:

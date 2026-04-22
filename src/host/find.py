@@ -1,5 +1,5 @@
 from models.input_conf.yaml_root import YamlRoot
-from models.input_conf.hosts import Host
+from models.input_conf.host import Host
 
 def findAll(config: YamlRoot) -> list[Host]:
     if config.hosts is None:

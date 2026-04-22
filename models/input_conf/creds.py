@@ -2,6 +2,7 @@
 from pydantic import BaseModel, model_validator, field_validator, FilePath
 from typing import Optional, Dict, Any, Literal
 import os
+import typer
 
 class Creds(BaseModel):
     username: str
@@ -23,4 +24,6 @@ class Creds(BaseModel):
             raise ValueError('Mutual exclusion error: Cannot set both passwd and ssh_key_path.')
         if not has_passwd and not has_key:
             raise ValueError('Missing credentials: Must set either passwd or ssh_key_path.')
+        if has_passwd and not has_key:
+            typer.secho('WARNING: Using only password authentication. Some features only work with an SSH key.', fg=typer.colors.YELLOW)
         return self

@@ -28,56 +28,52 @@ hosts:
         ip: 10.0.10.6
         os: debian
         vmid: 102
-        docker_stack:
-          nginx-proxy-manager:
-            config_path: "./docker/nginx/"
-            web_services:
-              app:
-                port: 81
-                proxy_name: nginx
-          nebula-sync:
-            config_path: "./docker/nebula-sync/"
-          dfs-aip-interface:
-            config_path: "./docker/homeassistant/"
-            web_services:
-            dfs-aip:
-              port: 8081
-              proxy_name: dfs-aip
+        docker:
+          root_path: "/home/manuel"
+          stacks:
+            nginx-proxy-manager:
+              config_path: "./docker/nginx/"
+              web_services:
+                - proxy_name: nginx
+                  port: 81
+            nebula-sync:
+              config_path: "./docker/nebula-sync/"
+            dfs-aip-interface:
+              config_path: "./docker/homeassistant/"
+              web_services:
+                - proxy_name: dfs-aip
+                  port: 8081
 
       home:
         ip: 10.0.10.10
         os: debian
         vmid: 103
-        docker_stack:
-          homeassistant:
-            config_path: "./docker/homeassistant/"
-            web_services:
-              esphome:
-                port: 6052
-              homeassistant:
-                port: 8123
-                proxy_name: home
-              zigbee2mqtt:
-                port: 8080
-                proxy_name: z2mqtt
+        docker:
+          root_path: "/home/manuel"
+          stacks:
+            homeassistant:
+              config_path: "./docker/homeassistant/"
+              web_services:
+                - proxy_name: esphome
+                  port: 6052
+                - proxy_name: home
+                  port: 8123
+                - proxy_name: z2mqtt
+                  port: 8080
 
       pihole:
         ip: 10.0.10.5
         os: debian
         vmid: 105
         web_services:
-          admin-panel:
+          - proxy_name: pihole
             port: 8080
-            proxy_name: pihole
 
     vm:
       fr24-radar:
         os: debian
         ip: 10.0.50.149
-          # for later -> Add option to add dncp
-          # dhcp-reserve: # for later
-          #  ip: 10.0.30.5
-          #  mac: FF:FF:FF:FF:FF:FF
+        vmid: 111
 
   test-system:
     os: debian
@@ -86,15 +82,14 @@ hosts:
   tmp-pi:
     os: debian
     ip: 10.0.10.254
-    # for later -> Add option to add dncp
-    # type: dhcp
+
   lifeboat:
     type: bare-metal
     os: debian
     ip: 10.0.10.9
     web_services:
-      pihole:
+      - proxy_name: pihole2
         port: 8080
-        proxy_name: pihole2
-      
+
+
 

@@ -5,7 +5,8 @@ from rich.table import Table
 
 from src.cli.core import get_model, resolve_targets, console, state
 from models.input_conf.yaml_root import YamlRoot
-from models.input_conf.hosts import LXC, Host
+from models.input_conf.host import Host
+from models.input_conf.lxc import LXC
 import src.lxc as lxc
 
 app = typer.Typer(help="Manage Proxmox LXC containers from Config.", no_args_is_help=True)
