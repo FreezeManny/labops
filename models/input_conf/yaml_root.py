@@ -14,7 +14,7 @@ from .unmanaged import Unmanaged
 class YamlRoot(StrictModel):
     settings: Settings
     hosts: Optional[Dict[str, Host]] = None
-    unmanaged: Optional[Dict[str, Unmanaged]]
+    unmanaged: Optional[Dict[str, Unmanaged]] = None
 
     @model_validator(mode="after")
     def propagate_host_names(self) -> "YamlRoot":
