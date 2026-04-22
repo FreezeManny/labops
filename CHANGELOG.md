@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/FreezeManny/labops/compare/labops-v0.4.0...labops-v0.4.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* do not allow user to have custom fields in yaml ([ef6c94a](https://github.com/FreezeManny/labops/commit/ef6c94a899bff646fadab087b21aa1cd63327c8a))
+
 ## [0.4.0](https://github.com/FreezeManny/labops/compare/labops-v0.3.2...labops-v0.4.0) (2026-04-22)
 
 
