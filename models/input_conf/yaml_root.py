@@ -21,6 +21,9 @@ class YamlRoot(StrictModel):
         if self.hosts:
             for k, host in self.hosts.items():
                 host.name = k
+        if self.unmanaged:
+            for k, node in self.unmanaged.items():
+                node.name = k
         return self
 
     @model_validator(mode="after")
@@ -50,6 +53,10 @@ class YamlRoot(StrictModel):
         if self.hosts:
             for host in self.hosts.values():
                 check_ips(host)
+
+        if self.unmanaged:
+            for node in self.unmanaged.values():
+                check_ips(node)
 
         if errors:
             raise ValueError("\n".join(errors))
@@ -116,6 +123,14 @@ class YamlRoot(StrictModel):
                             all_names.add(vm_name)
 
                 check_proxy_names(host)
+
+        if self.unmanaged:
+            for k, node in self.unmanaged.items():
+                if k in all_names:
+                    errors.append(f"Duplicate name found across configuration: '{k}'")
+                else:
+                    all_names.add(k)
+                check_proxy_names(node)
 
         if errors:
             raise ValueError("\n".join(errors))
