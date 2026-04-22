@@ -73,6 +73,7 @@ hosts:
       fr24-radar:
         os: debian
         ip: 10.0.50.149
+        vmid: 111
 
   test-system:
     os: debian

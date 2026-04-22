@@ -1,6 +1,6 @@
 from ansible_runner.runner import Runner
-from models.input_conf.hosts import Host
-from models.input_conf.hosts import OSType
+from models.input_conf.host import Host
+from models.input_conf.host import OSType
 from models.input_conf.creds import Creds
 from src.utils.ansible_runner import run_playbook
 

@@ -5,8 +5,8 @@ from .web_services import WebServices
 
 class Docker(BaseModel):
     root_path: str
-    stacks: Dict[str, Stack]
+    stacks: Dict[str, StackEntry]
     
-class Stack(BaseModel):
+class StackEntry(BaseModel):
     config_path: DirectoryPath
     web_services: Optional[WebServices] = None

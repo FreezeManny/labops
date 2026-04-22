@@ -1,27 +1,27 @@
 from models.input_conf.yaml_root import YamlRoot
-from models.input_conf.hosts import Host
+from models.input_conf.vm import VM
 
 
-def findAll(config: YamlRoot) -> list[Host]:
+def findAll(config: YamlRoot) -> list[VM]:
     if config.hosts is None:
         raise KeyError("No hosts are defined in the configuration.")
     
-    vms: list[Host] = []
+    vms: list[VM] = []
     for host in config.hosts.values():
         if host.vm is not None:
             vms.extend(host.vm.values())
     return vms
 
-def find(config: YamlRoot, targets: list[str]) -> list[Host]:
+def find(config: YamlRoot, targets: list[str]) -> list[VM]:
     if config.hosts is None:
         raise KeyError("No hosts are defined in the configuration.")
         
-    all_vms: dict[str, Host] = {}
+    all_vms: dict[str, VM] = {}
     for host in config.hosts.values():
         if host.vm is not None:
             all_vms.update(host.vm)
             
-    found_vms: list[Host] = []
+    found_vms: list[VM] = []
     for target in targets:
         found = False
         if target in all_vms:

@@ -4,7 +4,7 @@ from rich.table import Table
 
 from src.cli.core import get_model, resolve_targets, console
 from models.input_conf.yaml_root import YamlRoot
-from models.input_conf.hosts import Host
+from models.input_conf.host import Host
 import src.vm as vm
 
 app = typer.Typer(help="Manage virtual machines.", no_args_is_help=True)

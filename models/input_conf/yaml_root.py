@@ -1,7 +1,7 @@
 from pydantic import BaseModel, model_validator
 from typing import Optional, Dict
 
-from models.input_conf.hosts import Host
+from models.input_conf.host import Host
 from models.input_conf.settings import Settings
 
 class YamlRoot(BaseModel):

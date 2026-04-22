@@ -2,10 +2,11 @@ from pydantic import BaseModel, DirectoryPath
 from ipaddress import IPv4Address
 from typing import Optional, Dict
 
-from .hosts import OSType
 from .creds import Creds
 from .web_services import WebServices
 from .docker import Docker
+
+from .custom_types import OSType
 
 class LXC(BaseModel):
     name: str = ""
@@ -16,3 +17,4 @@ class LXC(BaseModel):
     web_services: Optional[WebServices] = None
     docker: Optional[Docker] = None
 
+LXCs = Dict[str, LXC]

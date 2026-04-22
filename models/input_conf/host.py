@@ -5,18 +5,9 @@ from ipaddress import IPv4Address
 from .creds import Creds
 from .web_services import WebServices
 from .docker import Docker
-
-OSType = Literal["debian", "alpine", "redhat"]
-HostType = Literal["bare-metal", "proxmox"]
-
-class LXC(BaseModel):
-    name: str = ""
-    ip: IPv4Address
-    os: OSType
-    vmid: int
-    creds: Optional[Creds] = None
-    web_services: Optional[WebServices] = None
-    docker: Optional[Docker] = None
+from .lxc import LXCs
+from .vm import VMs
+from .custom_types import HostType, OSType
 
 class Host(BaseModel):
     name: str = ""
@@ -24,8 +15,8 @@ class Host(BaseModel):
     os: OSType
     ip: IPv4Address
     creds: Optional[Creds] = None
-    lxc: Optional[Dict[str, LXC]] = None
-    vm: Optional[Dict[str, "Host"]] = None ## CHECK THIS
+    lxc: Optional[LXCs] = None
+    vm: Optional[VMs] = None ## CHECK THIS
     web_services: Optional[WebServices] = None
 
     @model_validator(mode="after")
