@@ -89,3 +89,6 @@ test-lxc-update:
 
 test-lxc-update-all:
 	{{runner}} {{test-args}} --file {{test_conf}} lxc update --all
+
+test-docker-list:
+	{{runner}} {{test-args}} --file {{test_conf}} docker stack list

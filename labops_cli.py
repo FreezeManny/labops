@@ -8,6 +8,7 @@ from src.cli.host import app as host_app
 from src.cli.vm import app as vm_app
 from src.cli.lxc import app as lxc_app
 from src.cli.validate import app as validate_app
+from src.cli.docker import app as docker_app
 
 # ------------- APP -----------------
 app = typer.Typer(
@@ -50,7 +51,7 @@ app.add_typer(validate_app, name="validate")
 app.add_typer(host_app, name="host")
 app.add_typer(vm_app, name="vm")
 app.add_typer(lxc_app, name="lxc")
-
+app.add_typer(docker_app, name="docker")
 # ------------- Entry -----------------
 
 def main() -> None:
