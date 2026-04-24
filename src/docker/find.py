@@ -63,10 +63,10 @@ def find(
     - node_name:  matches any segment in the path (host, VM, or LXC name).
     - stack_name: narrows to a specific stack; raises if still ambiguous.
     """
-    results = findAll(config)
+    results: list[StackResult] = findAll(config)
 
     if node_name:
-        matched = [r for r in results if node_name in r.path]
+        matched: list[StackResult] = [r for r in results if node_name in r.path]
         if not matched:
             raise KeyError(
                 f"'{node_name}' did not match any host, VM, or LXC with Docker stacks."
@@ -74,7 +74,7 @@ def find(
         results = matched
 
     if stack_name:
-        matched = [r for r in results if r.stack.name == stack_name]
+        matched: list[StackResult] = [r for r in results if r.stack.name == stack_name]
         if not matched:
             raise KeyError(f"Stack '{stack_name}' was not found.")
         if len(matched) > 1 and not node_name:

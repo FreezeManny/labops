@@ -48,16 +48,16 @@ def stacks_callback(
         console.print(ctx.get_help())
         raise typer.Exit()
 
-    stack_state.node = node
-    stack_state.all  = all
+    stack_state.node: str | None = node
+    stack_state.all: bool  = all
 
     model: YamlRoot = get_model()
     if all:
-        results = findAll(model)
+        results: list[StackResult] = findAll(model)
         if stack:
-            results = [r for r in results if r.stack.name == stack]
+            results: list[StackResult] = [r for r in results if r.stack.name == stack]
     else:
-        results = find(model, stack_name=stack, node_name=node)
+        results: list[StackResult] = find(model, stack_name=stack, node_name=node)
 
     if not results:
         console.print("[dim]No stacks matched.[/dim]")
@@ -81,7 +81,7 @@ def docker_list() -> None:
 @stacks_app.command(name="deploy", no_args_is_help=True)
 def docker_deploy() -> None:
     """[bold]Deploy[/bold] a stack by copying its config and running [dim]docker compose up -d[/dim]."""
-    result = require_single()
+    result: StackResult = require_single()
     console.print("[red]Not Implemented yet[/red]")
 
 @stacks_app.command(name="update")
@@ -89,34 +89,11 @@ def docker_update() -> None:
     """[bold]Update[/bold] a stack: pull latest images and recreate changed containers."""
     console.print("[red]Not Implemented yet[/red]")
 
-@stacks_app.command(name="start", no_args_is_help=True)
-def docker_start() -> None:
-    """[bold]Start[/bold] a stopped stack ([dim]docker compose start[/dim])."""
-    result = require_single()
-    console.print("[red]Not Implemented yet[/red]")
-
-@stacks_app.command(name="stop", no_args_is_help=True)
-def docker_stop() -> None:
-    """[bold]Stop[/bold] a running stack without removing containers ([dim]docker compose stop[/dim])."""
-    result = require_single()
-    console.print("[red]Not Implemented yet[/red]")
-
-@stacks_app.command(name="down", no_args_is_help=True)
-def docker_down() -> None:
-    """[bold]Tear down[/bold] a stack, removing containers and networks ([dim]docker compose down[/dim])."""
-    result = require_single()
-    console.print("[red]Not Implemented yet[/red]")
-
-@stacks_app.command(name="pull")
-def docker_pull() -> None:
-    """[bold]Pull[/bold] the latest images for a stack without restarting ([dim]docker compose pull[/dim])."""
-    console.print("[red]Not Implemented yet[/red]")
-
 @stacks_app.command(name="sync", no_args_is_help=True)
 def docker_sync() -> None:
     """[bold]Sync[/bold] the local [dim]config_path[/dim] files to the remote host without deploying."""
-    result = require_single()
+    result: StackResult = require_single()
     console.print("[red]Not Implemented yet[/red]")
 
 
-#Future Additions: diff, validate, logs, status, restart
+#Future Additions: diff, validate, logs, status, restart, start, stop, down, pull
