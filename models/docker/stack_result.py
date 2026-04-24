@@ -1,10 +1,13 @@
 from dataclasses import dataclass
 from models.input_conf.docker import StackEntry
+from models.input_conf.creds import Creds
 from ipaddress import IPv4Address
+from typing import Optional
 
 @dataclass
 class StackResult:
-    path: list[str]        # e.g. ["cprox", "home"] or ["lifeboat"] or ["cprox", "fr24-radar"]
-    target_ip: IPv4Address # IP of the innermost container that holds the docker stack
-    docker_root: str       # docker.root_path
-    stack: StackEntry
+    path:        list[str]   # e.g. ["cprox", "home"] or ["lifeboat"]
+    target_ip:   IPv4Address # IP of the node that runs the stack
+    docker_root: str         # docker.root_path on that node
+    stack:       StackEntry
+    creds:       Optional[Creds] = None  # node-specific creds; None means use default_creds

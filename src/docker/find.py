@@ -8,12 +8,7 @@ from models.input_conf.lxc import LXC
 from models.input_conf.vm import VM
 from models.input_conf.docker import StackEntry
 
-@dataclass
-class StackResult:
-    path:        list[str]   # e.g. ["cprox", "home"] or ["lifeboat"]
-    target_ip:   IPv4Address # IP of the node that runs the stack
-    docker_root: str         # docker.root_path on that node
-    stack:       StackEntry
+from models.docker.stack_result import StackResult
 
 
 # ─── Recursive walker ────────────────────────────────────────────────────────
@@ -27,6 +22,7 @@ def _walk(node: Union[Host, VM, LXC], path: list[str], results: list[StackResult
                 target_ip=node.ip,
                 docker_root=node.docker.root_path,
                 stack=stack,
+                creds=node.creds,
             ))
 
     # VMs can nest further VMs or LXCs

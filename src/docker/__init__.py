@@ -1,12 +1,8 @@
-from .sync import sync
-from .deploy import deploy
-from .update import update
 from .find import find, findAll
+from .common import run_stacks_playbook
 
 __all__ = [
-    "sync",
-    "deploy",
-    "update",
     "find",
     "findAll",
+    "run_stacks_playbook",
 ]

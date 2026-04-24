@@ -3,13 +3,10 @@ from typing import Optional
 import typer
 from rich.table import Table
 
-from ansible_runner.runner import Runner
-
 from src.cli.core import get_model, console, state
-from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.creds import Creds
-from src.docker.find import find, findAll, StackResult
-import src.docker as docker_commands
+from src.docker import run_stacks_playbook, find, findAll
+from models.docker.stack_result import StackResult
 
 app = typer.Typer(help="Manage Docker", no_args_is_help=True)
 
@@ -20,40 +17,71 @@ app.add_typer(stacks_app, name="stack")
 
 @dataclass
 class StackState:
-    node:    Optional[str]     = None
-    all:     bool              = False
+    node: Optional[str] = None
+    target_all: bool = False
     results: list[StackResult] = field(default_factory=list)
 
-stack_state = StackState()
 
-STACK_NAME_OPT : Optional[str] = typer.Argument(None, help="Stack name to target.")
+STACK_NAME_ARG = typer.Argument(None, help="Stack name to target.")
 
-def require_single(stack_res: list[StackResult]) -> StackResult:
+def _require_single(results: list[StackResult]) -> StackResult:
     """Return the single resolved stack, or exit with an error if ambiguous."""
-    if len(stack_res) > 1:
-        locations = ", ".join("/".join(r.path) for r in stack_res)
+    if len(results) > 1:
+        locations = ", ".join("/".join(r.path) for r in results)
         console.print(f"[red]Ambiguous — multiple stacks matched: {locations}.[/red]")
         console.print("[dim]Use --node or provide a stack name to narrow the target.[/dim]")
         raise typer.Exit(1)
-    return stack_res[0]
+    return results[0]
 
 
-def _filter_by_name(results: list[StackResult], name: Optional[str]) -> list[StackResult]:
-    """Optionally narrow results to a specific stack name, erroring if none match."""
+def _filter_by_name(
+    stack_state: StackState,
+    results: list[StackResult],
+    name: Optional[str],
+) -> list[StackResult]:
+    """Optionally narrow results to a specific stack name, erroring if none match or are ambiguous."""
+    if name is None and not stack_state.target_all and stack_state.node is None:
+        console.print("[red]Error:[/red] Provide a stack name, [dim]--node[/dim], or [dim]--all[/dim] to target stacks.")
+        raise typer.Exit(1)
     if not name:
         return results
-    filtered: list[StackResult] = [r for r in results if r.stack.name == name]
+    filtered = [r for r in results if r.stack.name == name]
     if not filtered:
         console.print(f"[red]Error:[/red] Stack '{name}' was not found.")
+        raise typer.Exit(1)
+    if len(filtered) > 1 and stack_state.node is None:
+        nodes = ", ".join("[magenta]" + "/".join(r.path) + "[/magenta]" for r in filtered)
+        console.print(f"[red]Error:[/red] Stack '[green]{name}[/green]' exists on multiple nodes: {nodes}.")
+        console.print("[dim]Use --node to specify which one.[/dim]")
         raise typer.Exit(1)
     return filtered
 
 
+def _resolve_stacks(
+    ctx: typer.Context,
+    node: Optional[str],
+    target_all: bool,
+) -> StackState:
+    """Return StackState using subcommand-level options when provided, else fall back to callback's state."""
+    if node is not None or target_all:
+        model = get_model()
+        try:
+            results = findAll(model) if target_all else find(model, node_name=node)
+        except KeyError as e:
+            console.print(f"[red]Error:[/red] {e.args[0]}")
+            raise typer.Exit(1)
+        if not results:
+            console.print("[dim]No stacks matched.[/dim]")
+            raise typer.Exit(0)
+        return StackState(node=node, target_all=target_all, results=results)
+    return ctx.obj
+
+
 @stacks_app.callback(invoke_without_command=True)
 def stacks_callback(
-    ctx:   typer.Context,
-    node:  Optional[str] = typer.Option(None, "--node", help="Match any node in the path (host, VM, or LXC name)."),
-    all:   bool          = typer.Option(False, "--all", help="Target all stacks."),
+    ctx: typer.Context,
+    node: Optional[str] = typer.Option(None, "--node", help="Match any node in the path (host, VM, or LXC name)."),
+    target_all: bool = typer.Option(False, "--all", help="Target all stacks."),
 ) -> None:
     """
     Stack targeting options — applied to every stack sub-command.
@@ -63,15 +91,9 @@ def stacks_callback(
         console.print(ctx.get_help())
         raise typer.Exit()
 
-    stack_state.node: str | None = node
-    stack_state.all: bool  = all
-
-    model: YamlRoot = get_model()
+    model = get_model()
     try:
-        if all:
-            results: list[StackResult] = findAll(model)
-        else:
-            results: list[StackResult] = find(model, node_name=node)
+        results = findAll(model) if target_all else find(model, node_name=node)
     except KeyError as e:
         console.print(f"[red]Error:[/red] {e.args[0]}")
         raise typer.Exit(1)
@@ -80,34 +102,44 @@ def stacks_callback(
         console.print("[dim]No stacks matched.[/dim]")
         raise typer.Exit(0)
 
-    stack_state.results = results
+    ctx.obj = StackState(node=node, target_all=target_all, results=results)
+
+
+NODE_OPT = typer.Option(None, "--node", help="Match any node in the path (host, VM, or LXC name).")
+ALL_OPT = typer.Option(False, "--all", help="Target all stacks.")
+
 
 @stacks_app.command(name="list")
 def docker_list(
-    stack_name: Optional[str] = STACK_NAME_OPT
+    ctx: typer.Context,
+    stack_name: Optional[str] = STACK_NAME_ARG,
+    node: Optional[str] = NODE_OPT,
+    target_all: bool = ALL_OPT,
 ) -> None:
     """[bold]List[/bold] all Docker stacks defined in the homelab config."""
-    results = _filter_by_name(stack_state.results, stack_name)
-    table = Table(title="Docker Stacks", show_header=True, header_style="bold blue")
-    table.add_column("Path",        style="magenta")
-    table.add_column("Stack",       style="green")
-    table.add_column("Config Path", style="yellow")
+    stack_state = _resolve_stacks(ctx, node, target_all)
+    results = _filter_by_name(stack_state, stack_state.results, stack_name)
 
+    table = Table(title="Docker Stacks", show_header=True, header_style="bold blue")
+    table.add_column("Path", style="magenta")
+    table.add_column("Stack", style="green")
+    table.add_column("Config Path", style="yellow")
     for r in results:
         table.add_row(" → ".join(r.path), r.stack.name, str(r.stack.config_path))
-
     console.print(table)
 
 @stacks_app.command(name="deploy")
 def docker_deploy(
-    stack_name: Optional[str] = STACK_NAME_OPT
+    ctx: typer.Context,
+    stack_name: Optional[str] = STACK_NAME_ARG,
+    node: Optional[str] = NODE_OPT,
+    target_all: bool = ALL_OPT,
 ) -> None:
     """[bold]Deploy[/bold] a stack by copying its config and running [dim]docker compose up -d[/dim]."""
-    result: StackResult = require_single(_filter_by_name(stack_state.results, stack_name))
-    model: YamlRoot = get_model()
-    creds: Creds = model.settings.default_creds
-    console.print(f"[bold]Deploying[/bold] stack [green]{result.stack.name}[/green] on [magenta]{result.target_ip}[/magenta]…")
-    runner: Runner = docker_commands.deploy(result, creds, dry_run=state.dry_run, verbose=state.verbose)
+    stack_state = _resolve_stacks(ctx, node, target_all)
+    result = _require_single(_filter_by_name(stack_state, stack_state.results, stack_name))
+    creds: Creds = result.creds or get_model().settings.default_creds
+    runner = run_stacks_playbook("docker/deploy.yml", [result], creds, dry_run=state.dry_run, verbose=state.verbose)
     if runner.rc != 0:
         console.print(f"[red]Deploy failed (rc={runner.rc}).[/red]")
         raise typer.Exit(runner.rc or 1)
@@ -116,38 +148,36 @@ def docker_deploy(
 
 @stacks_app.command(name="update")
 def docker_update(
-    stack_name: Optional[str] = STACK_NAME_OPT
+    ctx: typer.Context,
+    stack_name: Optional[str] = STACK_NAME_ARG,
+    node: Optional[str] = NODE_OPT,
+    target_all: bool = ALL_OPT,
 ) -> None:
     """[bold]Update[/bold] a stack: pull latest images and recreate changed containers."""
-    model: YamlRoot = get_model()
-    creds: Creds = model.settings.default_creds
-    failed = 0
-    for result in _filter_by_name(stack_state.results, stack_name):
-        console.print(f"[bold]Updating[/bold] stack [green]{result.stack.name}[/green] on [magenta]{result.target_ip}[/magenta]…")
-        runner: Runner = docker_commands.update(result, creds, dry_run=state.dry_run, verbose=state.verbose)
-        if runner.rc != 0:
-            console.print(f"[red]Update failed for {result.stack.name} (rc={runner.rc}).[/red]")
-            failed += 1
-        else:
-            console.print(f"[green]{result.stack.name}[/green] updated.")
-    if failed:
-        raise typer.Exit(1)
-
+    stack_state = _resolve_stacks(ctx, node, target_all)
+    results = _filter_by_name(stack_state, stack_state.results, stack_name)
+    default_creds: Creds = get_model().settings.default_creds
+    runner = run_stacks_playbook("docker/update.yml", results, default_creds, dry_run=state.dry_run, verbose=state.verbose)
+    if runner.rc != 0:
+        console.print(f"[red]Update failed (rc={runner.rc}).[/red]")
+        raise typer.Exit(runner.rc or 1)
+    console.print("[green]All stacks updated.[/green]")
 
 @stacks_app.command(name="sync")
 def docker_sync(
-    stack_name: Optional[str] = STACK_NAME_OPT
+    ctx: typer.Context,
+    stack_name: Optional[str] = STACK_NAME_ARG,
+    node: Optional[str] = NODE_OPT,
+    target_all: bool = ALL_OPT,
 ) -> None:
     """[bold]Sync[/bold] the local [dim]config_path[/dim] files to the remote host without deploying."""
-    result: StackResult = require_single(_filter_by_name(stack_state.results, stack_name))
-    model: YamlRoot = get_model()
-    creds: Creds = model.settings.default_creds
-    console.print(f"[bold]Syncing[/bold] stack [green]{result.stack.name}[/green] to [magenta]{result.target_ip}[/magenta]…")
-    runner: Runner = docker_commands.sync(result, creds, dry_run=state.dry_run, verbose=state.verbose)
+    stack_state = _resolve_stacks(ctx, node, target_all)
+    result = _require_single(_filter_by_name(stack_state, stack_state.results, stack_name))
+    creds: Creds = result.creds or get_model().settings.default_creds
+    runner = run_stacks_playbook("docker/sync.yml", [result], creds, dry_run=state.dry_run, verbose=state.verbose)
     if runner.rc != 0:
         console.print(f"[red]Sync failed (rc={runner.rc}).[/red]")
         raise typer.Exit(runner.rc or 1)
     console.print("[green]Sync complete.[/green]")
 
-
-#Future Additions: diff, validate, logs, status, restart, start, stop, down, pull
+# Future Additions: diff, validate, logs, status, restart, start, stop, down, pull
