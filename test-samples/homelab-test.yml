@@ -23,3 +23,13 @@ hosts:
         os: redhat
         ip: 10.0.10.44
         vmid: 115
+      
+  arr:
+    os: debian
+    ip: 10.0.10.8
+    docker:
+      root_path: "/home/manuel/"
+      stacks:
+        caddy:
+          config_path: "./docker/caddy"
+

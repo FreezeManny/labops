@@ -3,9 +3,13 @@ from typing import Optional
 import typer
 from rich.table import Table
 
-from src.cli.core import get_model, console
+from ansible_runner.runner import Runner
+
+from src.cli.core import get_model, console, state
 from models.input_conf.yaml_root import YamlRoot
+from models.input_conf.creds import Creds
 from src.docker.find import find, findAll, StackResult
+import src.docker as docker_commands
 
 app = typer.Typer(help="Manage Docker", no_args_is_help=True)
 
@@ -23,14 +27,14 @@ class StackState:
 stack_state = StackState()
 
 
-def require_single() -> StackResult:
+def require_single(stack_res: list[StackResult]) -> StackResult:
     """Return the single resolved stack, or exit with an error if ambiguous."""
-    if len(stack_state.results) > 1:
+    if len(stack_res) > 1:
         locations = ", ".join("/".join(r.path) for r in stack_state.results)
         console.print(f"[red]Ambiguous — multiple stacks matched: {locations}.[/red]")
         console.print("[dim]Use --node or provide a stack name to narrow the target.[/dim]")
         raise typer.Exit(1)
-    return stack_state.results[0]
+    return stack_res[0]
 
 
 @stacks_app.callback(invoke_without_command=True)
@@ -52,12 +56,16 @@ def stacks_callback(
     stack_state.all: bool  = all
 
     model: YamlRoot = get_model()
-    if all:
-        results: list[StackResult] = findAll(model)
-        if stack:
-            results: list[StackResult] = [r for r in results if r.stack.name == stack]
-    else:
-        results: list[StackResult] = find(model, stack_name=stack, node_name=node)
+    try:
+        if all:
+            results: list[StackResult] = findAll(model)
+            if stack:
+                results: list[StackResult] = [r for r in results if r.stack.name == stack]
+        else:
+            results: list[StackResult] = find(model, stack_name=stack, node_name=node)
+    except KeyError as e:
+        console.print(f"[red]Error:[/red] {e.args[0]}")
+        raise typer.Exit(1)
 
     if not results:
         console.print("[dim]No stacks matched.[/dim]")
@@ -78,22 +86,50 @@ def docker_list() -> None:
 
     console.print(table)
 
-@stacks_app.command(name="deploy", no_args_is_help=True)
+@stacks_app.command(name="deploy")
 def docker_deploy() -> None:
     """[bold]Deploy[/bold] a stack by copying its config and running [dim]docker compose up -d[/dim]."""
-    result: StackResult = require_single()
-    console.print("[red]Not Implemented yet[/red]")
+    result: StackResult = require_single(stack_state.results)
+    model: YamlRoot = get_model()
+    creds: Creds = model.settings.default_creds
+    console.print(f"[bold]Deploying[/bold] stack [green]{result.stack.name}[/green] on [magenta]{result.target_ip}[/magenta]…")
+    runner: Runner = docker_commands.deploy(result, creds, dry_run=state.dry_run, verbose=state.verbose)
+    if runner.rc != 0:
+        console.print(f"[red]Deploy failed (rc={runner.rc}).[/red]")
+        raise typer.Exit(runner.rc or 1)
+    console.print("[green]Deploy complete.[/green]")
+
 
 @stacks_app.command(name="update")
 def docker_update() -> None:
     """[bold]Update[/bold] a stack: pull latest images and recreate changed containers."""
-    console.print("[red]Not Implemented yet[/red]")
+    model: YamlRoot = get_model()
+    creds: Creds = model.settings.default_creds
+    failed = 0
+    for result in stack_state.results:
+        console.print(f"[bold]Updating[/bold] stack [green]{result.stack.name}[/green] on [magenta]{result.target_ip}[/magenta]…")
+        runner: Runner = docker_commands.update(result, creds, dry_run=state.dry_run, verbose=state.verbose)
+        if runner.rc != 0:
+            console.print(f"[red]Update failed for {result.stack.name} (rc={runner.rc}).[/red]")
+            failed += 1
+        else:
+            console.print(f"[green]{result.stack.name}[/green] updated.")
+    if failed:
+        raise typer.Exit(1)
 
-@stacks_app.command(name="sync", no_args_is_help=True)
+
+@stacks_app.command(name="sync")
 def docker_sync() -> None:
     """[bold]Sync[/bold] the local [dim]config_path[/dim] files to the remote host without deploying."""
-    result: StackResult = require_single()
-    console.print("[red]Not Implemented yet[/red]")
+    result: StackResult = require_single(stack_state.results)
+    model: YamlRoot = get_model()
+    creds: Creds = model.settings.default_creds
+    console.print(f"[bold]Syncing[/bold] stack [green]{result.stack.name}[/green] to [magenta]{result.target_ip}[/magenta]…")
+    runner: Runner = docker_commands.sync(result, creds, dry_run=state.dry_run, verbose=state.verbose)
+    if runner.rc != 0:
+        console.print(f"[red]Sync failed (rc={runner.rc}).[/red]")
+        raise typer.Exit(runner.rc or 1)
+    console.print("[green]Sync complete.[/green]")
 
 
 #Future Additions: diff, validate, logs, status, restart, start, stop, down, pull

@@ -1,4 +1,5 @@
-from pydantic import model_validator, DirectoryPath
+from pathlib import Path
+from pydantic import model_validator, field_validator, DirectoryPath
 from typing import Optional, Dict
 
 from .web_services import WebServices
@@ -10,6 +11,10 @@ class StackEntry(StrictModel):
     config_path: DirectoryPath
     web_services: Optional[WebServices] = None
 
+    @field_validator("config_path", mode="before")
+    @classmethod
+    def resolve_config_path(cls, v: object) -> Path:
+        return Path(str(v)).resolve()
 
 class Docker(StrictModel):
     root_path: str
