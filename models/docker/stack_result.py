@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from models.input_conf.docker import StackEntry
 from models.input_conf.creds import Creds
 from ipaddress import IPv4Address
-from typing import Optional
+
 
 @dataclass
 class StackResult:
@@ -10,4 +10,4 @@ class StackResult:
     target_ip:   IPv4Address # IP of the node that runs the stack
     docker_root: str         # docker.root_path on that node
     stack:       StackEntry
-    creds:       Optional[Creds] = None  # node-specific creds; None means use default_creds
+    creds:       Creds             # resolved creds (node-specific or default)

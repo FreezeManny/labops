@@ -6,7 +6,6 @@ import typer
 from rich.table import Table
 
 from src.cli.core import console, state
-from models.input_conf.creds import Creds
 from src.docker import run_stacks_playbook, find, findAll
 from models.docker.stack_result import StackResult
 
@@ -136,8 +135,7 @@ def docker_deploy(
     """[bold]Deploy[/bold] a stack by copying its config and running [dim]docker compose up -d[/dim]."""
     stack_state: StackState = _resolve_stacks(ctx, node, target_all)
     result:StackResult = _filter_by_name(stack_state, stack_state.results, stack_name, require_single=True)[0]
-    creds: Creds = result.creds or state.model.settings.default_creds
-    runner: Runner = run_stacks_playbook("docker/deploy.yml", [result], creds, dry_run=state.dry_run, verbose=state.verbose)
+    runner: Runner = run_stacks_playbook("docker/deploy.yml", [result], result.creds, dry_run=state.dry_run, verbose=state.verbose)
     if runner.rc != 0:
         console.print(f"[red]Deploy failed (rc={runner.rc}).[/red]")
         raise typer.Exit(runner.rc or 1)
@@ -153,8 +151,7 @@ def docker_update(
     """[bold]Update[/bold] a stack: pull latest images and recreate changed containers."""
     stack_state: StackState = _resolve_stacks(ctx, node, target_all)
     results: list[StackResult] = _filter_by_name(stack_state, stack_state.results, stack_name)
-    default_creds: Creds = state.model.settings.default_creds
-    runner: Runner = run_stacks_playbook("docker/update.yml", results, default_creds, dry_run=state.dry_run, verbose=state.verbose)
+    runner: Runner = run_stacks_playbook("docker/update.yml", results, results[0].creds, dry_run=state.dry_run, verbose=state.verbose)
     if runner.rc != 0:
         console.print(f"[red]Update failed (rc={runner.rc}).[/red]")
         raise typer.Exit(runner.rc or 1)
@@ -170,8 +167,7 @@ def docker_sync(
     """[bold]Sync[/bold] the local [dim]config_path[/dim] files to the remote host without deploying."""
     stack_state: StackState = _resolve_stacks(ctx, node, target_all)
     result: StackResult= _filter_by_name(stack_state, stack_state.results, stack_name, require_single=True)[0]
-    creds: Creds = result.creds or state.model.settings.default_creds
-    runner: Runner = run_stacks_playbook("docker/sync.yml", [result], creds, dry_run=state.dry_run, verbose=state.verbose)
+    runner: Runner = run_stacks_playbook("docker/sync.yml", [result], result.creds, dry_run=state.dry_run, verbose=state.verbose)
     if runner.rc != 0:
         console.print(f"[red]Sync failed (rc={runner.rc}).[/red]")
         raise typer.Exit(runner.rc or 1)

@@ -3,6 +3,7 @@ from ipaddress import IPv4Address
 from typing import Optional, Union
 
 from models.input_conf.yaml_root import YamlRoot
+from models.input_conf.creds import Creds
 from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
 from models.input_conf.vm import VM
@@ -13,7 +14,7 @@ from models.docker.stack_result import StackResult
 
 # ─── Recursive walker ────────────────────────────────────────────────────────
 
-def _walk(node: Union[Host, VM, LXC], path: list[str], results: list[StackResult]) -> None:
+def _walk(node: Union[Host, VM, LXC], path: list[str], results: list[StackResult], default_creds: Creds) -> None:
     """Recursively collect StackResults from any node that can carry docker/vm/lxc."""
     if node.docker:
         for stack in node.docker.stacks.values():
@@ -22,16 +23,16 @@ def _walk(node: Union[Host, VM, LXC], path: list[str], results: list[StackResult
                 target_ip=node.ip,
                 docker_root=node.docker.root_path,
                 stack=stack,
-                creds=node.creds,
+                creds=node.creds if node.creds is not None else default_creds,
             ))
 
     # VMs can nest further VMs or LXCs
     for name, child in (getattr(node, "vm", None) or {}).items():
-        _walk(child, path + [name], results)
+        _walk(child, path + [name], results, default_creds)
 
     # LXCs are leaves (no further nesting in the model)
     for name, child in (getattr(node, "lxc", None) or {}).items():
-        _walk(child, path + [name], results)
+        _walk(child, path + [name], results, default_creds)
 
 
 # ─── Public API ───────────────────────────────────────────────────────────────
@@ -42,8 +43,9 @@ def findAll(config: YamlRoot) -> list[StackResult]:
     if config.hosts is None:
         return results
 
+    default_creds = config.settings.default_creds
     for host_name, host in config.hosts.items():
-        _walk(host, [host_name], results)
+        _walk(host, [host_name], results, default_creds)
 
     return results
 
