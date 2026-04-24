@@ -24,12 +24,13 @@ def _build_multi_inventory(results: list[StackResult], default_creds: Creds) -> 
     """Build an inventory with one aliased entry per stack, carrying per-host vars."""
     hosts: dict = {}
     for r in results:
-        creds = r.creds or default_creds
+        creds: Creds = r.creds or default_creds
         # Use a unique alias so multiple stacks on the same host are distinct entries.
         alias = f"{r.stack.name}_{r.target_ip}"
         host_vars: dict = {
             "ansible_host": str(r.target_ip),
             "ansible_user": creds.username,
+            "compose_src": str(r.stack.config_path),
             "compose_dest": f"{r.docker_root.rstrip('/')}/{r.stack.name}",
             "stack_name": r.stack.name,
         }

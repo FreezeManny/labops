@@ -43,7 +43,7 @@ def findAll(config: YamlRoot) -> list[StackResult]:
     if config.hosts is None:
         return results
 
-    default_creds = config.settings.default_creds
+    default_creds: Creds = config.settings.default_creds
     for host_name, host in config.hosts.items():
         _walk(host, [host_name], results, default_creds)
 
@@ -76,7 +76,7 @@ def find(
         if not matched:
             raise KeyError(f"Stack '{stack_name}' was not found.")
         if len(matched) > 1 and not node_name:
-            locations = ", ".join("/".join(r.path) for r in matched)
+            locations: str = ", ".join("/".join(r.path) for r in matched)
             raise KeyError(
                 f"Stack '{stack_name}' exists in multiple locations: {locations}. "
                 "Use --node to disambiguate."
