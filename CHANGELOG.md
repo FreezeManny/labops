@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.5.0](https://github.com/FreezeManny/labops/compare/labops-v0.4.1...labops-v0.5.0) (2026-04-24)
+
+
+### Features
+
+* add docker-ansible ([4af4157](https://github.com/FreezeManny/labops/commit/4af415716f14fab0799cadf320b9e24ea6fb9a9b))
+* added docker cli, stack finder, list function and prepared for further functions ([89b7638](https://github.com/FreezeManny/labops/commit/89b7638108b953bfbb2f6841410c23ec77c6e713))
+* added docker stack duplicate name validator ([72ca51b](https://github.com/FreezeManny/labops/commit/72ca51bb303aa0dfdafabe5ce74f90b430adbd37))
+* added hostname, proxyname and ip checking ([829ae15](https://github.com/FreezeManny/labops/commit/829ae15fffa69de5a3777977379f1e481a7e3c03))
+* Added Unmanaged modle ([6c4717a](https://github.com/FreezeManny/labops/commit/6c4717a576c79d0391a9ae7e8044c41cf51c9e75))
+* enhance docker usability ([71c4383](https://github.com/FreezeManny/labops/commit/71c438339404393e3a59fc8130e7fe7667f18a2b))
+* implement Docker support for stack sync update and deploy ([7112c17](https://github.com/FreezeManny/labops/commit/7112c170b6f68d3fc40ceed5d1aab223e2d908bb))
+* refactor to use state.model instead of get_model in CLI modules ([26111ed](https://github.com/FreezeManny/labops/commit/26111ede3a1e0b8ed5e2cd174a3586fa4aa45e16))
+
+
+### Bug Fixes
+
+* docker source path ([0faf604](https://github.com/FreezeManny/labops/commit/0faf604998986d0529be9c33239b93c630b23cd5))
+* setup host with ssh/password mixed ([1a720fe](https://github.com/FreezeManny/labops/commit/1a720febe5e96848d234de988e071e670e219074))
+* Updated Stack_name Option ([2450a07](https://github.com/FreezeManny/labops/commit/2450a07bc677b2ddb6a092b4248d170b757c8169))
+* yaml_root requireing unmanaged ([dcb3b95](https://github.com/FreezeManny/labops/commit/dcb3b9511c8711c48e33968a1f2071e447ba10a5))
+
 ## [0.4.1](https://github.com/FreezeManny/labops/compare/labops-v0.4.0...labops-v0.4.1) (2026-04-22)
 
 
