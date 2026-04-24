@@ -3,7 +3,7 @@ from typing import Optional
 import typer
 from rich.table import Table
 
-from src.cli.core import get_model, resolve_targets, console, state
+from src.cli.core import resolve_targets, console, state
 from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
@@ -14,7 +14,7 @@ app = typer.Typer(help="Manage Proxmox LXC containers from Config.", no_args_is_
 @app.command("list")
 def list_lxcs() -> None:
     """List all LXCs defined in the homelab config."""
-    model: YamlRoot = get_model()
+    model: YamlRoot = state.model
     lxcs = lxc.findAll(model)
     
     if not lxcs:
@@ -46,7 +46,7 @@ def execute_update(
     """
     Run package upgrades natively via pct on a target LXC or all LXCs.
     """
-    model: YamlRoot = get_model()
+    model: YamlRoot = state.model
     # Resolve config targets into a list of tuples: [(Host, LXC), ...]
     targets: list[tuple[Host, LXC]] = resolve_targets(model, target, all, lxc.find,lxc.findAll, label="LXC")
     

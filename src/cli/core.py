@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Callable, Optional, Annotated
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import typer
 import yaml
 from rich.console import Console
@@ -12,9 +12,18 @@ from models.input_conf.yaml_root import YamlRoot
 @dataclass
 class AppState:
     config_path: Path | None = None
-    model: YamlRoot | None = None
+    _model: YamlRoot | None = field(default=None, init=False, repr=False)
     dry_run: bool = False
     verbose: bool = False
+
+    @property
+    def model(self) -> YamlRoot:
+        assert self._model is not None
+        return self._model
+
+    @model.setter
+    def model(self, value: YamlRoot) -> None:
+        self._model = value
 
 state = AppState()
 console = Console()
@@ -74,13 +83,6 @@ def load_homelab_model(path: Path) -> YamlRoot:
         raise ConfigError(
             f"Validation failed for {path} — check your YAML for errors.")
     return model
-
-def get_model() -> YamlRoot:
-    if state.model is None:
-        typer.secho("✘ Config not loaded — this is a bug.",
-                    fg=typer.colors.RED)
-        raise typer.Exit(1)
-    return state.model
 
 def resolve_targets(
     model: YamlRoot,

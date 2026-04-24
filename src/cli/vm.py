@@ -2,7 +2,7 @@ from typing import Optional
 import typer
 from rich.table import Table
 
-from src.cli.core import get_model, resolve_targets, console
+from src.cli.core import resolve_targets, console, state
 from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.host import Host
 import src.vm as vm
@@ -15,7 +15,7 @@ def host_setup(
         ..., help="Host name or IP address as defined in the homelab config."),
 ) -> None:
     """[bold]Set up[/bold] a host (initial provisioning)."""
-    model: YamlRoot = get_model()
+    model: YamlRoot = state.model
     hosts = resolve_targets(model, target, False,
                             vm.find,vm.findAll, label="host")
     vm.setup(hosts[0], model.settings.default_creds)
@@ -30,14 +30,14 @@ def vm_update(
     Run [bold]apt upgrade[/bold] on a target VM or all VMs.
     [dim]Respects global --dry-run and --verbose.[/dim]
     """
-    model: YamlRoot = get_model()
+    model: YamlRoot = state.model
     vms: list[Host] = resolve_targets(model, target, all, vm.find, vm.findAll, label="VM")
     vm.update(vms, model.settings.default_creds)
 
 @app.command("list")
 def vm_list() -> None:
     """[bold]List[/bold] all VMs defined in the config."""
-    model: YamlRoot = get_model()
+    model: YamlRoot = state.model
     if not model.hosts:
         console.print("[dim]No hosts defined, so no VMs.[/dim]")
         raise typer.Exit(0)
