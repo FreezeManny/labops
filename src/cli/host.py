@@ -2,12 +2,13 @@ from typing import Optional
 import typer
 from rich.table import Table
 
-from src.cli.core import get_model, resolve_targets, console, state
+from src.cli.core import resolve_targets, console, state
 from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.host import Host
 import src.host as host
 
 app = typer.Typer(help="Manage bare-metal hosts.", no_args_is_help=True)
+
 
 @app.command("setup")
 def host_setup(
@@ -15,10 +16,12 @@ def host_setup(
         ..., help="Host name or IP address as defined in the homelab config."),
 ) -> None:
     """[bold]Set up[/bold] a host (initial provisioning)."""
-    model: YamlRoot = get_model()
+    model: YamlRoot = state.model
     hosts = resolve_targets(model, target, False,
                             host.find, host.findAll, label="host")
-    host.setup(hosts[0], model.settings.default_creds, dry_run=state.dry_run, verbose=state.verbose)
+    host.setup(hosts[0], model.settings.default_creds,
+               dry_run=state.dry_run, verbose=state.verbose)
+
 
 @app.command("update")
 def host_update(
@@ -30,15 +33,17 @@ def host_update(
     Run [bold]apt upgrade[/bold] on a target host or all hosts.
     [dim]Respects global --dry-run and --verbose.[/dim]
     """
-    model: YamlRoot = get_model()
-    hosts: list[Host] = resolve_targets(model, target, all, host.find,
-                            host.findAll, label="host")
-    host.update(hosts, model.settings.default_creds, dry_run=state.dry_run, verbose=state.verbose)
+    model: YamlRoot = state.model
+    hosts: list[Host] = resolve_targets(
+        model, target, all, host.find,host.findAll, label="host")
+    host.update(hosts, model.settings.default_creds,
+                dry_run=state.dry_run, verbose=state.verbose)
+
 
 @app.command("list")
 def host_list() -> None:
     """[bold]List[/bold] all hosts defined in the config."""
-    model: YamlRoot = get_model()
+    model: YamlRoot = state.model
     if not model.hosts:
         console.print("[dim]No hosts defined.[/dim]")
         raise typer.Exit(0)

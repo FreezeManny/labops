@@ -1,6 +1,6 @@
 runner    := "uv run labops_cli.py"
 system    := "debian"
-test_conf := "./test-samples/homelab-complete.yml"
+test_conf := "./test-samples/homelab-test.yml"
 
 test-args := ""
 # In normal use no --file is needed — the CLI walks up from cwd and finds
@@ -17,12 +17,14 @@ container-attach:
 pre-commit:
 	uv run pre-commit run --all-files
 
-build: 
+build: pre-commit 
 	uv build
 
 local-install:
 	pipx install --force $(ls -t dist/*.whl | head -n1) --force
 
+install-ansible-collection:
+	uv run ansible-galaxy collection install -r ansible/requirements.yml
 # ── Normal usage (auto-discovers homelab.yml from cwd) ────────────────────────
 
 validate:
@@ -89,3 +91,18 @@ test-lxc-update:
 
 test-lxc-update-all:
 	{{runner}} {{test-args}} --file {{test_conf}} lxc update --all
+
+test-docker-list:
+	{{runner}} {{test-args}} --file {{test_conf}} docker stack list
+
+test-docker-deploy stack="caddy":
+	{{runner}} {{test-args}} --file {{test_conf}} docker stack --stack {{stack}} deploy
+
+test-docker-sync stack="caddy":
+	{{runner}} {{test-args}} --file {{test_conf}} docker stack --stack {{stack}} sync
+
+test-docker-update stack="caddy":
+	{{runner}} {{test-args}} --file {{test_conf}} docker stack --stack {{stack}} update
+
+test-docker-update-all:
+	{{runner}} {{test-args}} --file {{test_conf}} docker stack --all update

@@ -23,25 +23,39 @@ def setup(host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool
 
     # Prompt the user interactively in the terminal for the initial user setup
     print(f"\n--- Initial Setup for {host.ip} ---")
+    print(f"NOTE: Enter the existing admin user on the machine (NOT the target user '{creds.username}' which will be created).")
     initial_user: str = input(
-        f"Enter initial setup username: ").strip() or creds.username
-
-    initial_password = ""
-    while not initial_password:
-        initial_password: str = getpass.getpass(
-            f"Enter password for {initial_user}@{host.ip} (login and sudo): ")
-        if not initial_password:
-            print("Password cannot be blank. Please provide a password.")
+        f"Enter initial setup username: ").strip()
+    if not initial_user:
+        print("Initial username cannot be blank.")
+        return
 
     host_vars: dict[str, str] = {
         "ansible_user": initial_user,
+        "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
     }
 
-    if creds.ssh_key_path:
-        host_vars["ansible_ssh_private_key_file"] = str(creds.ssh_key_path)
-    else:
+    initial_password = ""
+    use_password = input("Use password authentication for initial login? [y/N]: ").strip().lower()
+    if use_password == "y":
+        while not initial_password:
+            initial_password = getpass.getpass(
+                f"Enter SSH password for {initial_user}@{host.ip}: ")
+            if not initial_password:
+                print("Password cannot be blank. Please provide a password.")
         host_vars["ansible_password"] = initial_password
-    host_vars["ansible_become_password"] = initial_password
+        host_vars["ansible_become_password"] = initial_password
+
+    sudo_prompt = f"Enter sudo password for {initial_user}@{host.ip} (leave blank if passwordless sudo): "
+    if initial_password:
+        sudo_prompt = (
+            f"Enter sudo password for {initial_user}@{host.ip} "
+            f"(leave blank to reuse SSH password): "
+        )
+
+    sudo_password = getpass.getpass(sudo_prompt).strip()
+    if sudo_password:
+        host_vars["ansible_become_password"] = sudo_password
 
     inventory = {
         "all": {

@@ -1,0 +1,25 @@
+---
+# Sync local compose config files to the remote host without touching running containers.
+#
+# Required extra vars:
+#   compose_src  – local directory containing the compose files (config_path)
+#   compose_dest – remote destination path  (docker_root/stack_name)
+#   stack_name   – human-readable stack identifier
+
+- name: Sync Docker compose files to remote host
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Ensure remote stack directory exists
+      ansible.builtin.file:
+        path: "{{ compose_dest }}"
+        state: directory
+        mode: "0755"
+      become: true
+
+    - name: Copy compose files to remote host
+      ansible.builtin.copy:
+        src: "{{ compose_src }}/"
+        dest: "{{ compose_dest }}/"
+        mode: preserve
+      become: true

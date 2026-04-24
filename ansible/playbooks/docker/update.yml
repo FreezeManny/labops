@@ -1,0 +1,21 @@
+---
+# Update a Docker stack: pull the latest images and recreate changed containers.
+# Does NOT sync config files — run deploy.yml if you also need to push config changes.
+#
+# Required extra vars:
+#   compose_dest – remote destination path  (docker_root/stack_name)
+#   stack_name   – human-readable stack identifier
+
+- name: Update Docker stack
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Pull latest images and recreate changed containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ compose_dest }}"
+        project_name: "{{ stack_name }}"
+        state: present
+        pull: always
+        recreate: auto
+        wait: true
+      become: true

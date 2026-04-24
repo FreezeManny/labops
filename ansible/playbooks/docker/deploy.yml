@@ -1,0 +1,24 @@
+---
+# Deploy a Docker stack: sync config files then bring the stack up.
+# Pulls missing images only (use update.yml to force pull all images).
+#
+# Required extra vars:
+#   compose_src  – local directory containing the compose files (config_path)
+#   compose_dest – remote destination path  (docker_root/stack_name)
+#   stack_name   – human-readable stack identifier
+
+- name: Sync compose files
+  ansible.builtin.import_playbook: sync.yml
+
+- name: Bring stack up (docker compose up -d)
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Run docker compose up
+      community.docker.docker_compose_v2:
+        project_src: "{{ compose_dest }}"
+        project_name: "{{ stack_name }}"
+        state: present
+        pull: missing
+        wait: true
+      become: true

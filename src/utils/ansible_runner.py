@@ -36,4 +36,3 @@ def run_playbook(playbook: str, inventory: dict, extravars: Optional[dict] = Non
         
     runner = ansible_runner.run(**kwargs)
     return runner
-    return runner
