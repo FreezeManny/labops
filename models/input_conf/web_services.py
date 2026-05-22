@@ -3,12 +3,12 @@ from typing import Optional, Dict, List, Generator
 
 from .custom_types import StrictModel
 
+class WebService(StrictModel):
+    port: int
+    proxy_name: Optional[str] = None
+
 class WebServices(RootModel):
     root: List[WebService]
 
     def __getitem__(self, item: int) -> WebService:
         return self.root[item]
-
-class WebService(StrictModel):
-    port: int
-    proxy_name: Optional[str] = None
