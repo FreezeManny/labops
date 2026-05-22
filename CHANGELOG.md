@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/FreezeManny/labops/compare/labops-v0.5.0...labops-v0.5.1) (2026-05-22)
+
+
+### Bug Fixes
+
+* Typing issue ([136a43f](https://github.com/FreezeManny/labops/commit/136a43f3674024d5208f817a3aa8631344cdfac7))
+
 ## [0.5.0](https://github.com/FreezeManny/labops/compare/labops-v0.4.1...labops-v0.5.0) (2026-04-24)
 
 
