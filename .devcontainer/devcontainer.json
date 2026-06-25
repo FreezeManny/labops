@@ -10,13 +10,16 @@
 	"features": {
 		"ghcr.io/devcontainers/features/sshd:1": {},
 		"ghcr.io/va-h/devcontainers-features/uv:1": {},
-		"ghcr.io/guiyomh/features/just:0": {}
+		"ghcr.io/guiyomh/features/just:0": {},
+		    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
 	},
 
 	// Mount local SSH keys to target, so connection can be tested in devcontainer
 	"mounts": [
 		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/id_homelab,target=/home/vscode/.ssh/id_homelab,type=bind,readonly",
-		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/id_homelab.pub,target=/home/vscode/.ssh/id_homelab.pub,type=bind,readonly"
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/id_homelab.pub,target=/home/vscode/.ssh/id_homelab.pub,type=bind,readonly",
+		  "source=claude-code-config,target=/home/node/.claude,type=volume"
 	],
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
