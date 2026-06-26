@@ -50,3 +50,4 @@ coverage.xml
 .vscode/
 *.swp
 *.swo
+.claude/

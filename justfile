@@ -17,8 +17,12 @@ container-attach:
 pre-commit:
 	uv run pre-commit run --all-files
 
-build: pre-commit 
+build: pre-commit
 	uv build
+
+# Run the pytest unit-test suite (pure-logic tests; no infra access).
+test:
+	uv run pytest
 
 local-install:
 	pipx install --force $(ls -t dist/*.whl | head -n1) --force

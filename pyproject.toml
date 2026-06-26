@@ -32,6 +32,19 @@ dev = [
     "ruff>=0.15.11",
     "ty>=0.0.31",
 ]
+test = [
+    "pytest>=8",
+]
+
+# Install the test group by default so `uv run pytest` / `uv sync` pick it up.
+[tool.uv]
+default-groups = ["dev", "test"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Import `src.*` / `models.*` as namespace packages from the repo root,
+# mirroring how labops_cli.py runs (there is no installed `labops` package).
+pythonpath = ["."]
 
 # To install Hook: uv run pre-commit install
 [tool.ruff.lint]
