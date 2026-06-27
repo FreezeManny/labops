@@ -36,7 +36,8 @@ def valid_config_dict(tmp_ssh_key: Path, tmp_docker_dir: Path) -> dict[str, Any]
       - proxmox host ``prox`` with one lxc (``ct1``) and one vm (``vm1``);
         ``vm1`` carries a docker stack ``app``.
       - bare-metal host ``edge`` with a web service.
-      - unmanaged node ``nas`` with a web service.
+      - host ``nas`` with ``os: unmanaged`` and a web service (an appliance
+        labops doesn't update, but still proxies).
 
     IPs, names, proxy_names and ports are all unique; vmids are unique within
     the host. Each test gets a fresh dict it may mutate freely.
@@ -86,9 +87,9 @@ def valid_config_dict(tmp_ssh_key: Path, tmp_docker_dir: Path) -> dict[str, Any]
                 "ip": "10.0.0.4",
                 "web_services": [{"port": 80, "proxy_name": "edge"}],
             },
-        },
-        "unmanaged": {
             "nas": {
+                "type": "bare-metal",
+                "os": "unmanaged",
                 "ip": "10.0.0.5",
                 "web_services": [{"port": 443, "proxy_name": "nas"}],
             },

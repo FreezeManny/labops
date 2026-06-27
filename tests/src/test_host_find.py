@@ -16,8 +16,9 @@ def model(valid_config_dict: dict[str, Any]) -> YamlRoot:
 
 
 def test_find_all_returns_every_host(model: YamlRoot) -> None:
+    # nas has os: unmanaged but is still a host, so it's discoverable.
     names = {h.name for h in host_find.findAll(model)}
-    assert names == {"prox", "edge"}
+    assert names == {"prox", "edge", "nas"}
 
 
 def test_find_by_name(model: YamlRoot) -> None:

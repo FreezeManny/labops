@@ -3,8 +3,8 @@
 import pytest
 from pydantic import ValidationError
 
+from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
-from models.input_conf.unmanaged import Unmanaged
 from models.input_conf.web_services import WebServices
 
 
@@ -17,10 +17,11 @@ def test_webservices_indexing() -> None:
 
 
 def test_duplicate_port_within_web_services_rejected() -> None:
-    # check_duplicate_ws_ports is shared; exercise it via Unmanaged.
+    # check_duplicate_ws_ports is shared; exercise it via Host.
     with pytest.raises(ValidationError, match="Duplicate port found: 80"):
-        Unmanaged.model_validate(
+        Host.model_validate(
             {
+                "os": "debian",
                 "ip": "10.0.0.5",
                 "web_services": [{"port": 80}, {"port": 80}],
             }
@@ -52,8 +53,8 @@ def test_duplicate_port_across_web_services_and_docker_stack_rejected(
 
 
 def test_unique_ports_accepted() -> None:
-    node = Unmanaged.model_validate(
-        {"ip": "10.0.0.5", "web_services": [{"port": 80}, {"port": 443}]}
+    node = Host.model_validate(
+        {"os": "debian", "ip": "10.0.0.5", "web_services": [{"port": 80}, {"port": 443}]}
     )
     assert node.web_services is not None
     assert [w.port for w in node.web_services.root] == [80, 443]

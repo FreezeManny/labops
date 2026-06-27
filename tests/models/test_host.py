@@ -58,3 +58,27 @@ def test_propagate_lxc_and_vm_names() -> None:
     host = Host.model_validate(data)
     assert host.lxc is not None and host.lxc["ct1"].name == "ct1"
     assert host.vm is not None and host.vm["vm1"].name == "vm1"
+
+
+# ── Unmanaged OS ──────────────────────────────────────────────────────────────
+# (the forbid-management-fields behaviour is covered in test_managed.py)
+
+
+def test_unmanaged_os_host_is_valid() -> None:
+    # `os: unmanaged` is the catch-all for appliances (HAOS) / boxes you don't
+    # manage. It still keeps ip + web_services; only update/setup skip it.
+    host = Host.model_validate(
+        {
+            "os": "unmanaged",
+            "ip": "10.0.0.1",
+            "web_services": [{"port": 8123, "proxy_name": "home"}],
+        }
+    )
+    assert host.os == "unmanaged"
+    assert host.web_services is not None
+
+
+def test_os_is_required() -> None:
+    # Regression guard: `os` stays mandatory for every host.
+    with pytest.raises(ValidationError):
+        Host.model_validate({"type": "bare-metal", "ip": "10.0.0.1"})
