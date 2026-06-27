@@ -9,6 +9,7 @@ from .lxc import LXCs
 from .vm import VMs
 from .custom_types import HostType, OSType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
+from .common_validators.managed import forbid_management_fields_when_unmanaged
 
 class Host(StrictModel):
     name: str = ""
@@ -29,6 +30,10 @@ class Host(StrictModel):
                     "Fields 'lxc' and 'vm' are only allowed when type is 'proxmox'"
                 )
         return self
+
+    @model_validator(mode="after")
+    def check_unmanaged_constraints(self) -> "Host":
+        return forbid_management_fields_when_unmanaged(self)
 
     @model_validator(mode="after")
     def check_duplicate_vmid(self) -> "Host":
@@ -59,11 +64,11 @@ class Host(StrictModel):
         # Inject the dictionary key as the 'name' attribute for child LXCs
         if self.lxc:
             for k, v in self.lxc.items():
-                v.name: str = k
-                
+                v.name = k
+
         # Inject the dictionary key as the 'name' attribute for child VMs
         if self.vm:
             for k, v in self.vm.items():
-                v.name: str = k
+                v.name = k
                 
         return self

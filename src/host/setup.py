@@ -4,9 +4,14 @@ import getpass
 
 from models.input_conf.host import Host
 from models.input_conf.creds import Creds
+from models.input_conf.custom_types import UNMANAGED_OS
 from src.utils.ansible_runner import run_playbook
 
 def setup(host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool = False) -> None:
+    if host.os == UNMANAGED_OS:
+        print(f"Skipping unmanaged node: {host.name or host.ip} (cannot be provisioned).")
+        return
+
     creds: Creds = host.creds or default_creds
 
     if not creds.ssh_key_path:

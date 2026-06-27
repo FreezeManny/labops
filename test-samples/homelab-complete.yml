@@ -88,6 +88,17 @@ hosts:
         ip: 10.0.50.149
         vmid: 111
 
+      # HomeAssistant OS — a real proxmox VM, but an appliance OS that labops
+      # cannot apt-update or SSH-provision. os: unmanaged → skipped by
+      # update/setup, but still listed and proxied via web_services.
+      homeassistant-os:
+        os: unmanaged
+        ip: 10.0.10.20
+        vmid: 120
+        web_services:
+          - proxy_name: hass
+            port: 8123
+
   test-system:
     os: debian
     ip: 10.0.10.42
@@ -104,8 +115,10 @@ hosts:
       - proxy_name: pihole2
         port: 8080
 
-unmanaged:
+  # A NAS appliance: not managed by labops, but still tracked for ip + proxy.
   nas:
+    type: bare-metal
+    os: unmanaged
     ip: 10.0.10.4
     web_services:
       - proxy_name: nas
