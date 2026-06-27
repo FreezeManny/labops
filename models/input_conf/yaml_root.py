@@ -9,21 +9,16 @@ from .docker import Docker, StackEntry
 from .host import Host
 from .settings import Settings
 from .custom_types import StrictModel
-from .unmanaged import Unmanaged
 
 class YamlRoot(StrictModel):
     settings: Settings
     hosts: Optional[Dict[str, Host]] = None
-    unmanaged: Optional[Dict[str, Unmanaged]] = None
 
     @model_validator(mode="after")
     def propagate_host_names(self) -> "YamlRoot":
         if self.hosts:
             for k, host in self.hosts.items():
                 host.name = k
-        if self.unmanaged:
-            for k, node in self.unmanaged.items():
-                node.name = k
         return self
 
     @model_validator(mode="after")
@@ -53,10 +48,6 @@ class YamlRoot(StrictModel):
         if self.hosts:
             for host in self.hosts.values():
                 check_ips(host)
-
-        if self.unmanaged:
-            for node in self.unmanaged.values():
-                check_ips(node)
 
         if errors:
             raise ValueError("\n".join(errors))
@@ -88,13 +79,6 @@ class YamlRoot(StrictModel):
                             errors.append(f"Duplicate name found across configuration: '{vm_name}'")
                         else:
                             all_names.add(vm_name)
-
-        if self.unmanaged:
-            for k in self.unmanaged.keys():
-                if k in all_names:
-                    errors.append(f"Duplicate name found across configuration: '{k}'")
-                else:
-                    all_names.add(k)
 
         if errors:
             raise ValueError("\n".join(errors))
@@ -141,10 +125,6 @@ class YamlRoot(StrictModel):
         if self.hosts:
             for host in self.hosts.values():
                 check_proxy_names(host)
-
-        if self.unmanaged:
-            for node in self.unmanaged.values():
-                check_proxy_names(node)
 
         if errors:
             raise ValueError("\n".join(errors))

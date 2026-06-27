@@ -1,5 +1,5 @@
 from typing import TypeVar, Any
-from ..web_services import WebService
+from ..web_services import WebServices
 from ..docker import Docker
 
 T = TypeVar("T")
@@ -9,7 +9,7 @@ def check_duplicate_ws_ports(obj: T) -> T:
     all_ports: set[int] = set()
     errors: list[str] = []
 
-    web_services: WebService | None = getattr(obj, "web_services", None)
+    web_services: WebServices | None = getattr(obj, "web_services", None)
     if web_services:
         for ws in web_services.root:
             if ws.port in all_ports:
@@ -20,7 +20,7 @@ def check_duplicate_ws_ports(obj: T) -> T:
     docker: Docker | None = getattr(obj, "docker", None)
     if docker:
         for stack in docker.stacks.values():
-            stack_ws: WebService | None = getattr(stack, "web_services", None)
+            stack_ws: WebServices | None = getattr(stack, "web_services", None)
             if stack_ws:
                 for ws in stack_ws.root:
                     if ws.port in all_ports:
