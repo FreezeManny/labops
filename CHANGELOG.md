@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.0](https://github.com/FreezeManny/labops/compare/labops-v0.5.1...labops-v0.6.0) (2026-06-27)
+
+
+### Features
+
+* add unmanaged model and model validators ([aa49240](https://github.com/FreezeManny/labops/commit/aa49240bdeb73871f9dcf29d4f50dd0613b95f6b))
+* add unmanaged model and model validators ([a193df4](https://github.com/FreezeManny/labops/commit/a193df4e00c8009fd425199411b1cf17a8876275))
+* skipp unmanage clients during setup run ([5148598](https://github.com/FreezeManny/labops/commit/5148598480e0c620c741fb6ab66223c5ab792d82))
+
+
+### Bug Fixes
+
+* Added unmanaged tag ([6ba9a45](https://github.com/FreezeManny/labops/commit/6ba9a45947f45761c554b3e3be29f5dcbec764bd))
+* added UNMANAGED_OS Export ([b3f86e8](https://github.com/FreezeManny/labops/commit/b3f86e8eab50cf2e6b8ed93b99dbcd658b001238))
+
 ## [0.5.1](https://github.com/FreezeManny/labops/compare/labops-v0.5.0...labops-v0.5.1) (2026-05-22)
 
 
