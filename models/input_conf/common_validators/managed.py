@@ -9,6 +9,8 @@ a box it doesn't manage.
 
 from typing import TypeVar
 
+from ..custom_types import UNMANAGED_OS
+
 T = TypeVar("T")
 
 # Fields that require labops to actively manage the node — disallowed when
@@ -17,7 +19,7 @@ _MANAGEMENT_FIELDS = ("docker", "lxc", "vm")
 
 
 def forbid_management_fields_when_unmanaged(obj: T) -> T:
-    if getattr(obj, "os", None) == "unmanaged":
+    if getattr(obj, "os", None) == UNMANAGED_OS:
         for field in _MANAGEMENT_FIELDS:
             if getattr(obj, field, None) is not None:
                 raise ValueError(f"Field '{field}' is not allowed when os is 'unmanaged'")
