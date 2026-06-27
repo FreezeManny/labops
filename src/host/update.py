@@ -2,14 +2,15 @@ from ansible_runner.runner import Runner
 from models.input_conf.host import Host
 from models.input_conf.host import OSType
 from models.input_conf.creds import Creds
+from models.input_conf.custom_types import UNMANAGED_OS
 from src.utils.ansible_runner import run_playbook
 
 def update(hosts: list[Host], default_creds: Creds, dry_run: bool = False, verbose: bool = False) -> None:
     # Group hosts by OS to run the correct playbooks
     hosts_by_os: dict[OSType, list[Host]] = {}
     for host in hosts:
-        if host.os not in ["debian", "redhat", "alpine"]:
-            print(f"Unsupported OS: {host.os} for host {host.ip}")
+        if host.os == UNMANAGED_OS:
+            print(f"Skipping unmanaged node: {host.name or host.ip}")
             continue
         if host.os not in hosts_by_os:
             hosts_by_os[host.os] = []
