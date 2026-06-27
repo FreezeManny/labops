@@ -11,3 +11,7 @@ class StrictModel(BaseModel):
 OSType = Literal["debian", "alpine", "redhat", "unmanaged"]
 HostType = Literal["bare-metal", "proxmox"]
 
+# The single source of truth for the "unmanaged" sentinel — import this instead
+# of hard-coding the string when checking whether a node is managed.
+UNMANAGED_OS: OSType = "unmanaged"
+
