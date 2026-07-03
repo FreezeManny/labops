@@ -67,10 +67,11 @@ class ConfigError(Exception):
 
 # ─── Run reporting ──────────────────────────────────────────────────────────
 
-def report_run(summary: "RunSummary", action: str = "Playbook") -> None:
+def report_run(summary: "RunSummary", action: str = "Playbook", kind: str = "host") -> None:
     """
     Print a playbook outcome, calling out unreachable hosts distinctly from
-    task failures so connection problems are obvious.
+    task failures so connection problems are obvious. ``kind`` ("host" or
+    "lxc") tailors the remediation hint.
     """
     if summary.succeeded:
         console.print(f"[green]✔ {action} completed successfully.[/green]")
@@ -82,16 +83,24 @@ def report_run(summary: "RunSummary", action: str = "Playbook") -> None:
         )
         for host, msg in summary.unreachable.items():
             console.print(f"  [red]•[/red] [bold]{host}[/bold]: {msg}")
-        console.print(
-            "[yellow]  Check the host is powered on and that its IP, "
-            "credentials/SSH key and connection are correct.[/yellow]"
-        )
+        if kind == "lxc":
+            hint = (
+                "  Check the LXC is running (start it in Proxmox) and that "
+                "the Proxmox host is reachable."
+            )
+        else:
+            hint = (
+                "  Check the host is powered on and that its IP, "
+                "credentials/SSH key and connection are correct."
+            )
+        console.print(f"[yellow]{hint}[/yellow]")
 
     if summary.failed:
         console.print(
-            f"[bold red]✘ {len(summary.failed)} host(s) failed during execution:[/bold red] "
-            f"{', '.join(summary.failed)}"
+            f"[bold red]✘ {len(summary.failed)} host(s) failed during execution:[/bold red]"
         )
+        for host, msg in summary.failed.items():
+            console.print(f"  [red]•[/red] [bold]{host}[/bold]: {msg}")
 
     if not summary.has_unreachable and not summary.failed:
         console.print(f"[red]✘ {action} failed (rc={summary.rc}).[/red]")

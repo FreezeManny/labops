@@ -39,9 +39,9 @@ def root_callback(
     if ctx.invoked_subcommand in COMMANDS_WITHOUT_CONFIG:
         return
     try:
-        state.config_path: Path = resolve_config(file)
+        state.config_path = resolve_config(file)
         console.print(f"[dim]Using config: {state.config_path}[/dim]")
-        state.model: YamlRoot = load_homelab_model(state.config_path)
+        state.model = load_homelab_model(state.config_path)
     except ConfigError as e:
         typer.secho(f"✘ {e}", fg=typer.colors.RED)
         raise typer.Exit(1)

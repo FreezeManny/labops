@@ -8,7 +8,11 @@ repos:
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]
-        args: [--strict, --verbose]
+        # Positional types REPLACE the built-in set, so the defaults are listed
+        # explicitly here alongside the extra `wip` type used during development.
+        args: [--strict, --verbose,
+               build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test,
+               wip]
 
   - repo: local
     hooks:

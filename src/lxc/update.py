@@ -51,4 +51,4 @@ def update(proxmox_lxc_pairs: list[tuple[Host, LXC]], default_creds: Creds, dry_
         return
 
     r = run_playbook(playbook="lxc/update.yml", inventory=inventory, dry_run=dry_run, verbose=verbose)
-    report_run(summarize_run(r), action="LXC update")
+    report_run(summarize_run(r, kind="lxc"), action="LXC update", kind="lxc")
