@@ -5,7 +5,8 @@ import getpass
 from models.input_conf.host import Host
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import UNMANAGED_OS
-from src.utils.ansible_runner import run_playbook
+from src.utils.ansible_runner import run_playbook, summarize_run
+from src.cli.core import report_run
 
 def setup(host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool = False) -> None:
     if host.os == UNMANAGED_OS:
@@ -89,7 +90,4 @@ def setup(host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool
         verbose=verbose
     )
 
-    if r.rc == 0:
-        print("Ansible setup playbook execution completed successfully.")
-    else:
-        print(f"Ansible playbook execution failed with return code {r.rc}.")
+    report_run(summarize_run(r), action="Host setup")

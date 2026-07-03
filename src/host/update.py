@@ -3,7 +3,8 @@ from models.input_conf.host import Host
 from models.input_conf.host import OSType
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import UNMANAGED_OS
-from src.utils.ansible_runner import run_playbook
+from src.utils.ansible_runner import run_playbook, summarize_run
+from src.cli.core import report_run
 
 def update(hosts: list[Host], default_creds: Creds, dry_run: bool = False, verbose: bool = False) -> None:
     # Group hosts by OS to run the correct playbooks
@@ -49,7 +50,4 @@ def update(hosts: list[Host], default_creds: Creds, dry_run: bool = False, verbo
         verbose=verbose
     )
     
-    if r.rc == 0:
-        print("Ansible playbook execution completed successfully for all hosts.")
-    else:
-        print(f"Ansible playbook execution failed with return code {r.rc}.")
+    report_run(summarize_run(r), action="Host update")

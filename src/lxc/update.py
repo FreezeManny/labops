@@ -1,4 +1,5 @@
-from src.utils.ansible_runner import run_playbook
+from src.utils.ansible_runner import run_playbook, summarize_run
+from src.cli.core import report_run
 from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
 from models.input_conf.creds import Creds
@@ -49,4 +50,5 @@ def update(proxmox_lxc_pairs: list[tuple[Host, LXC]], default_creds: Creds, dry_
         print("No managed LXCs to update.")
         return
 
-    run_playbook(playbook="lxc/update.yml", inventory=inventory, dry_run=dry_run, verbose=verbose)
+    r = run_playbook(playbook="lxc/update.yml", inventory=inventory, dry_run=dry_run, verbose=verbose)
+    report_run(summarize_run(r), action="LXC update")
