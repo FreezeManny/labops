@@ -30,12 +30,12 @@ def summarize_run(runner: Runner) -> RunSummary:
     Turn a finished Runner into a RunSummary, distinguishing hosts that could not be
     reached (Ansible 'dark' hosts) from hosts where a task failed.
     """
-    stats = runner.stats or {}
+    stats = getattr(runner, "stats", None) or {}
     unreachable_hosts = list((stats.get("dark") or {}).keys())
 
     # Pull the exact connection error message per host from the event stream.
     messages: dict[str, str] = {}
-    for event in runner.events:
+    for event in getattr(runner, "events", None) or []:
         if event.get("event") != "runner_on_unreachable":
             continue
         data = event.get("event_data") or {}
