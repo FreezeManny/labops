@@ -20,6 +20,14 @@ def run_playbook(playbook: str, inventory: dict, extravars: Optional[dict] = Non
         "private_data_dir": autogenerate_dir,
         "playbook": os.path.join(playbook_root, playbook),
         "inventory": inventory,
+        "envvars": {
+            # Keep Python interpreter auto-discovery but suppress the warning.
+            "ANSIBLE_PYTHON_INTERPRETER": "auto_silent",
+            "ANSIBLE_DEPRECATION_WARNINGS": "False",
+            "ANSIBLE_SYSTEM_WARNINGS": "False",
+            "ANSIBLE_LOCALHOST_WARNING": "False",
+            "ANSIBLE_COMMAND_WARNINGS": "False",
+        },
     }
 
     if extravars:
