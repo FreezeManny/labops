@@ -4,7 +4,9 @@ from dataclasses import dataclass, field
 import typer
 import yaml
 from rich.console import Console
+from rich.markup import escape
 from src.utils.yaml_validator import validate_yaml
+from src.utils.ansible_runner import RunSummary
 from models.input_conf.yaml_root import YamlRoot
 
 # ─── Shared state ─────────────────────────────────────────────────────────────
@@ -63,6 +65,53 @@ def resolve_config(explicit: str | None) -> Path:
 
 class ConfigError(Exception):
     """Raised when a config file cannot be loaded or fails validation."""
+
+# ─── Run reporting ──────────────────────────────────────────────────────────
+
+def report_run(summary: RunSummary, action: str = "Playbook", kind: str = "host") -> None:
+    """
+    Print a playbook outcome, calling out unreachable hosts distinctly from
+    task failures so connection problems are obvious. ``kind`` ("host" or
+    "lxc") tailors the remediation hint.
+    """
+    if summary.succeeded:
+        console.print(f"[green]✔ {action} completed successfully.[/green]")
+        return
+
+    if summary.has_unreachable:
+        console.print(
+            f"[bold red]✘ {len(summary.unreachable)} host(s) could not be reached:[/bold red]"
+        )
+        for host, msg in summary.unreachable.items():
+            console.print(f"  [red]•[/red] [bold]{escape(host)}[/bold]: {escape(msg)}")
+        if kind == "lxc":
+            hint = (
+                "  Check the LXC is running (start it in Proxmox) and that "
+                "the Proxmox host is reachable."
+            )
+        else:
+            hint = (
+                "  Check the host is powered on and that its IP, "
+                "credentials/SSH key and connection are correct."
+            )
+        console.print(f"[yellow]{hint}[/yellow]")
+
+    if summary.failed:
+        console.print(
+            f"[bold red]✘ {len(summary.failed)} host(s) failed during execution:[/bold red]"
+        )
+        for host, msg in summary.failed.items():
+            console.print(f"  [red]•[/red] [bold]{escape(host)}[/bold]: {escape(msg)}")
+
+    if not summary.has_unreachable and not summary.failed:
+        console.print(f"[red]✘ {action} failed (rc={summary.rc}).[/red]")
+        # No per-host attribution — surface the raw tail (syntax/inventory/path
+        # error) instead of leaving the user with only a return code.
+        if summary.raw_tail:
+            console.print("[dim]Last output from Ansible:[/dim]")
+            console.print(summary.raw_tail, markup=False, highlight=False, soft_wrap=True)
+        else:
+            console.print("[yellow]Re-run with -v for the full Ansible output.[/yellow]")
 
 # ─── Shared CLI options ───────────────────────────────────────────────────────
 
