@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/FreezeManny/labops/compare/labops-v0.6.0...labops-v0.6.1) (2026-07-14)
+
+
+### Bug Fixes
+
+* fixed auth, and swallowed failure issues ([f6fd0a7](https://github.com/FreezeManny/labops/commit/f6fd0a7501e6f27d1b0cda1c7baddbab720ab5fd))
+
 ## [0.6.0](https://github.com/FreezeManny/labops/compare/labops-v0.5.1...labops-v0.6.0) (2026-06-27)
 
 
