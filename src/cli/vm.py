@@ -18,7 +18,8 @@ def host_setup(
     model: YamlRoot = state.model
     hosts = resolve_targets(model, target, False,
                             vm.find,vm.findAll, label="host")
-    vm.setup(hosts[0], model.settings.default_creds)
+    vm.setup(hosts[0], model.settings.default_creds,
+             dry_run=state.dry_run, verbose=state.verbose)
 
 @app.command("update")
 def vm_update(
@@ -32,7 +33,8 @@ def vm_update(
     """
     model: YamlRoot = state.model
     vms: list[Host] = resolve_targets(model, target, all, vm.find, vm.findAll, label="VM")
-    vm.update(vms, model.settings.default_creds)
+    vm.update(vms, model.settings.default_creds,
+              dry_run=state.dry_run, verbose=state.verbose)
 
 @app.command("list")
 def vm_list() -> None:
