@@ -36,6 +36,7 @@ class RunSummary:
     unreachable: dict[str, str] = field(default_factory=dict)  # host -> connection error message
     failed: dict[str, str] = field(default_factory=dict)       # host -> task failure message
     ok: list[str] = field(default_factory=list)                # hosts that succeeded
+    raw_tail: str = ""                                          # tail of raw output for un-attributed failures
 
     @property
     def has_unreachable(self) -> bool:
@@ -46,19 +47,39 @@ class RunSummary:
         return self.rc == 0
 
 
+def _read_stdout_tail(runner: Runner, max_lines: int = 40) -> str:
+    """
+    Best-effort tail of the runner's raw stdout, for failures with no per-host
+    attribution (syntax errors, missing playbook/inventory) that emit no events
+    and would otherwise be invisible in the curated normal-mode view.
+    """
+    try:
+        out = getattr(runner, "stdout", None)
+        text = out.read() if hasattr(out, "read") else (out or "")
+        lines = (text or "").strip().splitlines()
+        return "\n".join(lines[-max_lines:])
+    except Exception:
+        return ""
+
+
 # Signatures of an SSH/connection-level failure. Ansible sometimes reports these
-# as task failures (rc 255 during temp-dir creation) rather than 'unreachable',
-# even though the real cause is the host being off or the network being down.
+# as task failures (rc 255 during temp-dir creation, or an auth rejection) rather
+# than 'unreachable', even though the real cause is the host being off/unreachable
+# or the credentials being wrong — all of which we want in the "unreachable" bucket
+# so they get a remediation hint. NOTE: these match Ansible's English output; under
+# a non-English locale detection degrades gracefully to passthrough wording.
 _CONNECTION_FAILURE_SIGNS = (
     "failed to connect to the host via ssh",
     "no route to host",
     "connection refused",
-    "connection timed out",
     "timed out",
     "network is unreachable",
     "name or service not known",
     "failed to create temporary directory",
     "result 255",
+    "permission denied",
+    "unable to authenticate",
+    "invalid/incorrect username/password",
 )
 
 
@@ -88,7 +109,8 @@ def clean_failure_message(msg: str, kind: str = "host") -> str:
         return "Connection timed out — host unreachable."
     if "name or service not known" in m:
         return "Host name could not be resolved."
-    if "permission denied" in m or "authentication" in m:
+    if ("permission denied" in m or "authentication" in m
+            or "unable to authenticate" in m or "invalid/incorrect username/password" in m):
         return "Authentication failed — check credentials/SSH key."
     if "failed to create temporary directory" in m or "result 255" in m:
         return "SSH connection failed — host may be powered off."
@@ -123,11 +145,18 @@ def summarize_run(runner: Runner, kind: str = "host") -> RunSummary:
     unreachable_hosts = dark_hosts | reclassified
     failed_hosts -= reclassified
 
+    # A non-zero rc with no per-host attribution means the failure happened before
+    # or outside task execution (bad playbook path, syntax/inventory error). Those
+    # emit no host events, so capture the raw tail to give report_run something to show.
+    rc = runner.rc or 0
+    raw_tail = _read_stdout_tail(runner) if rc != 0 and not unreachable_hosts and not failed_hosts else ""
+
     return RunSummary(
-        rc=runner.rc or 0,
+        rc=rc,
         unreachable={h: clean_failure_message(messages.get(h, "unreachable"), kind) for h in sorted(unreachable_hosts)},
         failed={h: clean_failure_message(messages.get(h, "task failed"), kind) for h in sorted(failed_hosts)},
         ok=list((stats.get("ok") or {}).keys()),
+        raw_tail=raw_tail,
     )
 
 def _clean_event_handler(event: dict) -> bool:
@@ -181,7 +210,6 @@ def run_playbook(playbook: str, inventory: dict, extravars: Optional[dict] = Non
             "ANSIBLE_DEPRECATION_WARNINGS": "False",
             "ANSIBLE_SYSTEM_WARNINGS": "False",
             "ANSIBLE_LOCALHOST_WARNING": "False",
-            "ANSIBLE_COMMAND_WARNINGS": "False",
         },
     }
 
