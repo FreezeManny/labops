@@ -2,7 +2,7 @@ import os
 import ansible_runner
 from ansible_runner import Runner
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Optional
 from rich.console import Console
 from rich.markup import escape
 
@@ -200,7 +200,7 @@ def run_playbook(playbook: str, inventory: dict, extravars: Optional[dict] = Non
     autogenerate_dir = os.path.join(project_root, ".ansible-autogenerate")
     os.makedirs(autogenerate_dir, exist_ok=True)
 
-    kwargs = {
+    kwargs: dict[str, Any] = {
         "private_data_dir": autogenerate_dir,
         "playbook": os.path.join(playbook_root, playbook),
         "inventory": inventory,

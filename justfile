@@ -14,10 +14,18 @@ container-start:
 container-attach:
 	devcontainer exec --workspace-folder . bash
 
-pre-commit:
-	uv run pre-commit run --all-files
+# Lint + type-check (check-only). CI runs this too.
+check:
+	uv run ruff check
+	uv run ty check
 
-build: pre-commit
+# Auto-format and apply safe fixes in place. Run manually when you want it;
+# the first run will reformat the whole codebase.
+format:
+	uv run ruff format
+	uv run ruff check --fix
+
+build: check
 	uv build
 
 # Run the pytest unit-test suite (pure-logic tests; no infra access).

@@ -25,5 +25,11 @@ jobs:
       - name: Install the project
         run: uv sync --all-extras --dev
 
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Lint & type-check
+        run: just check
+
       - name: Run tests
         run: uv run pytest

@@ -28,7 +28,6 @@ labops = "labops_cli:main"
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.5.1",
     "ruff>=0.15.11",
     "ty>=0.0.31",
 ]
@@ -46,7 +45,6 @@ testpaths = ["tests"]
 # mirroring how labops_cli.py runs (there is no installed `labops` package).
 pythonpath = ["."]
 
-# To install Hook: uv run pre-commit install
 [tool.ruff.lint]
 select = ["ANN"]  # requires type annotations on all functions
 
