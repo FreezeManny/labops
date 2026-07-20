@@ -36,3 +36,14 @@ def proxy_list() -> None:
     for r in routes:
         table.add_row(f"{r.proxy_name}{suffix}", f"{r.target_ip}:{r.port}", _access_label(r, default_list), " → ".join(r.path))
     console.print(table)
+
+@app.command(name="render")
+def proxy_render() -> None:
+    """[bold]Render[/bold] the Caddyfile locally and print it [dim](no deploy)[/dim]."""
+    model: YamlRoot = state.model
+    try:
+        caddyfile: str = render_caddyfile(model)
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+    console.print(caddyfile, markup=False, highlight=False, soft_wrap=True)
