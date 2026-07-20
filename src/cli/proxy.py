@@ -47,3 +47,33 @@ def proxy_render() -> None:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1)
     console.print(caddyfile, markup=False, highlight=False, soft_wrap=True)
+
+
+@app.command(name="sync")
+def proxy_sync() -> None:
+    """[bold]Sync[/bold] the rendered Caddyfile to the proxy host [dim](no reload)[/dim]."""
+    model: YamlRoot = state.model
+    try:
+        runner: Runner = sync_proxy(model, dry_run=state.dry_run, verbose=state.verbose)
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+    if runner.rc != 0:
+        console.print(f"[red]Proxy sync failed (rc={runner.rc}).[/red]")
+        raise typer.Exit(runner.rc or 1)
+    console.print("[green]Proxy sync complete.[/green]")
+
+
+@app.command(name="deploy")
+def proxy_deploy() -> None:
+    """[bold]Deploy[/bold]: write the Caddyfile to [dim]proxy_location[/dim] and reload Caddy."""
+    model: YamlRoot = state.model
+    try:
+        runner: Runner = deploy_proxy(model, dry_run=state.dry_run, verbose=state.verbose)
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+    if runner.rc != 0:
+        console.print(f"[red]Proxy deploy failed (rc={runner.rc}).[/red]")
+        raise typer.Exit(runner.rc or 1)
+    console.print("[green]Proxy deploy complete.[/green]")

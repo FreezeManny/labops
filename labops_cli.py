@@ -9,6 +9,7 @@ from src.cli.vm import app as vm_app
 from src.cli.lxc import app as lxc_app
 from src.cli.validate import app as validate_app
 from src.cli.docker import app as docker_app
+from src.cli.proxy import app as proxy_app
 
 # ------------- APP -----------------
 app = typer.Typer(
@@ -52,6 +53,7 @@ app.add_typer(host_app, name="host")
 app.add_typer(vm_app, name="vm")
 app.add_typer(lxc_app, name="lxc")
 app.add_typer(docker_app, name="docker")
+app.add_typer(proxy_app, name="proxy")
 # ------------- Entry -----------------
 
 def main() -> None:
