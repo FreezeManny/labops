@@ -45,6 +45,24 @@ def test_render_contains_wildcard_and_tls(valid_config_dict: dict[str, Any]) -> 
     )
 
 
+def test_render_https_upstream_skips_verify(valid_config_dict: dict[str, Any]) -> None:
+    # edge (10.0.0.4:80) marked https -> https:// upstream + insecure transport.
+    valid_config_dict["hosts"]["edge"]["web_services"][0]["https"] = True
+    out = render_caddyfile(_model(valid_config_dict))
+    assert "reverse_proxy https://10.0.0.4:80 {" in out
+    assert "transport http {" in out
+    assert "tls_insecure_skip_verify" in out
+
+
+def test_render_http_upstream_has_no_transport(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    # nas defaults to plain http -> bare reverse_proxy, no transport block.
+    out = render_caddyfile(_model(valid_config_dict))
+    assert "reverse_proxy 10.0.0.5:443\n" in out
+    assert "https://10.0.0.5" not in out
+
+
 def test_render_default_access_is_local_remote_ip(
     valid_config_dict: dict[str, Any],
 ) -> None:

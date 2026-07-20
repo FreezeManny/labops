@@ -56,11 +56,13 @@ def _render_context(
     rendered_routes = []
     for r in routes:
         accept, deny = _resolve_acl(r, proxy)
+        scheme = "https://" if r.https else ""
         rendered_routes.append(
             {
                 "name": r.proxy_name,
                 "host": f"{r.proxy_name}{proxy.proxy_suffix}",
-                "target": f"{r.target_ip}:{r.port}",
+                "target": f"{scheme}{r.target_ip}:{r.port}",
+                "insecure": r.https,
                 "accept": accept,
                 "deny": deny,
             }

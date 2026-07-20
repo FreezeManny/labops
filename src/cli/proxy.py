@@ -37,9 +37,10 @@ def proxy_list() -> None:
     table.add_column("Access", style="magenta")
     table.add_column("Path", style="cyan")
     for r in routes:
+        scheme = "https://" if r.https else ""
         table.add_row(
             f"{r.proxy_name}{suffix}",
-            f"{r.target_ip}:{r.port}",
+            f"{scheme}{r.target_ip}:{r.port}",
             _access_label(r, default_list),
             " → ".join(r.path),
         )

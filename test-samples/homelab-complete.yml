@@ -46,6 +46,10 @@ hosts:
       - proxy_name: cprox
         port: 82
         access: vpn          # single list (coerced to a list); reachable over tailscale
+      - proxy_name: pve      # Proxmox web UI: HTTPS upstream with a self-signed cert
+        port: 8006
+        access: vpn
+        https: true          # reverse_proxy over https:// + skip TLS verification
     lxc:
       wireguard:
         ip: 10.0.10.2

@@ -8,6 +8,10 @@ class WebService(StrictModel):
     port: int
     proxy_name: Optional[str] = None
     access: Optional[List[str]] = None
+    # Upstream speaks HTTPS (e.g. Proxmox on :8006). Renders an https:// upstream
+    # with TLS verification skipped, since such services usually present a
+    # self-signed cert.
+    https: bool = False
 
     @field_validator("access", mode="before")
     @classmethod

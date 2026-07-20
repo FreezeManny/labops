@@ -28,6 +28,7 @@ def _collect(
                 port=entry.port,
                 access=entry.access,
                 path=list(path),
+                https=entry.https,
             )
         )
 

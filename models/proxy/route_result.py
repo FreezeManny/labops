@@ -14,3 +14,4 @@ class RouteResult:
         list[str]
     ]  # access-list names (union); None -> local; ["public"] -> open
     path: list[str]  # node path for diagnostics, e.g. ["cprox", "home"]
+    https: bool = False  # upstream speaks HTTPS (self-signed cert tolerated)

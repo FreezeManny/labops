@@ -21,7 +21,15 @@
 		@{{ r.name }}_notallowed not remote_ip {{ r.accept | join(" ") }}
 		respond @{{ r.name }}_notallowed "Forbidden" 403
 {% endif %}
+{% if r.insecure %}
+		reverse_proxy {{ r.target }} {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
+{% else %}
 		reverse_proxy {{ r.target }}
+{% endif %}
 	}
 
 {% endfor %}
