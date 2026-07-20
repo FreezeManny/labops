@@ -8,7 +8,24 @@ settings:
     pihole_location: 10.0.10.5 
   proxy:
     proxy_suffix: .mfritz.top
-    proxy_location: 10.0.10.6
+    proxy_location: 10.0.10.6           # SSH target that Caddy runs on
+    caddyfile_path_remote: /etc/caddy/Caddyfile  # remote path the rendered config is written to
+    # `proxy sync` writes the file; `proxy deploy` also runs `caddy reload` (init-agnostic).
+    access_lists:
+      local:                 # default: used by services with no explicit access
+        default: true
+        accept:
+          - 10.0.10.0/24
+          - 10.0.20.0/24
+        # deny wins over accept — block a host even though it's in the subnet:
+        # deny:
+        #   - 10.0.10.66/32
+      vpn:
+        accept:
+          - 100.64.0.0/10    # tailscale
+      open:                  # accept-all == public
+        accept:
+          - 0.0.0.0/0
 
 hosts:
   proxmox_test:
@@ -28,6 +45,7 @@ hosts:
     web_services:
       - proxy_name: cprox
         port: 82
+        access: vpn          # single list (coerced to a list); reachable over tailscale
     lxc:
       wireguard:
         ip: 10.0.10.2
@@ -123,5 +141,7 @@ hosts:
     web_services:
       - proxy_name: nas
         port: 80
+        access: [open]          # accept-all list -> open to anyone
       - proxy_name: sync
         port: 20910
+        access: [local, vpn]    # union of both lists
