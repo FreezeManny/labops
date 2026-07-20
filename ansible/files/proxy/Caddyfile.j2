@@ -1,0 +1,32 @@
+# Managed by labops — do not edit by hand.
+# Generated from homelab.yml web_services + settings.proxy.
+#
+# labops only renders and places this file. The Caddy instance itself — its
+# image, the spaceship DNS plugin, the LIBDNS_SPACESHIP_* env vars, and reloads
+# — is managed outside labops.
+
+*{{ proxy_suffix }} {
+	tls {
+		dns spaceship {env.LIBDNS_SPACESHIP_APIKEY} {env.LIBDNS_SPACESHIP_APISECRET}
+	}
+
+{% for r in routes %}
+	@{{ r.name }} host {{ r.host }}
+	handle @{{ r.name }} {
+{% if r.deny %}
+		@{{ r.name }}_deny remote_ip {{ r.deny | join(" ") }}
+		respond @{{ r.name }}_deny "Forbidden" 403
+{% endif %}
+{% if r.accept %}
+		@{{ r.name }}_notallowed not remote_ip {{ r.accept | join(" ") }}
+		respond @{{ r.name }}_notallowed "Forbidden" 403
+{% endif %}
+		reverse_proxy {{ r.target }}
+	}
+
+{% endfor %}
+	# Any subdomain without a matching service.
+	handle {
+		respond "Unknown service" 404
+	}
+}

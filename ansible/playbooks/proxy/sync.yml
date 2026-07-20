@@ -1,0 +1,26 @@
+---
+# Write the labops-rendered Caddyfile to the proxy host, without reloading Caddy.
+# The Caddy instance itself (image, plugins, secrets, runtime) is managed
+# outside labops — labops only owns the config file.
+#
+# Required extra vars:
+#   caddyfile_content – the rendered Caddyfile (passed as content)
+#   caddyfile_dest    – remote path to write it to (settings.proxy.caddyfile_path_remote)
+
+- name: Sync the rendered Caddyfile
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Ensure the Caddyfile parent directory exists
+      ansible.builtin.file:
+        path: "{{ caddyfile_dest | dirname }}"
+        state: directory
+        mode: "0755"
+      become: true
+
+    - name: Write the Caddyfile
+      ansible.builtin.copy:
+        content: "{{ caddyfile_content }}"
+        dest: "{{ caddyfile_dest }}"
+        mode: "0644"
+      become: true
