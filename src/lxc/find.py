@@ -3,32 +3,36 @@ from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
 
+
 def findAll(config: YamlRoot) -> list[tuple[Host, LXC]]:
     """Returns a list of all LXCs found inside Proxmox hosts in the Yaml config."""
     results: list[tuple[Host, LXC]] = []
     if config.hosts is None:
         return results
-        
+
     for host in config.hosts.values():
         if host.type == "proxmox" and host.lxc is not None:
             for lxc_name, lxc_obj in host.lxc.items():
                 results.append((host, lxc_obj))
     return results
 
+
 def find(config: YamlRoot, targets: list[str]) -> list[tuple[Host, LXC]]:
     """Find specific LXCs defined in the Yaml config by Name, IP, or VMID."""
     results: list[tuple[Host, LXC]] = []
     if config.hosts is None:
         return results
-        
+
     for target in targets:
         found = False
         for host in config.hosts.values():
             if host.type == "proxmox" and host.lxc is not None:
                 for lxc_name, lxc_obj in host.lxc.items():
-                    if (target == lxc_name or 
-                        target == str(lxc_obj.ip) or 
-                        target == str(lxc_obj.vmid)):
+                    if (
+                        target == lxc_name
+                        or target == str(lxc_obj.ip)
+                        or target == str(lxc_obj.vmid)
+                    ):
                         results.append((host, lxc_obj))
                         found = True
                         break

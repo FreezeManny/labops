@@ -37,8 +37,14 @@ def proxy_list() -> None:
     table.add_column("Access", style="magenta")
     table.add_column("Path", style="cyan")
     for r in routes:
-        table.add_row(f"{r.proxy_name}{suffix}", f"{r.target_ip}:{r.port}", _access_label(r, default_list), " → ".join(r.path))
+        table.add_row(
+            f"{r.proxy_name}{suffix}",
+            f"{r.target_ip}:{r.port}",
+            _access_label(r, default_list),
+            " → ".join(r.path),
+        )
     console.print(table)
+
 
 @app.command(name="render")
 def proxy_render() -> None:
@@ -54,13 +60,19 @@ def proxy_render() -> None:
 
 @app.command(name="export")
 def proxy_export(
-    output: Annotated[Path, typer.Argument(
-        help="Destination path for the rendered Caddyfile.",
-    )] = Path("Caddyfile"),
-    force: Annotated[bool, typer.Option(
-        "--force",
-        help="Overwrite the destination if it already exists.",
-    )] = False,
+    output: Annotated[
+        Path,
+        typer.Argument(
+            help="Destination path for the rendered Caddyfile.",
+        ),
+    ] = Path("Caddyfile"),
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            help="Overwrite the destination if it already exists.",
+        ),
+    ] = False,
 ) -> None:
     """[bold]Export[/bold] the rendered Caddyfile to a local file [dim](no deploy)[/dim]."""
     model: YamlRoot = state.model
@@ -102,7 +114,9 @@ def proxy_deploy() -> None:
     """[bold]Deploy[/bold]: write the Caddyfile to [dim]proxy_location[/dim] and reload Caddy."""
     model: YamlRoot = state.model
     try:
-        runner: Runner = deploy_proxy(model, dry_run=state.dry_run, verbose=state.verbose)
+        runner: Runner = deploy_proxy(
+            model, dry_run=state.dry_run, verbose=state.verbose
+        )
     except ValueError as e:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1)

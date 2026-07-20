@@ -16,7 +16,9 @@ from src.docker.common import _build_multi_inventory
 
 
 def _key_creds(tmp_ssh_key: Path) -> Creds:
-    return Creds.model_validate({"username": "ansible", "ssh_key_path": str(tmp_ssh_key)})
+    return Creds.model_validate(
+        {"username": "ansible", "ssh_key_path": str(tmp_ssh_key)}
+    )
 
 
 def _pass_creds() -> Creds:
@@ -49,7 +51,9 @@ def _result(
 # ── Credential mapping ────────────────────────────────────────────────────────
 
 
-def test_ssh_key_creds_set_key_file_not_password(tmp_ssh_key: Path, tmp_docker_dir: Path) -> None:
+def test_ssh_key_creds_set_key_file_not_password(
+    tmp_ssh_key: Path, tmp_docker_dir: Path
+) -> None:
     creds = _key_creds(tmp_ssh_key)
     inv = _build_multi_inventory([_result(tmp_docker_dir, creds)], creds)
     h = inv["all"]["hosts"]["app_10.0.0.5"]
@@ -78,7 +82,9 @@ def test_ansible_user_comes_from_creds(tmp_docker_dir: Path) -> None:
 
 def test_alias_is_stack_name_and_ip(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
-    inv = _build_multi_inventory([_result(tmp_docker_dir, creds, stack_name="grafana", ip="192.168.1.10")], creds)
+    inv = _build_multi_inventory(
+        [_result(tmp_docker_dir, creds, stack_name="grafana", ip="192.168.1.10")], creds
+    )
     assert "grafana_192.168.1.10" in inv["all"]["hosts"]
 
 
@@ -91,7 +97,8 @@ def test_ansible_host_is_target_ip(tmp_docker_dir: Path) -> None:
 def test_compose_dest_strips_trailing_slash(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
     inv = _build_multi_inventory(
-        [_result(tmp_docker_dir, creds, stack_name="myapp", docker_root="/data/")], creds
+        [_result(tmp_docker_dir, creds, stack_name="myapp", docker_root="/data/")],
+        creds,
     )
     assert inv["all"]["hosts"]["myapp_10.0.0.5"]["compose_dest"] == "/data/myapp"
 
@@ -99,12 +106,16 @@ def test_compose_dest_strips_trailing_slash(tmp_docker_dir: Path) -> None:
 def test_compose_src_is_stack_config_path(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
     inv = _build_multi_inventory([_result(tmp_docker_dir, creds)], creds)
-    assert inv["all"]["hosts"]["app_10.0.0.5"]["compose_src"] == str(tmp_docker_dir.resolve())
+    assert inv["all"]["hosts"]["app_10.0.0.5"]["compose_src"] == str(
+        tmp_docker_dir.resolve()
+    )
 
 
 def test_stack_name_var_is_set(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
-    inv = _build_multi_inventory([_result(tmp_docker_dir, creds, stack_name="prometheus")], creds)
+    inv = _build_multi_inventory(
+        [_result(tmp_docker_dir, creds, stack_name="prometheus")], creds
+    )
     assert inv["all"]["hosts"]["prometheus_10.0.0.5"]["stack_name"] == "prometheus"
 
 

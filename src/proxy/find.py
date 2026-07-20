@@ -8,7 +8,12 @@ from models.input_conf.web_services import WebServices
 from models.proxy.route_result import RouteResult
 
 
-def _collect(ws: WebServices | None, node: Union[Host, VM, LXC], path: list[str], routes: list[RouteResult]) -> None:
+def _collect(
+    ws: WebServices | None,
+    node: Union[Host, VM, LXC],
+    path: list[str],
+    routes: list[RouteResult],
+) -> None:
     """Turn a node's web_services into routes, using the node's own IP as the upstream target."""
     if not ws:
         return
@@ -16,16 +21,20 @@ def _collect(ws: WebServices | None, node: Union[Host, VM, LXC], path: list[str]
         if entry.proxy_name is None:
             # Not routable without a hostname label — skip.
             continue
-        routes.append(RouteResult(
-            proxy_name=entry.proxy_name,
-            target_ip=node.ip,
-            port=entry.port,
-            access=entry.access,
-            path=list(path),
-        ))
+        routes.append(
+            RouteResult(
+                proxy_name=entry.proxy_name,
+                target_ip=node.ip,
+                port=entry.port,
+                access=entry.access,
+                path=list(path),
+            )
+        )
 
 
-def _walk(node: Union[Host, VM, LXC], path: list[str], routes: list[RouteResult]) -> None:
+def _walk(
+    node: Union[Host, VM, LXC], path: list[str], routes: list[RouteResult]
+) -> None:
     """Recursively collect routes from any node that can carry web_services/docker/vm/lxc."""
     _collect(getattr(node, "web_services", None), node, path, routes)
 

@@ -6,8 +6,8 @@ from ipaddress import IPv4Address
 
 @dataclass
 class StackResult:
-    path:        list[str]   # e.g. ["cprox", "home"] or ["lifeboat"]
-    target_ip:   IPv4Address # IP of the node that runs the stack
-    docker_root: str         # docker.root_path on that node
-    stack:       StackEntry
-    creds:       Creds             # resolved creds (node-specific or default)
+    path: list[str]  # e.g. ["cprox", "home"] or ["lifeboat"]
+    target_ip: IPv4Address  # IP of the node that runs the stack
+    docker_root: str  # docker.root_path on that node
+    stack: StackEntry
+    creds: Creds  # resolved creds (node-specific or default)

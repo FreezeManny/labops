@@ -13,7 +13,9 @@ def _model(cfg: dict[str, Any]) -> YamlRoot:
 # ── find_routes ─────────────────────────────────────────────────────────────
 
 
-def test_find_routes_collects_all_web_services(valid_config_dict: dict[str, Any]) -> None:
+def test_find_routes_collects_all_web_services(
+    valid_config_dict: dict[str, Any],
+) -> None:
     routes = find_routes(_model(valid_config_dict))
     by_name = {r.proxy_name: r for r in routes}
     # node-level (lxc, host) + docker-stack-level services are all collected.
@@ -23,7 +25,9 @@ def test_find_routes_collects_all_web_services(valid_config_dict: dict[str, Any]
     assert by_name["app"].port == 9090
 
 
-def test_find_routes_skips_entries_without_proxy_name(valid_config_dict: dict[str, Any]) -> None:
+def test_find_routes_skips_entries_without_proxy_name(
+    valid_config_dict: dict[str, Any],
+) -> None:
     valid_config_dict["hosts"]["edge"]["web_services"].append({"port": 9999})
     names = {r.proxy_name for r in find_routes(_model(valid_config_dict))}
     assert "edge" in names  # the named one survives; the unnamed one is skipped
@@ -35,10 +39,15 @@ def test_find_routes_skips_entries_without_proxy_name(valid_config_dict: dict[st
 def test_render_contains_wildcard_and_tls(valid_config_dict: dict[str, Any]) -> None:
     out = render_caddyfile(_model(valid_config_dict))
     assert "*.example.test {" in out
-    assert "dns spaceship {env.LIBDNS_SPACESHIP_APIKEY} {env.LIBDNS_SPACESHIP_APISECRET}" in out
+    assert (
+        "dns spaceship {env.LIBDNS_SPACESHIP_APIKEY} {env.LIBDNS_SPACESHIP_APISECRET}"
+        in out
+    )
 
 
-def test_render_default_access_is_local_remote_ip(valid_config_dict: dict[str, Any]) -> None:
+def test_render_default_access_is_local_remote_ip(
+    valid_config_dict: dict[str, Any],
+) -> None:
     out = render_caddyfile(_model(valid_config_dict))
     # edge has no explicit access -> default (local) list, matched via remote_ip.
     assert "@edge host edge.example.test" in out
@@ -47,7 +56,9 @@ def test_render_default_access_is_local_remote_ip(valid_config_dict: dict[str, A
 
 
 def test_render_accept_all_list_is_open(valid_config_dict: dict[str, Any]) -> None:
-    valid_config_dict["settings"]["proxy"]["access_lists"]["open"] = {"accept": ["0.0.0.0/0"]}
+    valid_config_dict["settings"]["proxy"]["access_lists"]["open"] = {
+        "accept": ["0.0.0.0/0"]
+    }
     valid_config_dict["hosts"]["nas"]["web_services"][0]["access"] = ["open"]
     out = render_caddyfile(_model(valid_config_dict))
     assert "@nas host nas.example.test" in out
@@ -57,7 +68,9 @@ def test_render_accept_all_list_is_open(valid_config_dict: dict[str, Any]) -> No
     assert "@nas_deny" not in out
 
 
-def test_render_deny_wins_and_precedes_accept(valid_config_dict: dict[str, Any]) -> None:
+def test_render_deny_wins_and_precedes_accept(
+    valid_config_dict: dict[str, Any],
+) -> None:
     valid_config_dict["settings"]["proxy"]["access_lists"]["local"] = {
         "default": True,
         "accept": ["10.0.0.0/24"],
@@ -70,7 +83,9 @@ def test_render_deny_wins_and_precedes_accept(valid_config_dict: dict[str, Any])
 
 
 def test_render_union_of_named_lists(valid_config_dict: dict[str, Any]) -> None:
-    valid_config_dict["settings"]["proxy"]["access_lists"]["vpn"] = {"accept": ["100.64.0.0/10"]}
+    valid_config_dict["settings"]["proxy"]["access_lists"]["vpn"] = {
+        "accept": ["100.64.0.0/10"]
+    }
     valid_config_dict["hosts"]["edge"]["web_services"][0]["access"] = ["local", "vpn"]
     out = render_caddyfile(_model(valid_config_dict))
     assert "@edge_notallowed not remote_ip 10.0.0.0/24 100.64.0.0/10" in out

@@ -11,6 +11,7 @@ from models.input_conf.yaml_root import YamlRoot
 
 # ─── Shared state ─────────────────────────────────────────────────────────────
 
+
 @dataclass
 class AppState:
     config_path: Path | None = None
@@ -27,12 +28,14 @@ class AppState:
     def model(self, value: YamlRoot) -> None:
         self._model = value
 
+
 state = AppState()
 console = Console()
 
 # ─── Config discovery ─────────────────────────────────────────────────────────
 
 CONFIG_NAMES = ["homelab.yml", "homelab.yaml"]
+
 
 def find_config(start: Path = Path.cwd()) -> Path | None:
     for directory in [start, *start.parents]:
@@ -42,12 +45,12 @@ def find_config(start: Path = Path.cwd()) -> Path | None:
                 return candidate
     return None
 
+
 def resolve_config(explicit: str | None) -> Path:
     if explicit:
         p = Path(explicit)
         if not p.is_file():
-            typer.secho(
-                f"✘ Config file not found: {explicit}", fg=typer.colors.RED)
+            typer.secho(f"✘ Config file not found: {explicit}", fg=typer.colors.RED)
             raise typer.Exit(1)
         return p
 
@@ -63,12 +66,17 @@ def resolve_config(explicit: str | None) -> Path:
     )
     raise typer.Exit(1)
 
+
 class ConfigError(Exception):
     """Raised when a config file cannot be loaded or fails validation."""
 
+
 # ─── Run reporting ──────────────────────────────────────────────────────────
 
-def report_run(summary: RunSummary, action: str = "Playbook", kind: str = "host") -> None:
+
+def report_run(
+    summary: RunSummary, action: str = "Playbook", kind: str = "host"
+) -> None:
     """
     Print a playbook outcome, calling out unreachable hosts distinctly from
     task failures so connection problems are obvious. ``kind`` ("host" or
@@ -109,17 +117,27 @@ def report_run(summary: RunSummary, action: str = "Playbook", kind: str = "host"
         # error) instead of leaving the user with only a return code.
         if summary.raw_tail:
             console.print("[dim]Last output from Ansible:[/dim]")
-            console.print(summary.raw_tail, markup=False, highlight=False, soft_wrap=True)
+            console.print(
+                summary.raw_tail, markup=False, highlight=False, soft_wrap=True
+            )
         else:
-            console.print("[yellow]Re-run with -v for the full Ansible output.[/yellow]")
+            console.print(
+                "[yellow]Re-run with -v for the full Ansible output.[/yellow]"
+            )
+
 
 # ─── Shared CLI options ───────────────────────────────────────────────────────
 
-FileOpt = Annotated[Optional[str], typer.Option(
-    "--file", "-f",
-    help=f"Path to homelab config file. Auto-discovered ({CONFIG_NAMES}) if omitted.",
-    show_default=False,
-)]
+FileOpt = Annotated[
+    Optional[str],
+    typer.Option(
+        "--file",
+        "-f",
+        help=f"Path to homelab config file. Auto-discovered ({CONFIG_NAMES}) if omitted.",
+        show_default=False,
+    ),
+]
+
 
 def load_homelab_model(path: Path) -> YamlRoot:
     try:
@@ -129,9 +147,9 @@ def load_homelab_model(path: Path) -> YamlRoot:
 
     model: YamlRoot | None = validate_yaml(raw, str(path))
     if not model:
-        raise ConfigError(
-            f"Validation failed for {path} — check your YAML for errors.")
+        raise ConfigError(f"Validation failed for {path} — check your YAML for errors.")
     return model
+
 
 def resolve_targets(
     model: YamlRoot,
@@ -145,7 +163,8 @@ def resolve_targets(
         results = finder(model, [target])
         if not results:
             typer.secho(
-                f"✘ {label.capitalize()} '{target}' not found.", fg=typer.colors.RED)
+                f"✘ {label.capitalize()} '{target}' not found.", fg=typer.colors.RED
+            )
             raise typer.Exit(1)
         return results
     if all_flag:
@@ -154,6 +173,5 @@ def resolve_targets(
             typer.secho(f"✘ No {label}s found in config.", fg=typer.colors.RED)
             raise typer.Exit(1)
         return results
-    typer.secho(
-        f"✘ Provide a {label} name/IP, or pass --all.", fg=typer.colors.RED)
+    typer.secho(f"✘ Provide a {label} name/IP, or pass --all.", fg=typer.colors.RED)
     raise typer.Exit(1)

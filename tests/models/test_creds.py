@@ -33,7 +33,9 @@ def test_neither_passwd_nor_key_rejected() -> None:
         Creds.model_validate({"username": "u"})
 
 
-def test_expand_tilde_resolves_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_expand_tilde_resolves_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # Point $HOME at a temp dir holding the key, then reference it via "~".
     monkeypatch.setenv("HOME", str(tmp_path))
     (tmp_path / "key").write_text("FAKE KEY")

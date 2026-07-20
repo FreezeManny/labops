@@ -8,9 +8,14 @@ from models.input_conf.custom_types import UNMANAGED_OS
 from src.utils.ansible_runner import run_playbook, summarize_run
 from src.cli.core import report_run
 
-def setup(host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool = False) -> None:
+
+def setup(
+    host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool = False
+) -> None:
     if host.os == UNMANAGED_OS:
-        print(f"Skipping unmanaged node: {host.name or host.ip} (cannot be provisioned).")
+        print(
+            f"Skipping unmanaged node: {host.name or host.ip} (cannot be provisioned)."
+        )
         return
 
     creds: Creds = host.creds or default_creds
@@ -29,9 +34,10 @@ def setup(host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool
 
     # Prompt the user interactively in the terminal for the initial user setup
     print(f"\n--- Initial Setup for {host.ip} ---")
-    print(f"NOTE: Enter the existing admin user on the machine (NOT the target user '{creds.username}' which will be created).")
-    initial_user: str = input(
-        f"Enter initial setup username: ").strip()
+    print(
+        f"NOTE: Enter the existing admin user on the machine (NOT the target user '{creds.username}' which will be created)."
+    )
+    initial_user: str = input(f"Enter initial setup username: ").strip()
     if not initial_user:
         print("Initial username cannot be blank.")
         return
@@ -42,11 +48,14 @@ def setup(host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool
     }
 
     initial_password = ""
-    use_password = input("Use password authentication for initial login? [y/N]: ").strip().lower()
+    use_password = (
+        input("Use password authentication for initial login? [y/N]: ").strip().lower()
+    )
     if use_password == "y":
         while not initial_password:
             initial_password = getpass.getpass(
-                f"Enter SSH password for {initial_user}@{host.ip}: ")
+                f"Enter SSH password for {initial_user}@{host.ip}: "
+            )
             if not initial_password:
                 print("Password cannot be blank. Please provide a password.")
         host_vars["ansible_password"] = initial_password
@@ -65,13 +74,7 @@ def setup(host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool
 
     inventory = {
         "all": {
-            "children": {
-                f"{host.os}_servers": {
-                    "hosts": {
-                        str(host.ip): host_vars
-                    }
-                }
-            }
+            "children": {f"{host.os}_servers": {"hosts": {str(host.ip): host_vars}}}
         }
     }
 
@@ -87,7 +90,7 @@ def setup(host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool
         inventory=inventory,
         extravars=extravars,
         dry_run=dry_run,
-        verbose=verbose
+        verbose=verbose,
     )
 
     report_run(summarize_run(r), action="Host setup")

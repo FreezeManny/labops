@@ -10,6 +10,7 @@ from .host import Host
 from .settings import Settings
 from .custom_types import StrictModel
 
+
 class YamlRoot(StrictModel):
     settings: Settings
     hosts: Optional[Dict[str, Host]] = None
@@ -29,10 +30,12 @@ class YamlRoot(StrictModel):
 
         def check_ips(node: object) -> None:
             # Check for an 'ip' attribute of type IPv4Address
-            ip : IPv4Address | None = getattr(node, "ip", None)
+            ip: IPv4Address | None = getattr(node, "ip", None)
             if isinstance(ip, IPv4Address):
                 if ip in all_ips:
-                    errors.append(f"Duplicate IP address found across configuration: '{ip}'")
+                    errors.append(
+                        f"Duplicate IP address found across configuration: '{ip}'"
+                    )
                 else:
                     all_ips.add(ip)
             # Check for lxc and vm attributes that are dict-like
@@ -69,14 +72,18 @@ class YamlRoot(StrictModel):
                 if host.lxc:
                     for lxc_name in host.lxc.keys():
                         if lxc_name in all_names:
-                            errors.append(f"Duplicate name found across configuration: '{lxc_name}'")
+                            errors.append(
+                                f"Duplicate name found across configuration: '{lxc_name}'"
+                            )
                         else:
                             all_names.add(lxc_name)
 
                 if host.vm:
                     for vm_name in host.vm.keys():
                         if vm_name in all_names:
-                            errors.append(f"Duplicate name found across configuration: '{vm_name}'")
+                            errors.append(
+                                f"Duplicate name found across configuration: '{vm_name}'"
+                            )
                         else:
                             all_names.add(vm_name)
 
@@ -97,7 +104,9 @@ class YamlRoot(StrictModel):
                     proxy_name: str | None = getattr(ws, "proxy_name", None)
                     if proxy_name:
                         if proxy_name in all_proxy_names:
-                            errors.append(f"Duplicate proxy_name found across configuration: '{proxy_name}'")
+                            errors.append(
+                                f"Duplicate proxy_name found across configuration: '{proxy_name}'"
+                            )
                         else:
                             all_proxy_names.add(proxy_name)
             docker: Docker | None = getattr(node, "docker", None)
@@ -110,7 +119,9 @@ class YamlRoot(StrictModel):
                             proxy_name = getattr(ws, "proxy_name", None)
                             if proxy_name:
                                 if proxy_name in all_proxy_names:
-                                    errors.append(f"Duplicate proxy_name found across configuration: '{proxy_name}'")
+                                    errors.append(
+                                        f"Duplicate proxy_name found across configuration: '{proxy_name}'"
+                                    )
                                 else:
                                     all_proxy_names.add(proxy_name)
             lxc: LXC | None = getattr(node, "lxc", None)
@@ -140,7 +151,9 @@ class YamlRoot(StrictModel):
           settings.proxy.access_lists.
         """
         errors: list[str] = []
-        known_lists: set[str] = set(self.settings.proxy.access_lists) if self.settings.proxy else set()
+        known_lists: set[str] = (
+            set(self.settings.proxy.access_lists) if self.settings.proxy else set()
+        )
         has_web_services = False
 
         def check_access(node: object) -> None:

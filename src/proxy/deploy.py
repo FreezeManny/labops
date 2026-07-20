@@ -45,11 +45,15 @@ def _run(playbook: str, config: YamlRoot, dry_run: bool, verbose: bool) -> Runne
     )
 
 
-def sync_proxy(config: YamlRoot, dry_run: bool = False, verbose: bool = False) -> Runner:
+def sync_proxy(
+    config: YamlRoot, dry_run: bool = False, verbose: bool = False
+) -> Runner:
     """Render + write the Caddyfile to the proxy host, without reloading Caddy."""
     return _run("proxy/sync.yml", config, dry_run, verbose)
 
 
-def deploy_proxy(config: YamlRoot, dry_run: bool = False, verbose: bool = False) -> Runner:
+def deploy_proxy(
+    config: YamlRoot, dry_run: bool = False, verbose: bool = False
+) -> Runner:
     """Render + write the Caddyfile, then reload Caddy (caddy reload, init-agnostic)."""
     return _run("proxy/deploy.yml", config, dry_run, verbose)

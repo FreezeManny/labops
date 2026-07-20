@@ -22,5 +22,7 @@ def forbid_management_fields_when_unmanaged(obj: T) -> T:
     if getattr(obj, "os", None) == UNMANAGED_OS:
         for field in _MANAGEMENT_FIELDS:
             if getattr(obj, field, None) is not None:
-                raise ValueError(f"Field '{field}' is not allowed when os is 'unmanaged'")
+                raise ValueError(
+                    f"Field '{field}' is not allowed when os is 'unmanaged'"
+                )
     return obj

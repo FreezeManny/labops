@@ -3,6 +3,7 @@ from typing import Optional, Dict, List, Generator
 
 from .custom_types import StrictModel
 
+
 class WebService(StrictModel):
     port: int
     proxy_name: Optional[str] = None
@@ -13,6 +14,7 @@ class WebService(StrictModel):
     def _normalize_access_to_list(cls, v: object) -> object:
         # Allow a bare string (`access: vpn`) as shorthand for a single-item list.
         return [v] if isinstance(v, str) else v
+
 
 class WebServices(RootModel):
     root: List[WebService]

@@ -45,9 +45,9 @@ def test_duplicate_ip_across_nested_vm(valid_config_dict: dict[str, Any]) -> Non
 
 def test_duplicate_name_host_vs_lxc(valid_config_dict: dict[str, Any]) -> None:
     # Rename the lxc to collide with a host key.
-    valid_config_dict["hosts"]["prox"]["lxc"]["edge"] = (
-        valid_config_dict["hosts"]["prox"]["lxc"].pop("ct1")
-    )
+    valid_config_dict["hosts"]["prox"]["lxc"]["edge"] = valid_config_dict["hosts"][
+        "prox"
+    ]["lxc"].pop("ct1")
     with pytest.raises(ValidationError, match="Duplicate name"):
         YamlRoot.model_validate(valid_config_dict)
 
@@ -94,7 +94,9 @@ def test_unmanaged_os_vm_in_tree_validates(valid_config_dict: dict[str, Any]) ->
     assert haos.name == "haos"
 
 
-def test_unmanaged_os_node_ip_collision_rejected(valid_config_dict: dict[str, Any]) -> None:
+def test_unmanaged_os_node_ip_collision_rejected(
+    valid_config_dict: dict[str, Any],
+) -> None:
     # Collide the unmanaged VM's IP with the bare-metal host edge (10.0.0.4).
     valid_config_dict["hosts"]["prox"]["vm"]["haos"] = {
         "os": "unmanaged",

@@ -20,6 +20,7 @@ def run_stacks_playbook(
         verbose=verbose,
     )
 
+
 def _build_multi_inventory(results: list[StackResult], default_creds: Creds) -> dict:
     """Build an inventory with one aliased entry per stack, carrying per-host vars."""
     hosts: dict = {}

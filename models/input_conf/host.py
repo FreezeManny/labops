@@ -11,6 +11,7 @@ from .custom_types import HostType, OSType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 from .common_validators.managed import forbid_management_fields_when_unmanaged
 
+
 class Host(StrictModel):
     name: str = ""
     type: HostType = "bare-metal"
@@ -70,5 +71,5 @@ class Host(StrictModel):
         if self.vm:
             for k, v in self.vm.items():
                 v.name = k
-                
+
         return self

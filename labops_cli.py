@@ -3,7 +3,14 @@ from models.input_conf.yaml_root import YamlRoot
 import typer
 from rich.console import Console
 
-from src.cli.core import state, console, FileOpt, resolve_config, load_homelab_model, ConfigError
+from src.cli.core import (
+    state,
+    console,
+    FileOpt,
+    resolve_config,
+    load_homelab_model,
+    ConfigError,
+)
 from src.cli.host import app as host_app
 from src.cli.vm import app as vm_app
 from src.cli.lxc import app as lxc_app
@@ -23,12 +30,17 @@ app = typer.Typer(
 
 COMMANDS_WITHOUT_CONFIG = set()
 
+
 @app.callback()
 def root_callback(
     ctx: typer.Context,
     file: FileOpt = None,
-    dry_run: bool = typer.Option(False, "--dry-run", help="Simulate execution without making changes."),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose logging in Ansible."),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Simulate execution without making changes."
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging in Ansible."
+    ),
 ) -> None:
     """
     Global options — applied to every sub-command.
@@ -47,6 +59,7 @@ def root_callback(
         typer.secho(f"✘ {e}", fg=typer.colors.RED)
         raise typer.Exit(1)
 
+
 # ------------- Apps -----------------
 app.add_typer(validate_app, name="validate")
 app.add_typer(host_app, name="host")
@@ -56,8 +69,10 @@ app.add_typer(docker_app, name="docker")
 app.add_typer(proxy_app, name="proxy")
 # ------------- Entry -----------------
 
+
 def main() -> None:
     app()
+
 
 if __name__ == "__main__":
     main()

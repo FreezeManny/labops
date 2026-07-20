@@ -51,7 +51,9 @@ def test_settings_rejects_unknown_field(tmp_ssh_key: Path) -> None:
 
 
 def test_dns_valid() -> None:
-    dns = Dns.model_validate({"local_dns_suffix": "home.local", "pihole_location": "10.0.0.53"})
+    dns = Dns.model_validate(
+        {"local_dns_suffix": "home.local", "pihole_location": "10.0.0.53"}
+    )
     assert dns.local_dns_suffix == "home.local"
 
 
@@ -67,7 +69,9 @@ def test_dns_requires_pihole_location() -> None:
 
 def test_dns_rejects_invalid_ip() -> None:
     with pytest.raises(ValidationError):
-        Dns.model_validate({"local_dns_suffix": "home.local", "pihole_location": "not-an-ip"})
+        Dns.model_validate(
+            {"local_dns_suffix": "home.local", "pihole_location": "not-an-ip"}
+        )
 
 
 # ── Proxy ─────────────────────────────────────────────────────────────────────
@@ -110,25 +114,35 @@ def test_proxy_rejects_invalid_ip() -> None:
 
 def test_proxy_requires_access_lists() -> None:
     with pytest.raises(ValidationError, match="access_lists"):
-        Proxy.model_validate({"proxy_suffix": "home.arpa", "proxy_location": "10.0.0.80"})
+        Proxy.model_validate(
+            {"proxy_suffix": "home.arpa", "proxy_location": "10.0.0.80"}
+        )
 
 
 def test_proxy_requires_a_default_list() -> None:
     with pytest.raises(ValidationError, match="exactly one list as 'default: true'"):
-        Proxy.model_validate(_proxy(access_lists={"vpn": {"accept": ["100.64.0.0/10"]}}))
+        Proxy.model_validate(
+            _proxy(access_lists={"vpn": {"accept": ["100.64.0.0/10"]}})
+        )
 
 
 def test_proxy_rejects_multiple_defaults() -> None:
     with pytest.raises(ValidationError, match="only one access list may be 'default"):
-        Proxy.model_validate(_proxy(access_lists={
-            "a": {"default": True, "accept": ["10.0.0.0/24"]},
-            "b": {"default": True, "accept": ["10.0.1.0/24"]},
-        }))
+        Proxy.model_validate(
+            _proxy(
+                access_lists={
+                    "a": {"default": True, "accept": ["10.0.0.0/24"]},
+                    "b": {"default": True, "accept": ["10.0.1.0/24"]},
+                }
+            )
+        )
 
 
 def test_proxy_rejects_bad_cidr() -> None:
     with pytest.raises(ValidationError):
-        Proxy.model_validate(_proxy(access_lists={"local": {"default": True, "accept": ["not-a-cidr"]}}))
+        Proxy.model_validate(
+            _proxy(access_lists={"local": {"default": True, "accept": ["not-a-cidr"]}})
+        )
 
 
 # ── AccessList ──────────────────────────────────────────────────────────────
@@ -140,7 +154,9 @@ def test_access_list_accept_only() -> None:
 
 
 def test_access_list_accept_with_deny_carveout() -> None:
-    al = AccessList.model_validate({"accept": ["10.0.0.0/24"], "deny": ["10.0.0.66/32"]})
+    al = AccessList.model_validate(
+        {"accept": ["10.0.0.0/24"], "deny": ["10.0.0.66/32"]}
+    )
     assert al.accept is not None and al.deny is not None
 
 

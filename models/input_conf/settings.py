@@ -7,6 +7,7 @@ from pydantic import IPvAnyNetwork
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import StrictModel
 
+
 class Dns(StrictModel):
     local_dns_suffix: str
     pihole_location: IPv4Address
@@ -32,7 +33,9 @@ class Proxy(StrictModel):
 
     @model_validator(mode="after")
     def validate_access_lists(self) -> "Proxy":
-        defaults: list[str] = [name for name, al in self.access_lists.items() if al.default]
+        defaults: list[str] = [
+            name for name, al in self.access_lists.items() if al.default
+        ]
         if len(defaults) == 0:
             raise ValueError(
                 "settings.proxy.access_lists must mark exactly one list as 'default: true' "
@@ -40,7 +43,8 @@ class Proxy(StrictModel):
             )
         if len(defaults) > 1:
             raise ValueError(
-                "only one access list may be 'default: true'; found: " + ", ".join(defaults)
+                "only one access list may be 'default: true'; found: "
+                + ", ".join(defaults)
             )
         return self
 

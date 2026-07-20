@@ -9,7 +9,9 @@ from models.proxy.route_result import RouteResult
 from src.proxy.find import find_routes
 
 # Repo layout: <root>/src/proxy/render.py -> <root>
-_project_root: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_project_root: str = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..")
+)
 _TEMPLATE_DIR: str = os.path.join(_project_root, "ansible", "files", "proxy")
 _TEMPLATE_NAME = "Caddyfile.j2"
 
@@ -25,7 +27,9 @@ def _dedup(nets: list) -> list[str]:
     return out
 
 
-def _resolve_acl(route: RouteResult, proxy: Proxy) -> tuple[Optional[list[str]], Optional[list[str]]]:
+def _resolve_acl(
+    route: RouteResult, proxy: Proxy
+) -> tuple[Optional[list[str]], Optional[list[str]]]:
     """
     Resolve a route's access to (accept_cidrs, deny_cidrs), unioning the referenced
     lists. Unset access falls back to the default list. Empty -> None (no rule).
@@ -40,7 +44,9 @@ def _resolve_acl(route: RouteResult, proxy: Proxy) -> tuple[Optional[list[str]],
     return (_dedup(accept) or None, _dedup(deny) or None)
 
 
-def _render_context(config: YamlRoot, routes: Optional[list[RouteResult]] = None) -> dict:
+def _render_context(
+    config: YamlRoot, routes: Optional[list[RouteResult]] = None
+) -> dict:
     proxy = config.settings.proxy
     if proxy is None:
         raise ValueError("settings.proxy is not configured; cannot render a Caddyfile.")
@@ -50,20 +56,24 @@ def _render_context(config: YamlRoot, routes: Optional[list[RouteResult]] = None
     rendered_routes = []
     for r in routes:
         accept, deny = _resolve_acl(r, proxy)
-        rendered_routes.append({
-            "name": r.proxy_name,
-            "host": f"{r.proxy_name}{proxy.proxy_suffix}",
-            "target": f"{r.target_ip}:{r.port}",
-            "accept": accept,
-            "deny": deny,
-        })
+        rendered_routes.append(
+            {
+                "name": r.proxy_name,
+                "host": f"{r.proxy_name}{proxy.proxy_suffix}",
+                "target": f"{r.target_ip}:{r.port}",
+                "accept": accept,
+                "deny": deny,
+            }
+        )
     return {
         "proxy_suffix": proxy.proxy_suffix,
         "routes": rendered_routes,
     }
 
 
-def render_caddyfile(config: YamlRoot, routes: Optional[list[RouteResult]] = None) -> str:
+def render_caddyfile(
+    config: YamlRoot, routes: Optional[list[RouteResult]] = None
+) -> str:
     """Render the full Caddyfile from the config's web_services + settings.proxy."""
     env = Environment(
         loader=FileSystemLoader(_TEMPLATE_DIR),

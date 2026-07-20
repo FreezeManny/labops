@@ -10,6 +10,7 @@ from .custom_types import OSType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 from .common_validators.managed import forbid_management_fields_when_unmanaged
 
+
 class LXC(StrictModel):
     name: str = ""
     ip: IPv4Address
@@ -26,5 +27,6 @@ class LXC(StrictModel):
     @model_validator(mode="after")
     def validate_ws_ports(self) -> "LXC":
         return check_duplicate_ws_ports(self)
+
 
 LXCs = Dict[str, LXC]

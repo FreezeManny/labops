@@ -54,7 +54,11 @@ def test_duplicate_port_across_web_services_and_docker_stack_rejected(
 
 def test_unique_ports_accepted() -> None:
     node = Host.model_validate(
-        {"os": "debian", "ip": "10.0.0.5", "web_services": [{"port": 80}, {"port": 443}]}
+        {
+            "os": "debian",
+            "ip": "10.0.0.5",
+            "web_services": [{"port": 80}, {"port": 443}],
+        }
     )
     assert node.web_services is not None
     assert [w.port for w in node.web_services.root] == [80, 443]
