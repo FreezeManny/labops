@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Annotated
+
 import typer
 from rich.table import Table
 from ansible_runner import Runner
@@ -47,6 +50,36 @@ def proxy_render() -> None:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1)
     console.print(caddyfile, markup=False, highlight=False, soft_wrap=True)
+
+
+@app.command(name="export")
+def proxy_export(
+    output: Annotated[Path, typer.Argument(
+        help="Destination path for the rendered Caddyfile.",
+    )] = Path("Caddyfile"),
+    force: Annotated[bool, typer.Option(
+        "--force",
+        help="Overwrite the destination if it already exists.",
+    )] = False,
+) -> None:
+    """[bold]Export[/bold] the rendered Caddyfile to a local file [dim](no deploy)[/dim]."""
+    model: YamlRoot = state.model
+    if output.exists() and not force:
+        console.print(
+            f"[red]Error:[/red] {output} already exists. Pass [bold]--force[/bold] to overwrite."
+        )
+        raise typer.Exit(1)
+    try:
+        caddyfile: str = render_caddyfile(model)
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+    try:
+        output.write_text(caddyfile)
+    except OSError as e:
+        console.print(f"[red]Error:[/red] could not write {output}: {e}")
+        raise typer.Exit(1)
+    console.print(f"[green]Caddyfile exported to[/green] {output}")
 
 
 @app.command(name="sync")
