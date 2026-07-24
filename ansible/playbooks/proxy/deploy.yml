@@ -1,18 +1,10 @@
 ---
-# Sync the rendered Caddyfile, then reload Caddy so the new config takes effect.
-# Uses Caddy's own `caddy reload` (via the admin API), which is init-system
-# agnostic — works on systemd, OpenRC/Alpine, or a bare binary alike. Requires
-# the caddy binary in PATH and its admin API reachable on the proxy host.
+# Sync the rendered Caddyfile, then reload Caddy — but only if the file actually
+# changed (reload.yml keys off the `caddyfile_write` register from sync.yml). So
+# a deploy that changes nothing writes nothing and reloads nothing.
 
 - name: Sync the Caddyfile
   ansible.builtin.import_playbook: sync.yml
 
-- name: Reload Caddy
-  hosts: all
-  gather_facts: false
-  tasks:
-    - name: Reload Caddy to apply the new config
-      ansible.builtin.command:
-        cmd: "caddy reload --config {{ caddyfile_dest }} --adapter caddyfile"
-      become: true
-      changed_when: true
+- name: Reload Caddy if the Caddyfile changed
+  ansible.builtin.import_playbook: reload.yml

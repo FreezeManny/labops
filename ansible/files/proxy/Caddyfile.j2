@@ -2,12 +2,25 @@
 # Generated from homelab.yml web_services + settings.proxy.
 #
 # labops only renders and places this file. The Caddy instance itself — its
-# image, the spaceship DNS plugin, the LIBDNS_SPACESHIP_* env vars, and reloads
-# — is managed outside labops.
+# image, the DNS provider plugin, any {env.*} vars referenced below, and
+# reloads — is managed outside labops.
 
+{% if tls_lines %}
 *{{ proxy_suffix }} {
 	tls {
-		dns spaceship {env.LIBDNS_SPACESHIP_APIKEY} {env.LIBDNS_SPACESHIP_APISECRET}
+{% for line in tls_lines %}
+		{{ line }}
+{% endfor %}
+	}
+
+{% else %}
+http://*{{ proxy_suffix }} {
+{% endif %}
+	# Access log to stdout (view via `docker logs caddy`). Logs every request,
+	# including the 403s from the access-list matchers below — so denied clients
+	# and their remote_ip are visible, not just reverse_proxy errors.
+	log {
+		output stdout
 	}
 
 {% for r in routes %}

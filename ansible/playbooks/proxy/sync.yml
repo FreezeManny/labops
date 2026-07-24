@@ -1,11 +1,11 @@
 ---
-# Write the labops-rendered Caddyfile to the proxy host, without reloading Caddy.
+# Write the labops-rendered Caddyfile to the target host, without reloading.
 # The Caddy instance itself (image, plugins, secrets, runtime) is managed
 # outside labops — labops only owns the config file.
 #
-# Required extra vars:
-#   caddyfile_content – the rendered Caddyfile (passed as content)
-#   caddyfile_dest    – remote path to write it to (settings.proxy.caddyfile_path_remote)
+# Required extra vars (set by src/proxy/deploy.py):
+#   caddyfile_content – the rendered Caddyfile (written as content)
+#   caddyfile_dest    – remote path to write it to (settings.proxy.deploy.caddyfile_dest)
 
 - name: Sync the rendered Caddyfile
   hosts: all
@@ -24,3 +24,5 @@
         dest: "{{ caddyfile_dest }}"
         mode: "0644"
       become: true
+      # Registered so deploy.yml can reload Caddy only when the file changed.
+      register: caddyfile_write

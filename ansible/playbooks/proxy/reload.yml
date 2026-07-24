@@ -1,0 +1,49 @@
+---
+# Reload Caddy so it picks up its current on-disk config. Caddyfile-based
+# (`caddy reload --adapter caddyfile`) so it works with whatever plugins the
+# build ships and never touches the JSON admin API.
+#
+# The reload path is chosen by `caddy_mode` (set by src/proxy/deploy.py):
+#   host   – `caddy` in PATH on the target (init-agnostic: systemd/OpenRC/binary)
+#   docker – `docker exec <caddy_container> caddy reload` against the in-container
+#            config path (`caddy_container_config`)
+# If `caddy_reload_command` is set it runs verbatim instead, overriding both.
+#
+# `caddyfile_write` is registered by sync.yml: when this play runs after a sync
+# (via deploy.yml) the reload only fires if the file actually changed. Run on its
+# own (`proxy reload`) the var is undefined, so it always reloads.
+
+- name: Reload Caddy
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Reload Caddy with the override command
+      ansible.builtin.command:
+        cmd: "{{ caddy_reload_command }}"
+      become: true
+      changed_when: true
+      when:
+        - caddy_reload_command is defined
+        - caddyfile_write.changed | default(true)
+
+    - name: Reload Caddy on the host
+      ansible.builtin.command:
+        cmd: "caddy reload --config {{ caddyfile_dest }} --adapter caddyfile"
+      become: true
+      changed_when: true
+      when:
+        - caddy_reload_command is not defined
+        - caddy_mode == "host"
+        - caddyfile_write.changed | default(true)
+
+    - name: Reload Caddy in the container
+      ansible.builtin.command:
+        cmd: >-
+          docker exec {{ caddy_container }}
+          caddy reload --config {{ caddy_container_config }} --adapter caddyfile
+      become: true
+      changed_when: true
+      when:
+        - caddy_reload_command is not defined
+        - caddy_mode == "docker"
+        - caddyfile_write.changed | default(true)
