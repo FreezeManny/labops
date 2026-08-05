@@ -13,30 +13,18 @@ playbook_root: str = os.path.join(project_root, "ansible", "playbooks")
 # spinner without the two fighting over the terminal.
 _console = Console()
 
-# Events whose rendered stdout we mirror to the console. Everything else
-# (warnings, the verbose failure/unreachable dumps and the ansible-core error
-# framework's multi-line "Origin:" source snippets) is dropped here and instead
-# reported compactly — inline while running, then summarized by report_run.
-_ECHO_EVENTS = frozenset({
-    "playbook_on_play_start",
-    "playbook_on_task_start",
-    "playbook_on_no_hosts_matched",  # "skipping: no hosts matched" — so empty plays aren't bare headers
-    "runner_on_ok",
-    "runner_on_skipped",
-    "runner_item_on_ok",
-    "runner_item_on_skipped",
-    "playbook_on_stats",
-})
-
 
 @dataclass
 class RunSummary:
     """Outcome of a playbook run, separating connection failures from task failures."""
+
     rc: int
-    unreachable: dict[str, str] = field(default_factory=dict)  # host -> connection error message
-    failed: dict[str, str] = field(default_factory=dict)       # host -> task failure message
-    ok: list[str] = field(default_factory=list)                # hosts that succeeded
-    raw_tail: str = ""                                          # tail of raw output for un-attributed failures
+    unreachable: dict[str, str] = field(
+        default_factory=dict
+    )  # host -> connection error message
+    failed: dict[str, str] = field(default_factory=dict)  # host -> task failure message
+    ok: list[str] = field(default_factory=list)  # hosts that succeeded
+    raw_tail: str = ""  # tail of raw output for un-attributed failures
 
     @property
     def has_unreachable(self) -> bool:
@@ -99,7 +87,9 @@ def clean_failure_message(msg: str, kind: str = "host") -> str:
     """
     m = (msg or "").lower()
     # pct exec into a stopped/missing container surfaces as a temp-dir / rc 255 error.
-    if kind == "lxc" and ("failed to create temporary directory" in m or "result 255" in m):
+    if kind == "lxc" and (
+        "failed to create temporary directory" in m or "result 255" in m
+    ):
         return "Container not reachable — is the LXC running? (pct exec failed; start it in Proxmox)"
     if "no route to host" in m or "network is unreachable" in m:
         return "No route to host — is it powered on and on the network?"
@@ -109,8 +99,12 @@ def clean_failure_message(msg: str, kind: str = "host") -> str:
         return "Connection timed out — host unreachable."
     if "name or service not known" in m:
         return "Host name could not be resolved."
-    if ("permission denied" in m or "authentication" in m
-            or "unable to authenticate" in m or "invalid/incorrect username/password" in m):
+    if (
+        "permission denied" in m
+        or "authentication" in m
+        or "unable to authenticate" in m
+        or "invalid/incorrect username/password" in m
+    ):
         return "Authentication failed — check credentials/SSH key."
     if "failed to create temporary directory" in m or "result 255" in m:
         return "SSH connection failed — host may be powered off."
@@ -141,7 +135,9 @@ def summarize_run(runner: Runner, kind: str = "host") -> RunSummary:
 
     # Reclassify connection failures ('failed' but really a dead SSH / stopped
     # container) as unreachable so the same real cause reports consistently.
-    reclassified = {h for h in failed_hosts if is_connection_failure(messages.get(h, ""))}
+    reclassified = {
+        h for h in failed_hosts if is_connection_failure(messages.get(h, ""))
+    }
     unreachable_hosts = dark_hosts | reclassified
     failed_hosts -= reclassified
 
@@ -149,48 +145,88 @@ def summarize_run(runner: Runner, kind: str = "host") -> RunSummary:
     # or outside task execution (bad playbook path, syntax/inventory error). Those
     # emit no host events, so capture the raw tail to give report_run something to show.
     rc = runner.rc or 0
-    raw_tail = _read_stdout_tail(runner) if rc != 0 and not unreachable_hosts and not failed_hosts else ""
+    raw_tail = (
+        _read_stdout_tail(runner)
+        if rc != 0 and not unreachable_hosts and not failed_hosts
+        else ""
+    )
 
     return RunSummary(
         rc=rc,
-        unreachable={h: clean_failure_message(messages.get(h, "unreachable"), kind) for h in sorted(unreachable_hosts)},
-        failed={h: clean_failure_message(messages.get(h, "task failed"), kind) for h in sorted(failed_hosts)},
+        unreachable={
+            h: clean_failure_message(messages.get(h, "unreachable"), kind)
+            for h in sorted(unreachable_hosts)
+        },
+        failed={
+            h: clean_failure_message(messages.get(h, "task failed"), kind)
+            for h in sorted(failed_hosts)
+        },
         ok=list((stats.get("ok") or {}).keys()),
         raw_tail=raw_tail,
     )
 
+
 def _clean_event_handler(event: dict) -> bool:
     """
-    Mirror only the useful parts of an Ansible run to the console.
+    Render a compact view of an Ansible run, built entirely from event data.
 
-    Progress events (play/task headers, ok/skipped results, the final recap)
-    are echoed verbatim; unreachable/failed hosts get a single terse line
-    instead of the full JSON result and multi-line source traceback. The run
-    itself is executed with ``quiet=True`` so nothing prints unless we do it
-    here. Always returns True so runner keeps processing events.
+    labops never echoes Ansible's own stdout — it prints one short line per play,
+    task and host result itself, so the output is identical regardless of how
+    ansible-core formats results (a newer core embeds whole module transcripts in
+    its stdout, which is what used to flood the console). The final outcome is
+    summarized separately by report_run. The run uses ``quiet=True`` so nothing
+    prints unless we do it here. Always returns True.
     """
     etype = event.get("event")
+    data = event.get("event_data") or {}
+
+    if etype == "playbook_on_play_start":
+        _console.print(
+            f"\n[bold blue]PLAY[/bold blue] {escape(str(data.get('play', '')))}"
+        )
+        return True
+
+    if etype == "playbook_on_task_start":
+        _console.print(f"[bold]TASK[/bold] {escape(str(data.get('task', '')))}")
+        return True
+
+    if etype == "playbook_on_no_hosts_matched":
+        _console.print("[dim]  no matching hosts[/dim]")
+        return True
 
     if etype in ("runner_on_unreachable", "runner_on_failed", "runner_item_on_failed"):
-        data = event.get("event_data") or {}
         host = data.get("host", "?")
         msg = (data.get("res") or {}).get("msg", "")
         # Match summarize_run: SSH-level failures read as 'unreachable', not 'failed'.
-        label = "unreachable" if etype == "runner_on_unreachable" or is_connection_failure(msg) else "failed"
+        label = (
+            "unreachable"
+            if etype == "runner_on_unreachable" or is_connection_failure(msg)
+            else "failed"
+        )
         _console.print(f"[red]{label}: \\[{escape(host)}][/red]")
         return True
 
-    if etype in _ECHO_EVENTS:
-        stdout = event.get("stdout")
-        if stdout:
-            # markup/highlight off + soft_wrap so ansible's own formatting
-            # (brackets, the aligned PLAY RECAP) is printed exactly as-is.
-            _console.print(stdout, markup=False, highlight=False, soft_wrap=True)
+    if etype in ("runner_on_ok", "runner_item_on_ok"):
+        host = data.get("host", "?")
+        changed = bool((data.get("res") or {}).get("changed"))
+        label, color = ("changed", "yellow") if changed else ("ok", "green")
+        _console.print(f"[{color}]{label}: \\[{escape(host)}][/{color}]")
+        return True
+
+    if etype in ("runner_on_skipped", "runner_item_on_skipped"):
+        _console.print(f"[dim]skipping: \\[{escape(data.get('host', '?'))}][/dim]")
+        return True
 
     return True
 
 
-def run_playbook(playbook: str, inventory: dict, extravars: Optional[dict] = None, dry_run: bool = False, verbose: bool = False) -> Runner:
+def run_playbook(
+    playbook: str,
+    inventory: dict,
+    extravars: Optional[dict] = None,
+    dry_run: bool = False,
+    verbose: bool = False,
+) -> Runner:
     """
     Wrapper for ansible_runner.run with standard application settings.
     """

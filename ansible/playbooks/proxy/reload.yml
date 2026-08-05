@@ -1,0 +1,25 @@
+---
+# Reload Caddy so it picks up its current on-disk config. Caddyfile-based
+# (`caddy reload --adapter caddyfile`) so it works with whatever plugins the
+# build ships and never touches the JSON admin API.
+#
+# The command itself is built by src/proxy/deploy.py:_reload_command and arrives
+# as `caddy_reload_command` — host mode runs `caddy` from the target's PATH,
+# docker mode wraps it in `docker exec`, and settings.proxy.deploy.reload_command
+# overrides both. Keeping that choice in Python leaves one task here, and makes
+# the mode → command mapping unit-testable.
+#
+# `caddyfile_write` is registered by sync.yml: when this play runs after a sync
+# (via deploy.yml) the reload only fires if the file actually changed. Run on its
+# own (`proxy reload`) the var is undefined, so it always reloads.
+
+- name: Reload Caddy
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Reload Caddy
+      ansible.builtin.command:
+        cmd: "{{ caddy_reload_command }}"
+      become: true
+      changed_when: true
+      when: caddyfile_write.changed | default(true)

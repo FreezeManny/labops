@@ -41,7 +41,9 @@ def test_unmanaged_os_without_management_fields_passes() -> None:
 @pytest.mark.parametrize("field", ["docker", "lxc", "vm"])
 def test_unmanaged_os_rejects_management_field(field: str) -> None:
     node = _node("unmanaged", **{field: {"x": 1}})
-    with pytest.raises(ValueError, match=f"'{field}' is not allowed when os is 'unmanaged'"):
+    with pytest.raises(
+        ValueError, match=f"'{field}' is not allowed when os is 'unmanaged'"
+    ):
         forbid_management_fields_when_unmanaged(node)
 
 
@@ -60,4 +62,6 @@ def test_models_reject_docker_when_unmanaged(
     model_cls: type[BaseModel], base: dict[str, Any]
 ) -> None:
     with pytest.raises(ValidationError, match="not allowed when os is 'unmanaged'"):
-        model_cls.model_validate({**base, "docker": {"root_path": "/srv", "stacks": {}}})
+        model_cls.model_validate(
+            {**base, "docker": {"root_path": "/srv", "stacks": {}}}
+        )

@@ -1,4 +1,7 @@
-"""Tests for models/input_conf/settings.py — Settings, Dns, and Proxy validation."""
+"""Tests for models/input_conf/settings.py — Settings and Dns validation.
+
+The proxy models live in models/input_conf/proxy.py; see test_proxy.py.
+"""
 
 from pathlib import Path
 from typing import Any
@@ -6,7 +9,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from models.input_conf.settings import Dns, Proxy, Settings
+from models.input_conf.settings import Dns, Settings
 
 
 def _creds(tmp_ssh_key: Path) -> dict[str, Any]:
@@ -27,11 +30,27 @@ def test_settings_requires_default_creds() -> None:
         Settings.model_validate({})
 
 
+def test_settings_env_file_defaults_none(tmp_ssh_key: Path) -> None:
+    s = Settings.model_validate({"default_creds": _creds(tmp_ssh_key)})
+    assert s.env_file is None
+
+
+def test_settings_accepts_env_file(tmp_ssh_key: Path) -> None:
+    s = Settings.model_validate(
+        {"default_creds": _creds(tmp_ssh_key), "env_file": "secrets.env"}
+    )
+    assert s.env_file == "secrets.env"
+
+
 def test_settings_with_dns_and_proxy(tmp_ssh_key: Path) -> None:
     data: dict[str, Any] = {
         "default_creds": _creds(tmp_ssh_key),
         "dns": {"local_dns_suffix": "home.local", "pihole_location": "10.0.0.53"},
-        "proxy": {"proxy_suffix": "home.arpa", "proxy_location": "10.0.0.80"},
+        "proxy": {
+            "proxy_suffix": "home.arpa",
+            "tls": {"provider": "cloudflare"},
+            "access_lists": {"local": {"default": True, "accept": ["10.0.0.0/24"]}},
+        },
     }
     s = Settings.model_validate(data)
     assert s.dns is not None and s.dns.local_dns_suffix == "home.local"
@@ -47,7 +66,9 @@ def test_settings_rejects_unknown_field(tmp_ssh_key: Path) -> None:
 
 
 def test_dns_valid() -> None:
-    dns = Dns.model_validate({"local_dns_suffix": "home.local", "pihole_location": "10.0.0.53"})
+    dns = Dns.model_validate(
+        {"local_dns_suffix": "home.local", "pihole_location": "10.0.0.53"}
+    )
     assert dns.local_dns_suffix == "home.local"
 
 
@@ -63,27 +84,6 @@ def test_dns_requires_pihole_location() -> None:
 
 def test_dns_rejects_invalid_ip() -> None:
     with pytest.raises(ValidationError):
-        Dns.model_validate({"local_dns_suffix": "home.local", "pihole_location": "not-an-ip"})
-
-
-# ── Proxy ─────────────────────────────────────────────────────────────────────
-
-
-def test_proxy_valid() -> None:
-    proxy = Proxy.model_validate({"proxy_suffix": "home.arpa", "proxy_location": "10.0.0.80"})
-    assert proxy.proxy_suffix == "home.arpa"
-
-
-def test_proxy_requires_proxy_suffix() -> None:
-    with pytest.raises(ValidationError, match="proxy_suffix"):
-        Proxy.model_validate({"proxy_location": "10.0.0.80"})
-
-
-def test_proxy_requires_proxy_location() -> None:
-    with pytest.raises(ValidationError, match="proxy_location"):
-        Proxy.model_validate({"proxy_suffix": "home.arpa"})
-
-
-def test_proxy_rejects_invalid_ip() -> None:
-    with pytest.raises(ValidationError):
-        Proxy.model_validate({"proxy_suffix": "home.arpa", "proxy_location": "not-an-ip"})
+        Dns.model_validate(
+            {"local_dns_suffix": "home.local", "pihole_location": "not-an-ip"}
+        )

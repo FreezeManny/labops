@@ -65,7 +65,14 @@ def _two_stacks_same_name(key_dir: Path) -> dict[str, Any]:
         }
 
     return {
-        "settings": {"default_creds": {"username": "u", "passwd": "p"}},
+        "settings": {
+            "default_creds": {"username": "u", "passwd": "p"},
+            "proxy": {
+                "proxy_suffix": ".example.test",
+                "tls": {"provider": "cloudflare"},
+                "access_lists": {"local": {"default": True, "accept": ["10.0.0.0/24"]}},
+            },
+        },
         "hosts": {
             "h1": {"os": "debian", "ip": "10.0.0.10", "docker": stack("a1", 81)},
             "h2": {"os": "debian", "ip": "10.0.0.11", "docker": stack("a2", 82)},

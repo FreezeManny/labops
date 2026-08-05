@@ -16,6 +16,7 @@ class StackEntry(StrictModel):
     def resolve_config_path(cls, v: object) -> Path:
         return Path(str(v)).resolve()
 
+
 class Docker(StrictModel):
     root_path: str
     stacks: Dict[str, StackEntry]
@@ -34,5 +35,3 @@ class Docker(StrictModel):
                 raise ValueError(f"Duplicate stack name: '{name}'")
             all_names.add(name)
         return self
-
-

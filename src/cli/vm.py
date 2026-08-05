@@ -9,32 +9,41 @@ import src.vm as vm
 
 app = typer.Typer(help="Manage virtual machines.", no_args_is_help=True)
 
+
 @app.command("setup")
 def host_setup(
     target: str = typer.Argument(
-        ..., help="Host name or IP address as defined in the homelab config."),
+        ..., help="Host name or IP address as defined in the homelab config."
+    ),
 ) -> None:
     """[bold]Set up[/bold] a host (initial provisioning)."""
     model: YamlRoot = state.model
-    hosts = resolve_targets(model, target, False,
-                            vm.find,vm.findAll, label="host")
-    vm.setup(hosts[0], model.settings.default_creds,
-             dry_run=state.dry_run, verbose=state.verbose)
+    hosts = resolve_targets(model, target, False, vm.find, vm.findAll, label="host")
+    vm.setup(
+        hosts[0],
+        model.settings.default_creds,
+        dry_run=state.dry_run,
+        verbose=state.verbose,
+    )
+
 
 @app.command("update")
 def vm_update(
-    target: Optional[str] = typer.Argument(
-        None, help="VM name or IP address."),
-    all:    bool = typer.Option(False, "--all", help="Update all VMs."),
+    target: Optional[str] = typer.Argument(None, help="VM name or IP address."),
+    all: bool = typer.Option(False, "--all", help="Update all VMs."),
 ) -> None:
     """
     Run [bold]apt upgrade[/bold] on a target VM or all VMs.
     [dim]Respects global --dry-run and --verbose.[/dim]
     """
     model: YamlRoot = state.model
-    vms: list[Host] = resolve_targets(model, target, all, vm.find, vm.findAll, label="VM")
-    vm.update(vms, model.settings.default_creds,
-              dry_run=state.dry_run, verbose=state.verbose)
+    vms: list[Host] = resolve_targets(
+        model, target, all, vm.find, vm.findAll, label="VM"
+    )
+    vm.update(
+        vms, model.settings.default_creds, dry_run=state.dry_run, verbose=state.verbose
+    )
+
 
 @app.command("list")
 def vm_list() -> None:
@@ -54,18 +63,19 @@ def vm_list() -> None:
         console.print("[dim]No VMs defined.[/dim]")
         raise typer.Exit(0)
 
-    table = Table(title="Homelab VMs", show_header=True,
-                  header_style="bold blue")
-    table.add_column("Host",       style="magenta")
-    table.add_column("VM Name",    style="cyan")
-    table.add_column("Type",       style="cyan")
-    table.add_column("OS",         style="green")
+    table = Table(title="Homelab VMs", show_header=True, header_style="bold blue")
+    table.add_column("Host", style="magenta")
+    table.add_column("VM Name", style="cyan")
+    table.add_column("Type", style="cyan")
+    table.add_column("OS", style="green")
     table.add_column("IP Address", style="yellow")
 
     current_host = None
     for host_name, vm_name, v in vms_with_host:
         host_display = host_name if host_name != current_host else "╰─> "
-        table.add_row(host_display, vm_name, str(v.type) + " (in VM)", str(v.os), str(v.ip))
+        table.add_row(
+            host_display, vm_name, str(v.type) + " (in VM)", str(v.os), str(v.ip)
+        )
         current_host = host_name
 
     console.print(table)
