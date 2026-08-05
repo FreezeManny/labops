@@ -39,10 +39,61 @@ def test_find_routes_skips_entries_without_proxy_name(
 def test_render_contains_wildcard_and_tls(valid_config_dict: dict[str, Any]) -> None:
     out = render_caddyfile(_model(valid_config_dict))
     assert "*.example.test {" in out
-    assert (
-        "dns spaceship {env.LIBDNS_SPACESHIP_APIKEY} {env.LIBDNS_SPACESHIP_APISECRET}"
-        in out
-    )
+    assert "dns cloudflare {env.CF_API_TOKEN}" in out
+
+
+def test_render_records_required_plugin(valid_config_dict: dict[str, Any]) -> None:
+    # labops can't verify the image, so the provider's plugin is documented in
+    # the generated file's header.
+    out = render_caddyfile(_model(valid_config_dict))
+    assert "github.com/caddy-dns/cloudflare" in out
+
+
+def test_render_without_tls_omits_plugin_note(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    del valid_config_dict["settings"]["proxy"]["tls"]
+    out = render_caddyfile(_model(valid_config_dict))
+    assert "caddy-dns" not in out
+
+
+def test_render_includes_access_log(valid_config_dict: dict[str, Any]) -> None:
+    # The site emits an access log to stdout so denied (403) requests are visible.
+    out = render_caddyfile(_model(valid_config_dict))
+    assert "log {" in out
+    assert "output stdout" in out
+
+
+def test_render_inline_token_is_literal(valid_config_dict: dict[str, Any]) -> None:
+    # An inline token is rendered verbatim (no {env.*} placeholder).
+    valid_config_dict["settings"]["proxy"]["tls"] = {
+        "provider": "cloudflare",
+        "token": "cf-secret-abc",
+    }
+    out = render_caddyfile(_model(valid_config_dict))
+    assert "dns cloudflare cf-secret-abc" in out
+    assert "dns cloudflare {env" not in out  # no placeholder when inlined
+
+
+def test_render_without_tls_serves_http(valid_config_dict: dict[str, Any]) -> None:
+    # No tls -> plain-HTTP wildcard site, no tls block, no cert provisioning.
+    del valid_config_dict["settings"]["proxy"]["tls"]
+    out = render_caddyfile(_model(valid_config_dict))
+    assert "http://*.example.test {" in out
+    assert "*.example.test {" not in out.replace("http://*.example.test {", "")
+    assert "tls {" not in out
+    assert "dns " not in out
+    # routing still renders as usual
+    assert "@edge host edge.example.test" in out
+    assert "reverse_proxy 10.0.0.4:80" in out
+
+
+def test_render_provider_none_serves_http(valid_config_dict: dict[str, Any]) -> None:
+    # provider: none disables TLS even with a tls block present.
+    valid_config_dict["settings"]["proxy"]["tls"] = {"provider": "none"}
+    out = render_caddyfile(_model(valid_config_dict))
+    assert "http://*.example.test {" in out
+    assert "tls {" not in out
 
 
 def test_render_https_upstream_skips_verify(valid_config_dict: dict[str, Any]) -> None:

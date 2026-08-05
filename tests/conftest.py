@@ -52,7 +52,7 @@ def valid_config_dict(tmp_ssh_key: Path, tmp_docker_dir: Path) -> dict[str, Any]
             # `access` use the access list marked default.
             "proxy": {
                 "proxy_suffix": ".example.test",
-                "proxy_location": "10.0.0.80",
+                "tls": {"provider": "cloudflare"},
                 "access_lists": {"local": {"default": True, "accept": ["10.0.0.0/24"]}},
             },
         },

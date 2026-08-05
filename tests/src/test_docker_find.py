@@ -69,7 +69,7 @@ def _two_stacks_same_name(key_dir: Path) -> dict[str, Any]:
             "default_creds": {"username": "u", "passwd": "p"},
             "proxy": {
                 "proxy_suffix": ".example.test",
-                "proxy_location": "10.0.0.80",
+                "tls": {"provider": "cloudflare"},
                 "access_lists": {"local": {"default": True, "accept": ["10.0.0.0/24"]}},
             },
         },

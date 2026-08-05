@@ -1,4 +1,4 @@
-"""Tests for the `proxy export` CLI command — writing the rendered Caddyfile."""
+"""Tests for the `proxy render` CLI command — printing, and writing with -o."""
 
 from pathlib import Path
 from typing import Any
@@ -18,41 +18,50 @@ def _load_model(cfg: dict[str, Any]) -> None:
     state.model = YamlRoot.model_validate(cfg)
 
 
-def test_export_writes_rendered_caddyfile(
+def test_render_prints_by_default(valid_config_dict: dict[str, Any]) -> None:
+    _load_model(valid_config_dict)
+
+    result = runner.invoke(app, ["render"])
+
+    assert result.exit_code == 0, result.output
+    assert "*.example.test {" in result.output
+
+
+def test_render_output_writes_rendered_caddyfile(
     valid_config_dict: dict[str, Any], tmp_path: Path
 ) -> None:
     _load_model(valid_config_dict)
     dest: Path = tmp_path / "Caddyfile"
 
-    result = runner.invoke(app, ["export", str(dest)])
+    result = runner.invoke(app, ["render", "-o", str(dest)])
 
     assert result.exit_code == 0, result.output
     assert dest.is_file()
     assert "*.example.test {" in dest.read_text()
 
 
-def test_export_refuses_to_overwrite_without_force(
+def test_render_output_refuses_to_overwrite_without_force(
     valid_config_dict: dict[str, Any], tmp_path: Path
 ) -> None:
     _load_model(valid_config_dict)
     dest: Path = tmp_path / "Caddyfile"
     dest.write_text("keep me")
 
-    result = runner.invoke(app, ["export", str(dest)])
+    result = runner.invoke(app, ["render", "--output", str(dest)])
 
     assert result.exit_code == 1
     assert "already exists" in result.output
     assert dest.read_text() == "keep me"  # left untouched
 
 
-def test_export_overwrites_with_force(
+def test_render_output_overwrites_with_force(
     valid_config_dict: dict[str, Any], tmp_path: Path
 ) -> None:
     _load_model(valid_config_dict)
     dest: Path = tmp_path / "Caddyfile"
     dest.write_text("old content")
 
-    result = runner.invoke(app, ["export", str(dest), "--force"])
+    result = runner.invoke(app, ["render", "-o", str(dest), "--force"])
 
     assert result.exit_code == 0, result.output
     assert "*.example.test {" in dest.read_text()

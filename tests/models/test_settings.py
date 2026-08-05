@@ -1,4 +1,7 @@
-"""Tests for models/input_conf/settings.py — Settings, Dns, and Proxy validation."""
+"""Tests for models/input_conf/settings.py — Settings and Dns validation.
+
+The proxy models live in models/input_conf/proxy.py; see test_proxy.py.
+"""
 
 from pathlib import Path
 from typing import Any
@@ -6,7 +9,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from models.input_conf.settings import AccessList, Dns, Proxy, Settings
+from models.input_conf.settings import Dns, Settings
 
 
 def _creds(tmp_ssh_key: Path) -> dict[str, Any]:
@@ -27,13 +30,25 @@ def test_settings_requires_default_creds() -> None:
         Settings.model_validate({})
 
 
+def test_settings_env_file_defaults_none(tmp_ssh_key: Path) -> None:
+    s = Settings.model_validate({"default_creds": _creds(tmp_ssh_key)})
+    assert s.env_file is None
+
+
+def test_settings_accepts_env_file(tmp_ssh_key: Path) -> None:
+    s = Settings.model_validate(
+        {"default_creds": _creds(tmp_ssh_key), "env_file": "secrets.env"}
+    )
+    assert s.env_file == "secrets.env"
+
+
 def test_settings_with_dns_and_proxy(tmp_ssh_key: Path) -> None:
     data: dict[str, Any] = {
         "default_creds": _creds(tmp_ssh_key),
         "dns": {"local_dns_suffix": "home.local", "pihole_location": "10.0.0.53"},
         "proxy": {
             "proxy_suffix": "home.arpa",
-            "proxy_location": "10.0.0.80",
+            "tls": {"provider": "cloudflare"},
             "access_lists": {"local": {"default": True, "accept": ["10.0.0.0/24"]}},
         },
     }
@@ -72,100 +87,3 @@ def test_dns_rejects_invalid_ip() -> None:
         Dns.model_validate(
             {"local_dns_suffix": "home.local", "pihole_location": "not-an-ip"}
         )
-
-
-# ── Proxy ─────────────────────────────────────────────────────────────────────
-
-
-def _proxy(**overrides: object) -> dict[str, Any]:
-    data: dict[str, Any] = {
-        "proxy_suffix": "home.arpa",
-        "proxy_location": "10.0.0.80",
-        "access_lists": {"local": {"default": True, "accept": ["10.0.0.0/24"]}},
-    }
-    data.update(overrides)
-    return data
-
-
-def test_proxy_valid() -> None:
-    proxy = Proxy.model_validate(_proxy())
-    assert proxy.proxy_suffix == "home.arpa"
-    assert proxy.default_access_list == "local"
-
-
-def test_proxy_requires_proxy_suffix() -> None:
-    data = _proxy()
-    del data["proxy_suffix"]
-    with pytest.raises(ValidationError, match="proxy_suffix"):
-        Proxy.model_validate(data)
-
-
-def test_proxy_requires_proxy_location() -> None:
-    data = _proxy()
-    del data["proxy_location"]
-    with pytest.raises(ValidationError, match="proxy_location"):
-        Proxy.model_validate(data)
-
-
-def test_proxy_rejects_invalid_ip() -> None:
-    with pytest.raises(ValidationError):
-        Proxy.model_validate(_proxy(proxy_location="not-an-ip"))
-
-
-def test_proxy_requires_access_lists() -> None:
-    with pytest.raises(ValidationError, match="access_lists"):
-        Proxy.model_validate(
-            {"proxy_suffix": "home.arpa", "proxy_location": "10.0.0.80"}
-        )
-
-
-def test_proxy_requires_a_default_list() -> None:
-    with pytest.raises(ValidationError, match="exactly one list as 'default: true'"):
-        Proxy.model_validate(
-            _proxy(access_lists={"vpn": {"accept": ["100.64.0.0/10"]}})
-        )
-
-
-def test_proxy_rejects_multiple_defaults() -> None:
-    with pytest.raises(ValidationError, match="only one access list may be 'default"):
-        Proxy.model_validate(
-            _proxy(
-                access_lists={
-                    "a": {"default": True, "accept": ["10.0.0.0/24"]},
-                    "b": {"default": True, "accept": ["10.0.1.0/24"]},
-                }
-            )
-        )
-
-
-def test_proxy_rejects_bad_cidr() -> None:
-    with pytest.raises(ValidationError):
-        Proxy.model_validate(
-            _proxy(access_lists={"local": {"default": True, "accept": ["not-a-cidr"]}})
-        )
-
-
-# ── AccessList ──────────────────────────────────────────────────────────────
-
-
-def test_access_list_accept_only() -> None:
-    al = AccessList.model_validate({"accept": ["10.0.0.0/24"]})
-    assert al.default is False and al.deny is None
-
-
-def test_access_list_accept_with_deny_carveout() -> None:
-    al = AccessList.model_validate(
-        {"accept": ["10.0.0.0/24"], "deny": ["10.0.0.66/32"]}
-    )
-    assert al.accept is not None and al.deny is not None
-
-
-def test_access_list_requires_accept() -> None:
-    # deny-only (no accept) is rejected — accept is mandatory.
-    with pytest.raises(ValidationError, match="accept"):
-        AccessList.model_validate({"deny": ["10.0.0.66/32"]})
-
-
-def test_access_list_rejects_empty_accept() -> None:
-    with pytest.raises(ValidationError, match="at least one 'accept' CIDR"):
-        AccessList.model_validate({"accept": []})
