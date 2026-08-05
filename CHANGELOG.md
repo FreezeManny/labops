@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/FreezeManny/labops/compare/labops-v0.6.1...labops-v0.7.0) (2026-08-05)
+
+
+### Features
+
+* caddy proxy support ([#38](https://github.com/FreezeManny/labops/issues/38)) ([81036b9](https://github.com/FreezeManny/labops/commit/81036b99d6116376a02cbcf78d1470e6b4f7490a))
+
 ## [0.6.1](https://github.com/FreezeManny/labops/compare/labops-v0.6.0...labops-v0.6.1) (2026-07-14)
 
 
