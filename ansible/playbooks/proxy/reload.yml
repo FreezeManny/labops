@@ -3,11 +3,11 @@
 # (`caddy reload --adapter caddyfile`) so it works with whatever plugins the
 # build ships and never touches the JSON admin API.
 #
-# The reload path is chosen by `caddy_mode` (set by src/proxy/deploy.py):
-#   host   – `caddy` in PATH on the target (init-agnostic: systemd/OpenRC/binary)
-#   docker – `docker exec <caddy_container> caddy reload` against the in-container
-#            config path (`caddy_container_config`)
-# If `caddy_reload_command` is set it runs verbatim instead, overriding both.
+# The command itself is built by src/proxy/deploy.py:_reload_command and arrives
+# as `caddy_reload_command` — host mode runs `caddy` from the target's PATH,
+# docker mode wraps it in `docker exec`, and settings.proxy.deploy.reload_command
+# overrides both. Keeping that choice in Python leaves one task here, and makes
+# the mode → command mapping unit-testable.
 #
 # `caddyfile_write` is registered by sync.yml: when this play runs after a sync
 # (via deploy.yml) the reload only fires if the file actually changed. Run on its
@@ -17,33 +17,9 @@
   hosts: all
   gather_facts: false
   tasks:
-    - name: Reload Caddy with the override command
+    - name: Reload Caddy
       ansible.builtin.command:
         cmd: "{{ caddy_reload_command }}"
       become: true
       changed_when: true
-      when:
-        - caddy_reload_command is defined
-        - caddyfile_write.changed | default(true)
-
-    - name: Reload Caddy on the host
-      ansible.builtin.command:
-        cmd: "caddy reload --config {{ caddyfile_dest }} --adapter caddyfile"
-      become: true
-      changed_when: true
-      when:
-        - caddy_reload_command is not defined
-        - caddy_mode == "host"
-        - caddyfile_write.changed | default(true)
-
-    - name: Reload Caddy in the container
-      ansible.builtin.command:
-        cmd: >-
-          docker exec {{ caddy_container }}
-          caddy reload --config {{ caddy_container_config }} --adapter caddyfile
-      become: true
-      changed_when: true
-      when:
-        - caddy_reload_command is not defined
-        - caddy_mode == "docker"
-        - caddyfile_write.changed | default(true)
+      when: caddyfile_write.changed | default(true)

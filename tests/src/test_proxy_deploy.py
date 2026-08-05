@@ -69,9 +69,10 @@ def test_host_target_uses_direct_ssh(
     assert hv["caddyfile_dest"] == "/srv/caddy/Caddyfile"
 
     ev = captured["extravars"]
-    assert ev["caddy_mode"] == "docker"
-    assert ev["caddy_container"] == "caddy"
-    assert ev["caddy_container_config"] == "/etc/caddy/Caddyfile"
+    assert ev["caddy_reload_command"] == (
+        "docker exec caddy caddy reload "
+        "--config /etc/caddy/Caddyfile --adapter caddyfile"
+    )
     assert "reverse_proxy" in ev["caddyfile_content"]
 
 
@@ -126,7 +127,27 @@ def test_lxc_target_matches_by_vmid(
     assert hv["ansible_connection"] == "community.proxmox.proxmox_pct_remote"
 
 
-def test_host_mode_omits_container_vars(
+def test_nested_lxc_target_uses_its_vm_as_the_pct_node(
+    captured: dict[str, Any], valid_config_dict: dict[str, Any]
+) -> None:
+    # A Caddy container nested under vm1 can carry routes, so it must also be a
+    # legal deploy target — reached by pct from vm1, not from the Proxmox host.
+    valid_config_dict["hosts"]["prox"]["vm"]["vm1"]["lxc"] = {
+        "deep-ct": {"os": "alpine", "ip": "10.0.0.10", "vmid": 301},
+    }
+    cfg = _config(
+        {"target": "deep-ct", "caddyfile_dest": "/etc/caddy/Caddyfile"},
+        valid_config_dict,
+    )
+    deploy_proxy(cfg)
+
+    hv = _host_vars(captured)
+    assert hv["ansible_connection"] == "community.proxmox.proxmox_pct_remote"
+    assert hv["ansible_host"] == "10.0.0.3"  # vm1, the container's parent
+    assert hv["proxmox_vmid"] == 301
+
+
+def test_host_mode_reloads_the_bare_binary(
     captured: dict[str, Any], valid_config_dict: dict[str, Any]
 ) -> None:
     cfg = _config(
@@ -135,9 +156,34 @@ def test_host_mode_omits_container_vars(
     )
     deploy_proxy(cfg)
     ev = captured["extravars"]
-    assert ev["caddy_mode"] == "host"
-    assert "caddy_container" not in ev
-    assert "caddy_container_config" not in ev
+    # No docker block -> host mode -> `caddy` from the target's PATH, against the
+    # same path the Caddyfile was written to.
+    assert ev["caddy_reload_command"] == (
+        "caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile"
+    )
+
+
+def test_docker_mode_reloads_via_the_container_config_path(
+    captured: dict[str, Any], valid_config_dict: dict[str, Any]
+) -> None:
+    cfg = _config(
+        {
+            "target": "edge",
+            # Host path (bind-mount source) differs from the in-container path;
+            # the reload must use the latter.
+            "caddyfile_dest": "/srv/caddy/Caddyfile",
+            "docker": {
+                "container": "caddy",
+                "container_caddyfile_path": "/opt/caddy/Caddyfile",
+            },
+        },
+        valid_config_dict,
+    )
+    deploy_proxy(cfg)
+    assert captured["extravars"]["caddy_reload_command"] == (
+        "docker exec caddy caddy reload "
+        "--config /opt/caddy/Caddyfile --adapter caddyfile"
+    )
 
 
 def test_reload_command_override_passed_as_extravar(
@@ -154,19 +200,9 @@ def test_reload_command_override_passed_as_extravar(
     )
     deploy_proxy(cfg)
     ev = captured["extravars"]
+    # Runs verbatim — the docker-mode default is not built, which is what lets
+    # `docker: {}` omit the container name.
     assert ev["caddy_reload_command"] == "docker compose exec caddy caddy reload"
-    assert "caddy_container" not in ev  # no container given; default not built
-
-
-def test_no_reload_command_omits_extravar(
-    captured: dict[str, Any], valid_config_dict: dict[str, Any]
-) -> None:
-    cfg = _config(
-        {"target": "edge", "caddyfile_dest": "/etc/caddy/Caddyfile"},
-        valid_config_dict,
-    )
-    deploy_proxy(cfg)
-    assert "caddy_reload_command" not in captured["extravars"]
 
 
 def test_sync_uses_sync_playbook(
@@ -201,8 +237,7 @@ def test_reload_uses_reload_playbook_without_caddyfile(
     ev = captured["extravars"]
     # Reload reuses the on-disk config — no Caddyfile is rendered or shipped.
     assert "caddyfile_content" not in ev
-    assert ev["caddy_mode"] == "docker"
-    assert ev["caddy_container"] == "caddy"
+    assert ev["caddy_reload_command"].startswith("docker exec caddy caddy reload")
 
 
 def test_unknown_target_raises(

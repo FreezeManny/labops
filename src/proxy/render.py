@@ -76,6 +76,8 @@ def tls_warnings(config: YamlRoot, config_path: Path) -> list[str]:
     secret store — not the deploy target's own environment, so these are
     warnings, not errors:
 
+    * an inline token at all -> it is a secret that leaves the secret store and
+      travels wherever the rendered Caddyfile goes;
     * no token in either place -> the DNS-01 challenge will fail unless the token
       reaches Caddy's environment some other way;
     * a token in *both* places that disagree -> the inline value wins on render,
@@ -92,6 +94,18 @@ def tls_warnings(config: YamlRoot, config_path: Path) -> list[str]:
     file_token: Optional[str] = read_env_file(env_path).get(spec.token_env)
 
     out: list[str] = []
+    if inline_token is not None:
+        # The inline token is rendered literally, so it ends up in whatever the
+        # Caddyfile touches: the terminal on `proxy render`, any `-o` file, the
+        # extravars ansible-runner writes under .ansible-autogenerate, and the
+        # file on the target. `{env.<VAR>}` (the default) avoids all of that.
+        out.append(
+            f"proxy.tls: settings.proxy.tls.token is set inline and will be written "
+            f"in clear text into the rendered Caddyfile — printed by `proxy render`, "
+            f"saved by `-o`, and stored on the deploy target. Prefer removing it and "
+            f"setting {spec.token_env} in Caddy's environment, which labops renders "
+            f"as a {{env.{spec.token_env}}} placeholder instead."
+        )
     if inline_token is None and file_token is None:
         out.append(
             f"proxy.tls: no TLS token found — none inline and {spec.token_env} is "

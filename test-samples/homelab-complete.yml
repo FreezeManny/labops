@@ -63,6 +63,7 @@ settings:
       open:                  # accept-all == public
         accept:
           - 0.0.0.0/0
+          - ::/0             # needed too: an IPv4-only accept list 403s IPv6 clients
 
 hosts:
   proxmox_test:

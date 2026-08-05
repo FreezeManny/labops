@@ -44,11 +44,15 @@ def test_no_warning_when_env_has_token(
     assert tls_warnings(model, _cfg_path(tmp_path, "CF_API_TOKEN=abc")) == []
 
 
-def test_no_warning_when_inline_matches_env(
+def test_warns_when_inline_matches_env(
     valid_config_dict: dict[str, Any], tmp_path: Path
 ) -> None:
+    # Agreeing with the .env does not make an inline token safe — it is still
+    # rendered in clear text into the Caddyfile.
     model = _model(valid_config_dict, {"provider": "cloudflare", "token": "abc"})
-    assert tls_warnings(model, _cfg_path(tmp_path, "CF_API_TOKEN=abc")) == []
+    warns = tls_warnings(model, _cfg_path(tmp_path, "CF_API_TOKEN=abc"))
+    assert len(warns) == 1
+    assert "clear text" in warns[0]
 
 
 def test_warns_when_inline_differs_from_env(
@@ -56,15 +60,29 @@ def test_warns_when_inline_differs_from_env(
 ) -> None:
     model = _model(valid_config_dict, {"provider": "cloudflare", "token": "abc"})
     warns = tls_warnings(model, _cfg_path(tmp_path, "CF_API_TOKEN=different"))
-    assert len(warns) == 1
-    assert "differs" in warns[0]
+    # The clear-text warning plus the disagreement warning.
+    assert len(warns) == 2
+    assert "clear text" in warns[0]
+    assert "differs" in warns[1]
 
 
-def test_no_warning_with_inline_token_and_no_env(
+def test_warns_with_inline_token_and_no_env(
     valid_config_dict: dict[str, Any], tmp_path: Path
 ) -> None:
     model = _model(valid_config_dict, {"provider": "cloudflare", "token": "abc"})
-    assert tls_warnings(model, _cfg_path(tmp_path, None)) == []
+    warns = tls_warnings(model, _cfg_path(tmp_path, None))
+    # No "missing token" warning — it is present, just in the wrong place.
+    assert len(warns) == 1
+    assert "clear text" in warns[0]
+    assert "CF_API_TOKEN" in warns[0]
+
+
+def test_inline_token_warning_does_not_leak_the_token(
+    valid_config_dict: dict[str, Any], tmp_path: Path
+) -> None:
+    model = _model(valid_config_dict, {"provider": "cloudflare", "token": "s3cret"})
+    warns = tls_warnings(model, _cfg_path(tmp_path, None))
+    assert all("s3cret" not in w for w in warns)
 
 
 def test_no_warning_when_provider_none(

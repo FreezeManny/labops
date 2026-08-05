@@ -1,4 +1,5 @@
-"""Tests for web-service port collision (shared validator) and WebServices indexing."""
+"""Tests for web-service port collision (shared validator), proxy_name shape and
+WebServices indexing."""
 
 import pytest
 from pydantic import ValidationError
@@ -62,3 +63,48 @@ def test_unique_ports_accepted() -> None:
     )
     assert node.web_services is not None
     assert [w.port for w in node.web_services.root] == [80, 443]
+
+
+# ─── proxy_name shape ─────────────────────────────────────────────────────────
+#
+# A proxy_name becomes a DNS label *and* a Caddy matcher name, so anything the
+# Caddyfile grammar cannot hold has to be rejected at validate time — otherwise
+# it only fails on the target, mid-deploy.
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["home", "dfs-aip", "z2mqtt", "a", "Home", "pi-hole-2", "x" * 63],
+)
+def test_valid_proxy_names_accepted(name: str) -> None:
+    ws = WebServices.model_validate([{"port": 80, "proxy_name": name}])
+    assert ws[0].proxy_name == name
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "has space",
+        "has.dot",  # would silently add a subdomain level
+        "-leading",
+        "trailing-",
+        "under_score",
+        "curly{brace}",
+        "with/slash",
+        "",
+    ],
+)
+def test_invalid_proxy_names_rejected(name: str) -> None:
+    with pytest.raises(ValidationError, match="not a valid hostname label"):
+        WebServices.model_validate([{"port": 80, "proxy_name": name}])
+
+
+def test_overlong_proxy_name_rejected() -> None:
+    with pytest.raises(ValidationError, match="longer than 63 characters"):
+        WebServices.model_validate([{"port": 80, "proxy_name": "x" * 64}])
+
+
+def test_absent_proxy_name_still_allowed() -> None:
+    # No proxy_name means "not routed" — still a legal web_service.
+    ws = WebServices.model_validate([{"port": 80}])
+    assert ws[0].proxy_name is None

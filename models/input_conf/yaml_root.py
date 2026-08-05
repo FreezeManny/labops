@@ -195,7 +195,7 @@ class YamlRoot(StrictModel):
             errors.insert(
                 0,
                 "web_services are defined but settings.proxy is missing. "
-                "Configure settings.proxy (proxy_suffix, proxy_location, access_lists) to route them.",
+                "Configure settings.proxy (proxy_suffix, access_lists) to route them.",
             )
 
         if errors:

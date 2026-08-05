@@ -29,9 +29,10 @@ def _require_deploy(config: YamlRoot) -> ProxyDeploy:
 def _resolve_connection(config: YamlRoot, deploy: ProxyDeploy) -> dict:
     """Resolve ``deploy.target`` to a single inventory host_vars dict.
 
-    An LXC is reached via the pct connection (SSH to its Proxmox node); a VM or
+    An LXC is reached via the pct connection (SSH to its parent node); a VM or
     bare-metal host is reached over direct SSH. Tried most-specific first (LXC
-    also matches by vmid), so the namespaces don't collide.
+    also matches by vmid), so the namespaces don't collide. An ambiguous target
+    raises out of the finder rather than resolving here.
     """
     target: str = deploy.target
     default_creds: Creds = config.settings.default_creds
@@ -68,7 +69,7 @@ def _resolve_connection(config: YamlRoot, deploy: ProxyDeploy) -> dict:
 
     raise ValueError(
         f"settings.proxy.deploy.target '{target}' matches no host, VM or LXC in "
-        "the config (checked by name, IP and vmid)."
+        "the config (checked by name and IP, plus vmid for LXCs)."
     )
 
 
@@ -78,16 +79,23 @@ def _build_inventory(config: YamlRoot, deploy: ProxyDeploy) -> dict:
     return {"all": {"hosts": {f"{_ALIAS}_{deploy.target}": host_vars}}}
 
 
-def _reload_extravars(deploy: ProxyDeploy) -> dict:
-    """Vars the reload needs (mode + docker/override details). No Caddyfile."""
-    extravars: dict = {"caddy_mode": deploy.mode}
-    if deploy.docker is not None and deploy.docker.container:
-        extravars["caddy_container"] = deploy.docker.container
-        extravars["caddy_container_config"] = deploy.docker.container_caddyfile_path
-    # Set only when provided so the playbook can test `is defined`.
+def _reload_command(deploy: ProxyDeploy) -> str:
+    """The shell command that makes Caddy re-read its on-disk config.
+
+    Chosen here rather than branched on in the playbook, so the reload stays one
+    Ansible task and the mode -> command mapping is unit-testable. An explicit
+    ``reload_command`` wins over both defaults.
+    """
     if deploy.reload_command is not None:
-        extravars["caddy_reload_command"] = deploy.reload_command
-    return extravars
+        return deploy.reload_command
+    if deploy.docker is not None:
+        # container is guaranteed by ProxyDeploy.validate_docker_container
+        # whenever reload_command is absent, which is the branch we are in.
+        return (
+            f"docker exec {deploy.docker.container} caddy reload "
+            f"--config {deploy.docker.container_caddyfile_path} --adapter caddyfile"
+        )
+    return f"caddy reload --config {deploy.caddyfile_dest} --adapter caddyfile"
 
 
 def _run(
@@ -99,7 +107,7 @@ def _run(
     include_caddyfile: bool,
 ) -> Runner:
     deploy: ProxyDeploy = _require_deploy(config)
-    extravars: dict = _reload_extravars(deploy)
+    extravars: dict = {"caddy_reload_command": _reload_command(deploy)}
     if include_caddyfile:
         # Only rendered when the file is actually shipped (sync/deploy); a bare
         # reload reuses whatever config is already on the target.

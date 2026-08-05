@@ -160,7 +160,14 @@ def resolve_targets(
     label: str = "target",
 ) -> list:
     if target:
-        results = finder(model, [target])
+        # Finders raise KeyError for "no match" and ValueError for "matches more
+        # than one node" — both are config/typo problems, so they get a one-line
+        # message rather than a traceback.
+        try:
+            results = finder(model, [target])
+        except (KeyError, ValueError) as e:
+            typer.secho(f"✘ {e.args[0] if e.args else e}", fg=typer.colors.RED)
+            raise typer.Exit(1)
         if not results:
             typer.secho(
                 f"✘ {label.capitalize()} '{target}' not found.", fg=typer.colors.RED
@@ -168,7 +175,11 @@ def resolve_targets(
             raise typer.Exit(1)
         return results
     if all_flag:
-        results = finder_all(model)
+        try:
+            results = finder_all(model)
+        except (KeyError, ValueError) as e:
+            typer.secho(f"✘ {e.args[0] if e.args else e}", fg=typer.colors.RED)
+            raise typer.Exit(1)
         if not results:
             typer.secho(f"✘ No {label}s found in config.", fg=typer.colors.RED)
             raise typer.Exit(1)

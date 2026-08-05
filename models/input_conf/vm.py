@@ -31,5 +31,16 @@ class VM(StrictModel):
     def validate_ws_ports(self) -> "VM":
         return check_duplicate_ws_ports(self)
 
+    @model_validator(mode="after")
+    def propagate_lxc_vm_names(self) -> "VM":
+        # Same as Host.propagate_lxc_vm_names: a nested child's dict key is its
+        # name. Without this, LXCs/VMs under a VM keep the empty default and are
+        # unaddressable by name (find) and unnamed in generated inventories.
+        for k, v in (self.lxc or {}).items():
+            v.name = k
+        for k, v in (self.vm or {}).items():
+            v.name = k
+        return self
+
 
 VMs = Dict[str, VM]

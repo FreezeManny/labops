@@ -40,6 +40,11 @@ class DockerDeploy(StrictModel):
     container_caddyfile_path: str = "/etc/caddy/Caddyfile"
 
 
+# How labops reaches the Caddy process to reload it: `docker exec` into a
+# container, or a bare `caddy` on the target's PATH.
+DeployMode = Literal["docker", "host"]
+
+
 class ProxyDeploy(StrictModel):
     target: str
     caddyfile_dest: str
@@ -47,7 +52,7 @@ class ProxyDeploy(StrictModel):
     reload_command: Optional[str] = None
 
     @property
-    def mode(self) -> str:
+    def mode(self) -> DeployMode:
         return "docker" if self.docker is not None else "host"
 
     @model_validator(mode="after")

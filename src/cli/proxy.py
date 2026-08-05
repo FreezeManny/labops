@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated, Callable, Optional
 
 import typer
+from ansible_runner import Runner
 from rich.table import Table
 
 from src.cli.core import console, state, report_run
@@ -50,6 +51,22 @@ def _require_deploy_configured(model: YamlRoot) -> None:
             "(set target and caddyfile_dest; add a docker: block for docker mode)."
         )
         raise typer.Exit(1)
+
+
+def _run_playbook_action(run: Callable[[], Runner], action: str) -> None:
+    """Run a proxy playbook and report the outcome.
+
+    Config problems only detectable at run time — an unresolvable or ambiguous
+    ``deploy.target``, a render that cannot be produced — surface as ValueError
+    from deep in the call stack. They are user errors, not bugs, so they get the
+    same one-line treatment as the checks above instead of a traceback.
+    """
+    try:
+        runner: Runner = run()
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+    report_run(summarize_run(runner), action=action)
 
 
 @app.command(name="list")
@@ -134,8 +151,10 @@ def proxy_sync() -> None:
     model: YamlRoot = state.model
     _require_deploy_configured(model)
     _emit_tls_warnings(model)
-    r = sync_proxy(model, dry_run=state.dry_run, verbose=state.verbose)
-    report_run(summarize_run(r), action="Caddyfile sync")
+    _run_playbook_action(
+        lambda: sync_proxy(model, dry_run=state.dry_run, verbose=state.verbose),
+        action="Caddyfile sync",
+    )
 
 
 @app.command(name="deploy")
@@ -144,8 +163,10 @@ def proxy_deploy() -> None:
     model: YamlRoot = state.model
     _require_deploy_configured(model)
     _emit_tls_warnings(model)
-    r = deploy_proxy(model, dry_run=state.dry_run, verbose=state.verbose)
-    report_run(summarize_run(r), action="Proxy deploy")
+    _run_playbook_action(
+        lambda: deploy_proxy(model, dry_run=state.dry_run, verbose=state.verbose),
+        action="Proxy deploy",
+    )
 
 
 @app.command(name="reload")
@@ -153,5 +174,7 @@ def proxy_reload() -> None:
     """[bold]Reload[/bold] Caddy on the target using its on-disk config [dim](no sync)[/dim]."""
     model: YamlRoot = state.model
     _require_deploy_configured(model)
-    r = reload_proxy(model, dry_run=state.dry_run, verbose=state.verbose)
-    report_run(summarize_run(r), action="Proxy reload")
+    _run_playbook_action(
+        lambda: reload_proxy(model, dry_run=state.dry_run, verbose=state.verbose),
+        action="Proxy reload",
+    )
