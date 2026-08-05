@@ -2,7 +2,15 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import (
+    ChoiceLoader,
+    Environment,
+    FileSystemLoader,
+    PrefixLoader,
+    StrictUndefined,
+    Template,
+    TemplateError,
+)
 
 from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.proxy import Proxy
@@ -17,6 +25,11 @@ _project_root: str = os.path.abspath(
 )
 _TEMPLATE_DIR: str = os.path.join(_project_root, "ansible", "files", "proxy")
 _TEMPLATE_NAME = "Caddyfile.j2"
+
+# Prefix a custom template uses to reach the built-in one unambiguously, e.g.
+# `{% extends "builtin/Caddyfile.j2" %}`. Needed because a custom template may
+# itself be named Caddyfile.j2, in which case the bare name resolves to itself.
+_BUILTIN_PREFIX = "builtin"
 
 
 def _dedup(nets: list) -> list[str]:
@@ -127,6 +140,23 @@ def tls_warnings(config: YamlRoot, config_path: Path) -> list[str]:
 def _render_context(
     config: YamlRoot, routes: Optional[list[RouteResult]] = None
 ) -> dict:
+    """Build the variables a Caddyfile template is rendered with.
+
+    This is the contract for ``settings.proxy.template``, so treat additions as
+    additive and removals as breaking:
+
+    * ``proxy_suffix`` — e.g. ``.example.com``; the site address is ``*`` + this.
+    * ``tls_lines``   — directives for the ``tls`` block, or None when TLS is off
+      (no ``tls:`` block, or ``provider: none``) and the site is plain HTTP.
+    * ``tls_plugin``  — caddy-dns module the image needs, or None when TLS is off.
+    * ``routes``      — one dict per routed web_service, each with:
+        ``name``     matcher label (the validated proxy_name),
+        ``host``     full hostname (name + proxy_suffix),
+        ``target``   upstream, scheme included only when it speaks HTTPS,
+        ``insecure`` True when the upstream's TLS cert must not be verified,
+        ``accept``   allowed CIDRs as strings, or None for no restriction,
+        ``deny``     blocked CIDRs as strings, or None.
+    """
     proxy = config.settings.proxy
     if proxy is None:
         raise ValueError("settings.proxy is not configured; cannot render a Caddyfile.")
@@ -161,15 +191,62 @@ def _render_context(
     }
 
 
-def render_caddyfile(
-    config: YamlRoot, routes: Optional[list[RouteResult]] = None
-) -> str:
-    """Render the full Caddyfile from the config's web_services + settings.proxy."""
+def _load_template(proxy: Proxy) -> Template:
+    """Load the Caddyfile template: the built-in one, or ``settings.proxy.template``.
+
+    A custom template's own directory is searched first, so its relative
+    ``include``/``import`` paths work, with the built-in directory behind it and
+    also mounted under ``builtin/``. That lets an override reuse the shipped
+    structure — ``{% extends "builtin/Caddyfile.j2" %}`` plus a block or two —
+    rather than restating the whole file, and the prefixed name stays
+    unambiguous even when the custom template is itself called Caddyfile.j2.
+
+    ``StrictUndefined``: a typo'd variable is an error, not a silently empty
+    stretch of Caddyfile that only fails once it reaches the target.
+    """
+    search_dirs: list[str] = [_TEMPLATE_DIR]
+    name: str = _TEMPLATE_NAME
+    if proxy.template is not None:
+        search_dirs.insert(0, str(proxy.template.parent))
+        name = proxy.template.name
+
     env = Environment(
-        loader=FileSystemLoader(_TEMPLATE_DIR),
+        loader=ChoiceLoader(
+            [
+                FileSystemLoader(search_dirs),
+                PrefixLoader({_BUILTIN_PREFIX: FileSystemLoader(_TEMPLATE_DIR)}),
+            ]
+        ),
+        undefined=StrictUndefined,
         trim_blocks=True,
         lstrip_blocks=True,
         keep_trailing_newline=True,
     )
-    template = env.get_template(_TEMPLATE_NAME)
-    return template.render(**_render_context(config, routes))
+    return env.get_template(name)
+
+
+def render_caddyfile(
+    config: YamlRoot, routes: Optional[list[RouteResult]] = None
+) -> str:
+    """Render the full Caddyfile from the config's web_services + settings.proxy.
+
+    The context handed to the template is fixed by ``_render_context`` and is the
+    contract a custom ``settings.proxy.template`` writes against.
+    """
+    proxy = config.settings.proxy
+    if proxy is None:
+        raise ValueError("settings.proxy is not configured; cannot render a Caddyfile.")
+    context: dict = _render_context(config, routes)
+
+    try:
+        return _load_template(proxy).render(**context)
+    except TemplateError as e:
+        # A broken custom template is a config problem, not a labops bug — report
+        # it like one, with the file that caused it. ValueError is what the CLI
+        # already turns into a clean message.
+        where: str = (
+            str(proxy.template)
+            if proxy.template is not None
+            else f"the built-in template ({_TEMPLATE_NAME})"
+        )
+        raise ValueError(f"could not render {where}: {e}") from e

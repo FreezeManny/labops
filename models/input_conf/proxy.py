@@ -1,8 +1,8 @@
-from pathlib import PurePosixPath
-from pydantic import model_validator
+from pathlib import Path, PurePosixPath
+from pydantic import field_validator, model_validator
 from typing import Optional, Dict, List, Literal
 
-from pydantic import IPvAnyNetwork
+from pydantic import FilePath, IPvAnyNetwork
 
 from models.input_conf.custom_types import StrictModel
 
@@ -85,7 +85,22 @@ class Proxy(StrictModel):
     proxy_suffix: str
     tls: Optional[ProxyTls] = None
     deploy: Optional[ProxyDeploy] = None
+    # A Jinja template to render the Caddyfile from, replacing the built-in one
+    # (ansible/files/proxy/Caddyfile.j2). Relative paths resolve against the
+    # config file's directory. See src/proxy/render.py for the context it is
+    # handed, and the built-in template for the blocks it can override.
+    template: Optional[FilePath] = None
     access_lists: Dict[str, AccessList]
+
+    @field_validator("template", mode="before")
+    @classmethod
+    def resolve_template(cls, v: object) -> object:
+        # Resolved to an absolute path here, matching StackEntry.config_path:
+        # validation runs with the cwd set to the config file's directory, but
+        # rendering happens later from wherever the user invoked labops.
+        if v is None:
+            return v
+        return Path(str(v)).expanduser().resolve()
 
     @model_validator(mode="after")
     def validate_access_lists(self) -> "Proxy":

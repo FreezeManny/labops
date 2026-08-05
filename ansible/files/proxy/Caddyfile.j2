@@ -1,3 +1,17 @@
+{#
+  The built-in Caddyfile template. See README.md in this directory for how to
+  override it via settings.proxy.template, and for the variables in scope.
+
+  A custom template can replace this file outright, or extend it and override
+  only the blocks it cares about — header, global_options, log, routes, extra,
+  fallback — via {% extends "builtin/Caddyfile.j2" %}. The "builtin/" prefix
+  reaches this file even from a custom template that is itself named
+  Caddyfile.j2, which a bare name would not.
+
+  Keep the blocks below intact when editing: they are the override points, and
+  removing one silently breaks any template extending it.
+#}
+{% block header %}
 # Managed by labops — do not edit by hand.
 # Generated from homelab.yml web_services + settings.proxy.
 #
@@ -8,6 +22,8 @@
 #
 # This config needs a Caddy build carrying the DNS plugin: {{ tls_plugin }}
 {% endif %}
+{% endblock %}
+{% block global_options %}{% endblock %}
 
 {% if tls_lines %}
 *{{ proxy_suffix }} {
@@ -20,13 +36,16 @@
 {% else %}
 http://*{{ proxy_suffix }} {
 {% endif %}
+{% block log %}
 	# Access log to stdout (view via `docker logs caddy`). Logs every request,
 	# including the 403s from the access-list matchers below — so denied clients
 	# and their remote_ip are visible, not just reverse_proxy errors.
 	log {
 		output stdout
 	}
+{% endblock %}
 
+{% block routes %}
 {% for r in routes %}
 	@{{ r.name }} host {{ r.host }}
 	handle @{{ r.name }} {
@@ -50,8 +69,12 @@ http://*{{ proxy_suffix }} {
 	}
 
 {% endfor %}
+{% endblock %}
+{% block extra %}{% endblock %}
+{% block fallback %}
 	# Any subdomain without a matching service.
 	handle {
 		respond "Unknown service" 404
 	}
+{% endblock %}
 }

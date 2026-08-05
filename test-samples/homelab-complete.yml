@@ -12,6 +12,23 @@ settings:
     pihole_location: 10.0.10.5 
   proxy:
     proxy_suffix: .mfritz.top
+    # Optional: render the Caddyfile from your own Jinja template instead of the
+    # built-in one. Relative to this file, or absolute. The template must exist.
+    # It can replace the built-in template outright, or extend it and override
+    # only the parts it cares about — blocks: header, global_options, log,
+    # routes, extra, fallback:
+    #
+    #   {% extends "builtin/Caddyfile.j2" %}
+    #   {% block global_options %}
+    #   {
+    #     email me@example.com
+    #   }
+    #   {% endblock %}
+    #
+    # The variables in scope (proxy_suffix, tls_lines, tls_plugin, routes) and
+    # the full block list are documented in ansible/files/proxy/README.md.
+    # `proxy render` prints the result without deploying it.
+    # template: ./caddy/Caddyfile.j2
     # Optional: where Caddy runs, so `proxy sync`/`proxy deploy` can push the
     # rendered Caddyfile over SSH and reload it. Omit for render-only.
     deploy:
