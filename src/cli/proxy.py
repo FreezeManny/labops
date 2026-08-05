@@ -10,6 +10,7 @@ from models.proxy.route_result import RouteResult
 from src.proxy import (
     find_routes,
     render_caddyfile,
+    tls_warnings,
     sync_proxy,
     deploy_proxy,
     reload_proxy,
@@ -17,6 +18,18 @@ from src.proxy import (
 from src.utils.ansible_runner import summarize_run
 
 app = typer.Typer(help="Manage the Caddy reverse proxy", no_args_is_help=True)
+
+
+def _emit_tls_warnings(model: YamlRoot) -> None:
+    """Print any DNS-provider token sanity warnings (missing / conflicting).
+
+    Warnings, not errors: labops only sees the inline token and the .env store,
+    not the Caddy container's own environment, where the token may well live.
+    """
+    if state.config_path is None:
+        return
+    for w in tls_warnings(model, state.config_path):
+        console.print(f"[yellow]⚠ {w}[/yellow]")
 
 
 def _access_label(route: RouteResult, default_list: str) -> str:
@@ -34,7 +47,7 @@ def _require_deploy_configured(model: YamlRoot) -> None:
     if proxy.deploy is None:
         console.print(
             "[red]Error:[/red] settings.proxy.deploy is not configured "
-            "(set location, mode and caddyfile_dest to sync/deploy)."
+            "(set target and caddyfile_dest; add a docker: block for docker mode)."
         )
         raise typer.Exit(1)
 
@@ -96,6 +109,7 @@ def proxy_render(
     except ValueError as e:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1)
+    _emit_tls_warnings(model)
 
     if output is None:
         console.print(caddyfile, markup=False, highlight=False, soft_wrap=True)
@@ -119,6 +133,7 @@ def proxy_sync() -> None:
     """[bold]Sync[/bold] the rendered Caddyfile to the Caddy host [dim](no reload)[/dim]."""
     model: YamlRoot = state.model
     _require_deploy_configured(model)
+    _emit_tls_warnings(model)
     r = sync_proxy(model, dry_run=state.dry_run, verbose=state.verbose)
     report_run(summarize_run(r), action="Caddyfile sync")
 
@@ -128,6 +143,7 @@ def proxy_deploy() -> None:
     """[bold]Deploy[/bold] the Caddyfile to the Caddy host and [bold]reload[/bold] [dim](only if changed)[/dim]."""
     model: YamlRoot = state.model
     _require_deploy_configured(model)
+    _emit_tls_warnings(model)
     r = deploy_proxy(model, dry_run=state.dry_run, verbose=state.verbose)
     report_run(summarize_run(r), action="Proxy deploy")
 

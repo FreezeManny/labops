@@ -4,6 +4,7 @@ from models.input_conf.host import OSType
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import UNMANAGED_OS
 from src.utils.ansible_runner import run_playbook, summarize_run
+from src.utils.inventory import ssh_host_vars
 from src.cli.core import report_run
 
 
@@ -30,14 +31,8 @@ def update(
         group_hosts_dict = {}
         for host in os_hosts:
             creds: Creds = host.creds or default_creds
-            host_vars: dict[str, str] = {"ansible_user": creds.username}
-            if creds.passwd:
-                host_vars["ansible_password"] = creds.passwd
-                host_vars["ansible_become_password"] = creds.passwd
-            if creds.ssh_key_path:
-                host_vars["ansible_ssh_private_key_file"] = str(creds.ssh_key_path)
-
-            group_hosts_dict[str(host.ip)] = host_vars
+            # Keyed by IP, so no ansible_host is needed.
+            group_hosts_dict[str(host.ip)] = ssh_host_vars(creds)
 
         inventory["all"]["children"][group_name] = {"hosts": group_hosts_dict}
 

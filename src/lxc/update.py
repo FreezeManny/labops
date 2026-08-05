@@ -1,4 +1,5 @@
 from src.utils.ansible_runner import run_playbook, summarize_run
+from src.utils.inventory import pct_host_vars
 from src.cli.core import report_run
 from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
@@ -35,19 +36,7 @@ def update(
 
         # Connect to the parent Proxmox host to proxy the execution
         creds: Creds = host.creds or default_creds
-        host_user = creds.username
-
-        host_vars = {
-            "ansible_connection": "community.proxmox.proxmox_pct_remote",
-            "ansible_host": str(host.ip),
-            "ansible_user": host_user,
-            "proxmox_vmid": lxc_obj.vmid,
-        }
-
-        if creds.ssh_key_path:
-            host_vars["ansible_ssh_private_key_file"] = str(creds.ssh_key_path)
-        if creds.passwd:
-            host_vars["ansible_password"] = str(creds.passwd)
+        host_vars = pct_host_vars(str(host.ip), lxc_obj.vmid, creds)
 
         inventory["all"]["children"][group_name]["hosts"][lxc_obj.name] = host_vars
 

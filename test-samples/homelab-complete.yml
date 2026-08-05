@@ -3,14 +3,51 @@ settings:
     username: root
     passwd: changeme
     #ssh_key_path: xxxxx
+  # Secret store for API tokens (e.g. CF_API_TOKEN). Defaults to a `.env` next to
+  # this config file; uncomment to point elsewhere (relative to this file, or
+  # absolute). The file is git-ignored and never written by labops.
+  # env_file: .env
   dns:
     local_dns_suffix: .lab
     pihole_location: 10.0.10.5 
   proxy:
     proxy_suffix: .mfritz.top
-    proxy_location: 10.0.10.6           # SSH target that Caddy runs on
-    caddyfile_path_remote: /etc/caddy/Caddyfile  # remote path the rendered config is written to
-    # `proxy sync` writes the file; `proxy deploy` also runs `caddy reload` (init-agnostic).
+    # Optional: where Caddy runs, so `proxy sync`/`proxy deploy` can push the
+    # rendered Caddyfile over SSH and reload it. Omit for render-only.
+    deploy:
+      # A host / VM / LXC in this config (by name, IP or vmid) that runs Caddy.
+      # Hosts/VMs are reached over SSH; an LXC is reached via the Proxmox node
+      # using pct (no sshd needed in the container).
+      target: docker                     # the `docker` LXC under cprox (vmid 102)
+      # Absolute remote path the Caddyfile is written to. In docker mode this is
+      # the host path bind-mounted into the container.
+      caddyfile_dest: /home/manuel/Caddy/volumes/caddy/Caddyfile
+      # The presence of this `docker:` block selects docker mode. Omit it entirely
+      # for a host-mode target (bare `caddy` on the host) — then target +
+      # caddyfile_dest is all you need.
+      docker:
+        container: caddy                 # container to `docker exec` into to reload
+        # container_caddyfile_path: /etc/caddy/Caddyfile   # mount target; default shown
+      # Optional: replace the whole reload command (runs verbatim over SSH).
+      # Overrides the mode default; when set, `docker.container` is not required.
+      # reload_command: docker compose -f /home/manuel/Caddy/compose.yml exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+    # tls is optional: omit it to serve the wildcard over plain HTTP (e.g. an
+    # internal `.lan` suffix with no cert) — Caddy renders `http://*.<suffix>`.
+    # When present, labops issues a wildcard cert via the provider's ACME DNS-01
+    # challenge.
+    tls:
+      # One provider at a time. `none` is the off switch; the other names come
+      # from the registry in src/proxy/tls_providers.py, which also fixes each
+      # provider's credential env var and the caddy-dns plugin the Caddy image
+      # must be built with (labops renders the Caddyfile, not the image).
+      provider: cloudflare     # none | cloudflare
+      # No token here by default: labops renders `dns cloudflare {env.CF_API_TOKEN}`
+      # and Caddy resolves that var from its container env at runtime, so the
+      # secret never lands in the config or the rendered Caddyfile. labops also
+      # reads the same key from the .env next to this file (see settings.env_file)
+      # only to warn if it's missing. To inline the token instead (rendered
+      # literally — discouraged), set:
+      # token: "cf-xxxxxxxx"
     access_lists:
       local:                 # default: used by services with no explicit access
         default: true

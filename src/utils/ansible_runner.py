@@ -13,23 +13,6 @@ playbook_root: str = os.path.join(project_root, "ansible", "playbooks")
 # spinner without the two fighting over the terminal.
 _console = Console()
 
-# Events whose rendered stdout we mirror to the console. Everything else
-# (warnings, the verbose failure/unreachable dumps and the ansible-core error
-# framework's multi-line "Origin:" source snippets) is dropped here and instead
-# reported compactly — inline while running, then summarized by report_run.
-_ECHO_EVENTS = frozenset(
-    {
-        "playbook_on_play_start",
-        "playbook_on_task_start",
-        "playbook_on_no_hosts_matched",  # "skipping: no hosts matched" — so empty plays aren't bare headers
-        "runner_on_ok",
-        "runner_on_skipped",
-        "runner_item_on_ok",
-        "runner_item_on_skipped",
-        "playbook_on_stats",
-    }
-)
-
 
 @dataclass
 class RunSummary:
@@ -185,18 +168,31 @@ def summarize_run(runner: Runner, kind: str = "host") -> RunSummary:
 
 def _clean_event_handler(event: dict) -> bool:
     """
-    Mirror only the useful parts of an Ansible run to the console.
+    Render a compact view of an Ansible run, built entirely from event data.
 
-    Progress events (play/task headers, ok/skipped results, the final recap)
-    are echoed verbatim; unreachable/failed hosts get a single terse line
-    instead of the full JSON result and multi-line source traceback. The run
-    itself is executed with ``quiet=True`` so nothing prints unless we do it
-    here. Always returns True so runner keeps processing events.
+    labops never echoes Ansible's own stdout — it prints one short line per play,
+    task and host result itself, so the output is identical regardless of how
+    ansible-core formats results (a newer core embeds whole module transcripts in
+    its stdout, which is what used to flood the console). The final outcome is
+    summarized separately by report_run. The run uses ``quiet=True`` so nothing
+    prints unless we do it here. Always returns True.
     """
     etype = event.get("event")
+    data = event.get("event_data") or {}
+
+    if etype == "playbook_on_play_start":
+        _console.print(f"\n[bold blue]PLAY[/bold blue] {escape(str(data.get('play', '')))}")
+        return True
+
+    if etype == "playbook_on_task_start":
+        _console.print(f"[bold]TASK[/bold] {escape(str(data.get('task', '')))}")
+        return True
+
+    if etype == "playbook_on_no_hosts_matched":
+        _console.print("[dim]  no matching hosts[/dim]")
+        return True
 
     if etype in ("runner_on_unreachable", "runner_on_failed", "runner_item_on_failed"):
-        data = event.get("event_data") or {}
         host = data.get("host", "?")
         msg = (data.get("res") or {}).get("msg", "")
         # Match summarize_run: SSH-level failures read as 'unreachable', not 'failed'.
@@ -208,12 +204,16 @@ def _clean_event_handler(event: dict) -> bool:
         _console.print(f"[red]{label}: \\[{escape(host)}][/red]")
         return True
 
-    if etype in _ECHO_EVENTS:
-        stdout = event.get("stdout")
-        if stdout:
-            # markup/highlight off + soft_wrap so ansible's own formatting
-            # (brackets, the aligned PLAY RECAP) is printed exactly as-is.
-            _console.print(stdout, markup=False, highlight=False, soft_wrap=True)
+    if etype in ("runner_on_ok", "runner_item_on_ok"):
+        host = data.get("host", "?")
+        changed = bool((data.get("res") or {}).get("changed"))
+        label, color = ("changed", "yellow") if changed else ("ok", "green")
+        _console.print(f"[{color}]{label}: \\[{escape(host)}][/{color}]")
+        return True
+
+    if etype in ("runner_on_skipped", "runner_item_on_skipped"):
+        _console.print(f"[dim]skipping: \\[{escape(data.get('host', '?'))}][/dim]")
+        return True
 
     return True
 
