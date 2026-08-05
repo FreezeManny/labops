@@ -1,37 +1,26 @@
-from typing import Union
-
 from models.input_conf.yaml_root import YamlRoot
-from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
-from models.input_conf.vm import VM
+from models.tree import Parent
 
 # The node an LXC is reached *through*, i.e. the one labops SSHes to in order to
 # run `pct`. For a top-level container that is the Proxmox Host; for one nested
 # inside a VM it is that VM. Both carry the ip/creds/name a pct inventory needs.
-LXCParent = Union[Host, VM]
+LXCParent = Parent
 
 # (parent, container) — the pair every caller needs, since an LXC on its own does
 # not know how it is reached.
 LXCPair = tuple[LXCParent, LXC]
 
 
-def _walk(node: LXCParent, results: list[LXCPair]) -> None:
-    """Collect LXCs from a node and from any VM nested under it, at any depth."""
-    for lxc_obj in (getattr(node, "lxc", None) or {}).values():
-        results.append((node, lxc_obj))
-    for vm_obj in (getattr(node, "vm", None) or {}).values():
-        _walk(vm_obj, results)
-
-
 def findAll(config: YamlRoot) -> list[LXCPair]:
     """Returns every LXC in the Yaml config, at any depth, with its parent node."""
-    results: list[LXCPair] = []
-    if config.hosts is None:
-        return results
-
-    for host in config.hosts.values():
-        _walk(host, results)
-    return results
+    return [
+        (ref.parent, ref.node)
+        for ref in config.iter_nodes()
+        # An LXC always has a parent — only a host sits at the root — but the
+        # check narrows the Optional for the type checker as well.
+        if isinstance(ref.node, LXC) and ref.parent is not None
+    ]
 
 
 def _matches(lxc_obj: LXC, target: str) -> bool:

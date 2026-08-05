@@ -1,46 +1,9 @@
-from dataclasses import dataclass
-from ipaddress import IPv4Address
-from typing import Optional, Union
+from typing import Optional
 
 from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.creds import Creds
-from models.input_conf.host import Host
-from models.input_conf.lxc import LXC
-from models.input_conf.vm import VM
-from models.input_conf.docker import StackEntry
 
 from models.docker.stack_result import StackResult
-
-
-# ─── Recursive walker ────────────────────────────────────────────────────────
-
-
-def _walk(
-    node: Union[Host, VM, LXC],
-    path: list[str],
-    results: list[StackResult],
-    default_creds: Creds,
-) -> None:
-    """Recursively collect StackResults from any node that can carry docker/vm/lxc."""
-    if node.docker:
-        for stack in node.docker.stacks.values():
-            results.append(
-                StackResult(
-                    path=list(path),
-                    target_ip=node.ip,
-                    docker_root=node.docker.root_path,
-                    stack=stack,
-                    creds=node.creds if node.creds is not None else default_creds,
-                )
-            )
-
-    # VMs can nest further VMs or LXCs
-    for name, child in (getattr(node, "vm", None) or {}).items():
-        _walk(child, path + [name], results, default_creds)
-
-    # LXCs are leaves (no further nesting in the model)
-    for name, child in (getattr(node, "lxc", None) or {}).items():
-        _walk(child, path + [name], results, default_creds)
 
 
 # ─── Public API ───────────────────────────────────────────────────────────────
@@ -48,13 +11,25 @@ def _walk(
 
 def findAll(config: YamlRoot) -> list[StackResult]:
     """Return every stack at any nesting depth across all hosts."""
-    results: list[StackResult] = []
-    if config.hosts is None:
-        return results
-
     default_creds: Creds = config.settings.default_creds
-    for host_name, host in config.hosts.items():
-        _walk(host, [host_name], results, default_creds)
+    results: list[StackResult] = []
+
+    for ref in config.iter_nodes():
+        docker = ref.node.docker
+        if not docker:
+            continue
+        for stack in docker.stacks.values():
+            results.append(
+                StackResult(
+                    path=ref.path,
+                    target_ip=ref.node.ip,
+                    docker_root=docker.root_path,
+                    stack=stack,
+                    creds=(
+                        ref.node.creds if ref.node.creds is not None else default_creds
+                    ),
+                )
+            )
 
     return results
 

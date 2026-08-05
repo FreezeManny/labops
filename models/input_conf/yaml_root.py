@@ -1,11 +1,9 @@
 from pydantic import model_validator
-from typing import Optional, Dict, Any
+from typing import Iterator, Optional, Dict
 from ipaddress import IPv4Address
 
-from .lxc import LXC
-from .vm import VM
-from .web_services import WebService, WebServices
-from .docker import Docker, StackEntry
+from models.tree import NodeRef, WebServiceRef, iter_nodes, iter_web_services
+
 from .host import Host
 from .settings import Settings
 from .custom_types import StrictModel
@@ -14,6 +12,21 @@ from .custom_types import StrictModel
 class YamlRoot(StrictModel):
     settings: Settings
     hosts: Optional[Dict[str, Host]] = None
+
+    # ─── Traversal ────────────────────────────────────────────────────────────
+    #
+    # The config is a tree; these are how everything else walks it. See
+    # models/tree.py for the ordering and the record types they yield.
+
+    def iter_nodes(self) -> Iterator[NodeRef]:
+        """Every host, VM and LXC in the config, at any depth."""
+        return iter_nodes(self.hosts)
+
+    def iter_web_services(self) -> Iterator[WebServiceRef]:
+        """Every web_service in the config — each node's own and its stacks'."""
+        return iter_web_services(self.hosts)
+
+    # ─── Validators ───────────────────────────────────────────────────────────
 
     @model_validator(mode="after")
     def propagate_host_names(self) -> "YamlRoot":
@@ -24,33 +37,17 @@ class YamlRoot(StrictModel):
 
     @model_validator(mode="after")
     def validate_unique_ips(self) -> "YamlRoot":
-
         all_ips: set[IPv4Address] = set()
         errors: list[str] = []
 
-        def check_ips(node: object) -> None:
-            # Check for an 'ip' attribute of type IPv4Address
-            ip: IPv4Address | None = getattr(node, "ip", None)
-            if isinstance(ip, IPv4Address):
-                if ip in all_ips:
-                    errors.append(
-                        f"Duplicate IP address found across configuration: '{ip}'"
-                    )
-                else:
-                    all_ips.add(ip)
-            # Check for lxc and vm attributes that are dict-like
-            lxc: LXC | None = getattr(node, "lxc", None)
-            if isinstance(lxc, dict):
-                for lxc_node in lxc.values():
-                    check_ips(lxc_node)
-            vm: VM | None = getattr(node, "vm", None)
-            if isinstance(vm, dict):
-                for vm_node in vm.values():
-                    check_ips(vm_node)
-
-        if self.hosts:
-            for host in self.hosts.values():
-                check_ips(host)
+        for ref in self.iter_nodes():
+            ip: IPv4Address = ref.node.ip
+            if ip in all_ips:
+                errors.append(
+                    f"Duplicate IP address found across configuration: '{ip}'"
+                )
+            else:
+                all_ips.add(ip)
 
         if errors:
             raise ValueError("\n".join(errors))
@@ -59,6 +56,8 @@ class YamlRoot(StrictModel):
 
     @model_validator(mode="after")
     def validate_unique_names(self) -> "YamlRoot":
+        # Depth 1 only: hosts and their direct lxc/vm children. Names nested
+        # deeper may collide; the finders report that as an ambiguous target.
         all_names: set[str] = set()
         errors: list[str] = []
 
@@ -94,48 +93,21 @@ class YamlRoot(StrictModel):
 
     @model_validator(mode="after")
     def validate_unique_proxy_names(self) -> "YamlRoot":
+        # A proxy_name becomes a hostname, so it must be unique across the whole
+        # config — two services claiming one name is not resolvable.
         all_proxy_names: set[str] = set()
         errors: list[str] = []
 
-        def check_proxy_names(node: object) -> None:
-            web_services: WebService | None = getattr(node, "web_services", None)
-            if web_services:
-                for ws in getattr(web_services, "root", []):
-                    proxy_name: str | None = getattr(ws, "proxy_name", None)
-                    if proxy_name:
-                        if proxy_name in all_proxy_names:
-                            errors.append(
-                                f"Duplicate proxy_name found across configuration: '{proxy_name}'"
-                            )
-                        else:
-                            all_proxy_names.add(proxy_name)
-            docker: Docker | None = getattr(node, "docker", None)
-            if docker:
-                stacks: dict[str, StackEntry] = getattr(docker, "stacks", {})
-                for stack in stacks.values():
-                    stack_ws: WebService | None = getattr(stack, "web_services", None)
-                    if stack_ws:
-                        for ws in getattr(stack_ws, "root", []):
-                            proxy_name = getattr(ws, "proxy_name", None)
-                            if proxy_name:
-                                if proxy_name in all_proxy_names:
-                                    errors.append(
-                                        f"Duplicate proxy_name found across configuration: '{proxy_name}'"
-                                    )
-                                else:
-                                    all_proxy_names.add(proxy_name)
-            lxc: LXC | None = getattr(node, "lxc", None)
-            if isinstance(lxc, dict):
-                for lxc_node in lxc.values():
-                    check_proxy_names(lxc_node)
-            vm: VM | None = getattr(node, "vm", None)
-            if isinstance(vm, dict):
-                for vm_node in vm.values():
-                    check_proxy_names(vm_node)
-
-        if self.hosts:
-            for host in self.hosts.values():
-                check_proxy_names(host)
+        for ref in self.iter_web_services():
+            proxy_name: Optional[str] = ref.web_service.proxy_name
+            if not proxy_name:
+                continue
+            if proxy_name in all_proxy_names:
+                errors.append(
+                    f"Duplicate proxy_name found across configuration: '{proxy_name}'"
+                )
+            else:
+                all_proxy_names.add(proxy_name)
 
         if errors:
             raise ValueError("\n".join(errors))
@@ -156,40 +128,15 @@ class YamlRoot(StrictModel):
         )
         has_web_services = False
 
-        def check_access(node: object) -> None:
-            nonlocal has_web_services
-
-            def check_ws(ws_container: WebServices | None) -> None:
-                nonlocal has_web_services
-                if not ws_container:
-                    return
-                for ws in ws_container.root:
-                    has_web_services = True
-                    for name in ws.access or []:
-                        if name not in known_lists:
-                            errors.append(
-                                f"web_service '{ws.proxy_name or ws.port}' references unknown "
-                                f"access list '{name}'. Define it under settings.proxy.access_lists."
-                            )
-
-            check_ws(getattr(node, "web_services", None))
-            docker: Docker | None = getattr(node, "docker", None)
-            if docker:
-                for stack in getattr(docker, "stacks", {}).values():
-                    check_ws(getattr(stack, "web_services", None))
-
-            lxc: LXC | None = getattr(node, "lxc", None)
-            if isinstance(lxc, dict):
-                for lxc_node in lxc.values():
-                    check_access(lxc_node)
-            vm: VM | None = getattr(node, "vm", None)
-            if isinstance(vm, dict):
-                for vm_node in vm.values():
-                    check_access(vm_node)
-
-        if self.hosts:
-            for host in self.hosts.values():
-                check_access(host)
+        for ref in self.iter_web_services():
+            has_web_services = True
+            ws = ref.web_service
+            for name in ws.access or []:
+                if name not in known_lists:
+                    errors.append(
+                        f"web_service '{ws.proxy_name or ws.port}' references unknown "
+                        f"access list '{name}'. Define it under settings.proxy.access_lists."
+                    )
 
         if has_web_services and self.settings.proxy is None:
             errors.insert(
