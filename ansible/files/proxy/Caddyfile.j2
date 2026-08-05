@@ -4,6 +4,10 @@
 # labops only renders and places this file. The Caddy instance itself — its
 # image, the DNS provider plugin, any {env.*} vars referenced below, and
 # reloads — is managed outside labops.
+{% if tls_plugin %}
+#
+# This config needs a Caddy build carrying the DNS plugin: {{ tls_plugin }}
+{% endif %}
 
 {% if tls_lines %}
 *{{ proxy_suffix }} {
