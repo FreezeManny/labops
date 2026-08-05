@@ -1,15 +1,5 @@
-from typing import Union
-
 from models.input_conf.yaml_root import YamlRoot
-from models.input_conf.host import Host
 from models.input_conf.vm import VM
-
-
-def _walk(node: Union[Host, VM], results: list[VM]) -> None:
-    """Collect VMs from a node and from any VM nested under it, at any depth."""
-    for vm_obj in (getattr(node, "vm", None) or {}).values():
-        results.append(vm_obj)
-        _walk(vm_obj, results)
 
 
 def findAll(config: YamlRoot) -> list[VM]:
@@ -17,10 +7,7 @@ def findAll(config: YamlRoot) -> list[VM]:
     if config.hosts is None:
         raise KeyError("No hosts are defined in the configuration.")
 
-    vms: list[VM] = []
-    for host in config.hosts.values():
-        _walk(host, vms)
-    return vms
+    return [ref.node for ref in config.iter_nodes() if isinstance(ref.node, VM)]
 
 
 def _matches(vm: VM, target: str) -> bool:
