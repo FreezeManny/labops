@@ -114,7 +114,9 @@ def _run(
     )
 
 
-def sync_proxy(config: YamlRoot, dry_run: bool = False, verbose: bool = False) -> Runner:
+def sync_proxy(
+    config: YamlRoot, dry_run: bool = False, verbose: bool = False
+) -> Runner:
     """Render + write the Caddyfile to the Caddy target, without reloading."""
     return _run("proxy/sync.yml", config, dry_run, verbose, include_caddyfile=True)
 

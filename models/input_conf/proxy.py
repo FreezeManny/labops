@@ -1,3 +1,4 @@
+from pathlib import PurePosixPath
 from pydantic import model_validator
 from typing import Optional, Dict, List, Literal
 
@@ -48,6 +49,17 @@ class ProxyDeploy(StrictModel):
     @property
     def mode(self) -> str:
         return "docker" if self.docker is not None else "host"
+
+    @model_validator(mode="after")
+    def validate_caddyfile_dest_absolute(self) -> "ProxyDeploy":
+        # Resolved on the target, not here, so a relative path has no meaningful
+        # base — Ansible would write it relative to the remote login directory.
+        if not PurePosixPath(self.caddyfile_dest).is_absolute():
+            raise ValueError(
+                "settings.proxy.deploy.caddyfile_dest must be an absolute path on "
+                f"the target (got '{self.caddyfile_dest}')."
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_docker_container(self) -> "ProxyDeploy":

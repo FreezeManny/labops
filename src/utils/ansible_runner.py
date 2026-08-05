@@ -181,7 +181,9 @@ def _clean_event_handler(event: dict) -> bool:
     data = event.get("event_data") or {}
 
     if etype == "playbook_on_play_start":
-        _console.print(f"\n[bold blue]PLAY[/bold blue] {escape(str(data.get('play', '')))}")
+        _console.print(
+            f"\n[bold blue]PLAY[/bold blue] {escape(str(data.get('play', '')))}"
+        )
         return True
 
     if etype == "playbook_on_task_start":
