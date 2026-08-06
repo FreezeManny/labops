@@ -101,9 +101,7 @@ def unknown_under_names(
     return [name for name in names if name not in known]
 
 
-def select_nodes(
-    hosts: Optional[Mapping[str, Host]], sel: Selector
-) -> list[NodeRef]:
+def select_nodes(hosts: Optional[Mapping[str, Host]], sel: Selector) -> list[NodeRef]:
     """Nodes matching ``sel``, in tree order.
 
     Raises ``KeyError`` if an ``under`` name matches no node — the common typo,

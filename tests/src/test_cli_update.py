@@ -33,9 +33,7 @@ def _ok() -> RunSummary:
 
 
 def _failed() -> RunSummary:
-    return RunSummary(
-        rc=2, unreachable={}, failed={"h": "boom"}, ok={}, raw_tail=""
-    )
+    return RunSummary(rc=2, unreachable={}, failed={"h": "boom"}, ok={}, raw_tail="")
 
 
 @pytest.fixture
@@ -141,9 +139,7 @@ def test_named_set_buckets_like_the_equivalent_flags(
 def test_a_failing_phase_fails_the_command(
     monkeypatch: pytest.MonkeyPatch, calls: list[tuple[str, list[str]]]
 ) -> None:
-    monkeypatch.setattr(
-        _update_module.lxc, "update", lambda *a, **kw: _failed()
-    )
+    monkeypatch.setattr(_update_module.lxc, "update", lambda *a, **kw: _failed())
     result = runner.invoke(app, ["--all", "--yes"])
     assert result.exit_code == 1
     assert "phase(s) completed" in result.output

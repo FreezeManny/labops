@@ -173,9 +173,7 @@ def _resolve_selector(
     if target_set:
         sets = model.settings.targets
         if target_set not in sets:
-            typer.secho(
-                f"✘ No target set named '{target_set}'.", fg=typer.colors.RED
-            )
+            typer.secho(f"✘ No target set named '{target_set}'.", fg=typer.colors.RED)
             if sets:
                 typer.secho(
                     f"  Defined sets: {', '.join(sorted(sets))}",
@@ -300,17 +298,13 @@ def _run_phases(
     if ssh_nodes:
         _phase("Hosts & VMs")
         summaries.append(
-            host.update(
-                ssh_nodes, creds, dry_run=state.dry_run, verbose=state.verbose
-            )
+            host.update(ssh_nodes, creds, dry_run=state.dry_run, verbose=state.verbose)
         )
 
     if lxc_pairs:
         _phase("Containers")
         summaries.append(
-            lxc.update(
-                lxc_pairs, creds, dry_run=state.dry_run, verbose=state.verbose
-            )
+            lxc.update(lxc_pairs, creds, dry_run=state.dry_run, verbose=state.verbose)
         )
 
     if stacks:
