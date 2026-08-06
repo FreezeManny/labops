@@ -2,6 +2,7 @@ from pydantic import model_validator
 from typing import Iterator, Optional, Dict
 from ipaddress import IPv4Address
 
+from models.select import Selector, select_nodes, unknown_under_names
 from models.tree import NodeRef, WebServiceRef, iter_nodes, iter_web_services
 
 from .host import Host
@@ -25,6 +26,10 @@ class YamlRoot(StrictModel):
     def iter_web_services(self) -> Iterator[WebServiceRef]:
         """Every web_service in the config — each node's own and its stacks'."""
         return iter_web_services(self.hosts)
+
+    def select(self, sel: Selector) -> list[NodeRef]:
+        """The nodes a selector matches, in tree order. See models/select.py."""
+        return select_nodes(self.hosts, sel)
 
     # ─── Validators ───────────────────────────────────────────────────────────
 
@@ -108,6 +113,29 @@ class YamlRoot(StrictModel):
                 )
             else:
                 all_proxy_names.add(proxy_name)
+
+        if errors:
+            raise ValueError("\n".join(errors))
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_target_names(self) -> "YamlRoot":
+        """Every `under` in a named target set must name a real node.
+
+        A named set is curated config that gets run months later, so a typo in
+        it is invisible: the selection quietly matches nothing and the run looks
+        like a success. Catch it at validation time instead. Ad-hoc CLI
+        selectors get the same check at call time, where the error is immediate.
+        """
+        errors: list[str] = []
+
+        for set_name, sel in self.settings.targets.items():
+            for missing in unknown_under_names(self.hosts, sel.under):
+                errors.append(
+                    f"Target set '{set_name}' references unknown node "
+                    f"'{missing}' in 'under'."
+                )
 
         if errors:
             raise ValueError("\n".join(errors))

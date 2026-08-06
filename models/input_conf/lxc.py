@@ -17,6 +17,7 @@ class LXC(StrictModel):
     os: OSType
     vmid: int
     creds: Optional[Creds] = None
+    tags: list[str] = []
     web_services: Optional[WebServices] = None
     docker: Optional[Docker] = None
 

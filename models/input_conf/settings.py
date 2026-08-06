@@ -1,9 +1,10 @@
-from typing import Optional
+from typing import Dict, Optional
 from ipaddress import IPv4Address
 
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import StrictModel
 from models.input_conf.proxy import Proxy
+from models.select import Selector
 
 
 class Dns(StrictModel):
@@ -19,3 +20,4 @@ class Settings(StrictModel):
     env_file: Optional[str] = None
     dns: Optional[Dns] = None
     proxy: Optional[Proxy] = None
+    targets: Dict[str, Selector] = {}
