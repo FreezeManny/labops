@@ -81,6 +81,19 @@ settings:
         accept:
           - 0.0.0.0/0
           - ::/0             # needed too: an IPv4-only accept list 403s IPv6 clients
+  # Reusable named selections for `labops update <name>`. The same four fields as
+  # the CLI options (--kind/--os/--tag/--under), combined as AND across fields and
+  # OR within one. Empty fields mean "no constraint", so a set with only
+  # `kind: [lxc]` is every container regardless of os, tags or position.
+  targets:
+    weekly:                  # the debian guests patched on Sundays
+      kind: [vm, lxc]
+      os: [debian]
+    edge:                    # the production side of cprox, containers included
+      under: [cprox]
+      tags: [prod]
+    containers:
+      kind: lxc              # single value; coerced to a list
 
 hosts:
   proxmox_test:
@@ -97,6 +110,11 @@ hosts:
     type: proxmox
     os: debian
     ip: 10.0.10.3
+    # Free-form labels, matched by `labops update --tag prod`. Tags are local to
+    # the node that carries them — they are not inherited by its VMs or LXCs, so
+    # a container is only "prod" if it says so itself. Use --under to sweep a
+    # subtree.
+    tags: [prod, proxmox]
     web_services:
       - proxy_name: cprox
         port: 82
@@ -118,6 +136,7 @@ hosts:
         ip: 10.0.10.6
         os: debian
         vmid: 102
+        tags: [prod, media]
         docker:
           root_path: "/home/manuel"
           stacks:

@@ -1,4 +1,6 @@
-from src.utils.ansible_runner import run_playbook, summarize_run
+from typing import Optional
+
+from src.utils.ansible_runner import RunSummary, run_playbook, summarize_run
 from src.utils.inventory import pct_host_vars
 from src.cli.core import report_run
 from models.input_conf.host import Host
@@ -12,14 +14,16 @@ def update(
     default_creds: Creds,
     dry_run: bool = False,
     verbose: bool = False,
-) -> None:
+) -> Optional[RunSummary]:
     """
     Builds a dynamic ansible inventory from the Yaml config and proxies the
     commands via community.proxmox.proxmox_pct_remote inside community OS groups.
+
+    Returns the run summary, or ``None`` when there was nothing to update.
     """
     if not proxmox_lxc_pairs:
         print("No LXCs to update.")
-        return
+        return None
 
     # Initialize the dynamic inventory with OS groups
     inventory = {"all": {"children": {}}}
@@ -42,9 +46,11 @@ def update(
 
     if not inventory["all"]["children"]:
         print("No managed LXCs to update.")
-        return
+        return None
 
     r = run_playbook(
         playbook="lxc/update.yml", inventory=inventory, dry_run=dry_run, verbose=verbose
     )
-    report_run(summarize_run(r, kind="lxc"), action="LXC update", kind="lxc")
+    summary: RunSummary = summarize_run(r, kind="lxc")
+    report_run(summary, action="LXC update", kind="lxc")
+    return summary
