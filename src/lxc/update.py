@@ -1,16 +1,16 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from src.utils.ansible_runner import RunSummary, run_playbook, summarize_run
 from src.utils.inventory import pct_host_vars
 from src.cli.core import report_run
-from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import UNMANAGED_OS
+from models.tree import Parent
 
 
 def update(
-    proxmox_lxc_pairs: list[tuple[Host, LXC]],
+    proxmox_lxc_pairs: Sequence[tuple[Parent, LXC]],
     default_creds: Creds,
     dry_run: bool = False,
     verbose: bool = False,
@@ -18,6 +18,10 @@ def update(
     """
     Builds a dynamic ansible inventory from the Yaml config and proxies the
     commands via community.proxmox.proxmox_pct_remote inside community OS groups.
+
+    The pair's first element is a ``Parent`` rather than a ``Host`` because a
+    container can also hang off a nested VM; either way it is only used as the
+    address to proxy ``pct`` through.
 
     Returns the run summary, or ``None`` when there was nothing to update.
     """

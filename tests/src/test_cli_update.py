@@ -29,11 +29,11 @@ runner = CliRunner()
 
 
 def _ok() -> RunSummary:
-    return RunSummary(rc=0, unreachable={}, failed={}, ok={}, raw_tail="")
+    return RunSummary(rc=0, unreachable={}, failed={}, ok=[], raw_tail="")
 
 
 def _failed() -> RunSummary:
-    return RunSummary(rc=2, unreachable={}, failed={"h": "boom"}, ok={}, raw_tail="")
+    return RunSummary(rc=2, unreachable={}, failed={"h": "boom"}, ok=[], raw_tail="")
 
 
 @pytest.fixture

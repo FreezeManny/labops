@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from ansible_runner.runner import Runner
 from models.input_conf.host import OSType
@@ -11,7 +11,7 @@ from src.cli.core import report_run
 
 
 def update(
-    hosts: list[Node],
+    hosts: Sequence[Node],
     default_creds: Creds,
     dry_run: bool = False,
     verbose: bool = False,
