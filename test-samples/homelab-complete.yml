@@ -16,13 +16,22 @@ settings:
     # Appended to each node's name. A leading dot is optional — `.lab` and `lab`
     # both yield `cprox.lab`.
     local_dns_suffix: .lab
-    # Exactly one Pi-hole: the secret store holds a single PIHOLE_PASSWORD, so a
-    # list of instances would assume they all share one API password. With a
-    # replicating setup (nebula-sync) point labops at the primary and let it
-    # propagate to the rest.
-    pihole_location: 10.0.10.5
-    # Where the Pi-hole v6 admin/API listens. Default is 80; this sample's
-    # Pi-hole publishes its web interface on 8080 (see the `pihole` LXC).
+    # Where Pi-hole is. Optional — leave it out and records are still derived, so
+    # `dns list` works before you have a Pi-hole to point at. Three things are
+    # accepted, and which one you write decides what `dns upgrade` may do:
+    #   * a config node (name, IP or vmid) — records + upgrades;
+    #   * a docker stack name — records go to the node running it, and
+    #     `dns upgrade` refuses (a container is upgraded by pulling an image);
+    #   * a bare IP matching nothing here — records only, nothing to SSH into.
+    # One field, because `dns sync` needs an address and `dns upgrade` needs the
+    # thing behind it, and they must not disagree about which Pi-hole is meant.
+    #
+    # Only one instance: the secret store holds a single PIHOLE_PASSWORD, so a list
+    # would assume they all share one API password. With a replicating setup
+    # (nebula-sync) point labops at the primary and let it propagate to the rest.
+    pihole_location: pihole      # the `pihole` LXC under cprox (10.0.10.5)
+    # Where the Pi-hole v6 admin/API listens. Default is 80; this sample's Pi-hole
+    # publishes its web interface on 8080 (see that LXC's web_services).
     api_port: 8080
     # api_scheme: http           # http | https (https skips cert verification,
     #                              since Pi-hole's own cert is self-signed)
@@ -31,6 +40,14 @@ settings:
     # from Settings → Web interface / API. To inline it instead (clear text in
     # this file, and `dns sync` warns) set:
     # password: "xxxxxxxx"
+    #
+    # What `labops dns upgrade` runs on pihole_location. Upgrading Pi-hole is the
+    # one operation with no API behind it, so it goes over SSH (or pct for an LXC).
+    # It is also not covered by `lxc update` / `host update`: those run the package
+    # manager, and Pi-hole installs from its own installer, so apt never sees it.
+    # Bare installs only — a containerised Pi-hole is upgraded by pulling a new
+    # image (`docker stack update`).
+    # upgrade_command: pihole -up --check-only   # default is `pihole -up`
   proxy:
     proxy_suffix: .mfritz.top
     # Optional: render the Caddyfile from your own Jinja template instead of the
