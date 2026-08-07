@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/FreezeManny/labops/compare/labops-v0.7.0...labops-v0.8.0) (2026-08-07)
+
+
+### Features
+
+* custom update command ([#45](https://github.com/FreezeManny/labops/issues/45)) ([093e6f8](https://github.com/FreezeManny/labops/commit/093e6f83640b15e9935a51ec8f8d5d2137b8f757))
+
 ## [0.7.0](https://github.com/FreezeManny/labops/compare/labops-v0.6.1...labops-v0.7.0) (2026-08-05)
 
 
