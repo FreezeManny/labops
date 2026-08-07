@@ -109,9 +109,7 @@ def resolve_location(config: YamlRoot, dns: Dns) -> PiholeLocation:
     if stack is not None:
         # A stack's services are published on its host node's address, which is why
         # the stack name is not part of the address.
-        return PiholeLocation(
-            address=str(stack.target_ip), target=target, stack=stack
-        )
+        return PiholeLocation(address=str(stack.target_ip), target=target, stack=stack)
 
     try:
         return PiholeLocation(address=str(IPv4Address(target)), target=target)

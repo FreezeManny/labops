@@ -79,9 +79,7 @@ def test_command_override_is_passed(
     upgrade_pihole(
         _config(dns_config_dict, "edge", upgrade_command="pihole -up --check-only")
     )
-    assert (
-        captured["extravars"]["pihole_upgrade_command"] == "pihole -up --check-only"
-    )
+    assert captured["extravars"]["pihole_upgrade_command"] == "pihole -up --check-only"
 
 
 def test_dry_run_and_verbose_are_forwarded(

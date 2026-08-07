@@ -88,18 +88,14 @@ def _client(config: YamlRoot, password: str) -> PiholeClient:
     )
 
 
-def plan_sync(
-    config: YamlRoot, password: str, desired: list[DnsRecord]
-) -> DnsPlan:
+def plan_sync(config: YamlRoot, password: str, desired: list[DnsRecord]) -> DnsPlan:
     """Read the Pi-hole and diff it against the config. Changes nothing."""
     with _client(config, password) as client:
         current, unparsed = client.get_hosts()
     return diff_records(desired, current, unparsed)
 
 
-def apply_sync(
-    config: YamlRoot, password: str, desired: list[DnsRecord]
-) -> None:
+def apply_sync(config: YamlRoot, password: str, desired: list[DnsRecord]) -> None:
     """Replace the Pi-hole's record list with exactly what the config asks for."""
     with _client(config, password) as client:
         client.set_hosts([(record.ip, record.hostname) for record in desired])

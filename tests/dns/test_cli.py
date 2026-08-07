@@ -53,9 +53,7 @@ def _plan(
             DnsRecord(hostname=h, ip=IPv4Address(ip), path=[h]) for h, ip in (add or [])
         ],
         update=[],
-        remove=[
-            LiveRecord(hostname=h, ip=IPv4Address(ip)) for h, ip in (remove or [])
-        ],
+        remove=[LiveRecord(hostname=h, ip=IPv4Address(ip)) for h, ip in (remove or [])],
         unchanged=[
             DnsRecord(hostname=f"same{n}.lab", ip=IPv4Address("10.0.0.1"), path=[])
             for n in range(unchanged)
@@ -65,9 +63,7 @@ def _plan(
 
 
 def _stub_plan(monkeypatch: pytest.MonkeyPatch, plan: DnsPlan) -> None:
-    def _fake(
-        config: YamlRoot, password: str, desired: list[DnsRecord]
-    ) -> DnsPlan:
+    def _fake(config: YamlRoot, password: str, desired: list[DnsRecord]) -> DnsPlan:
         return plan
 
     monkeypatch.setattr(dns_cli, "plan_sync", _fake)
@@ -77,9 +73,7 @@ def _stub_apply(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     """Record the location each write went to."""
     applied: list[str] = []
 
-    def _fake(
-        config: YamlRoot, password: str, desired: list[DnsRecord]
-    ) -> None:
+    def _fake(config: YamlRoot, password: str, desired: list[DnsRecord]) -> None:
         assert config.settings.dns is not None
         location = config.settings.dns.pihole_location
         assert location is not None  # sync cannot get here without one
@@ -268,9 +262,7 @@ def test_apply_failure_exits_cleanly(
     # message, not a traceback.
     _stub_plan(monkeypatch, _plan(add=[("new.lab", "10.0.0.9")]))
 
-    def _fake_apply(
-        config: YamlRoot, password: str, desired: list[DnsRecord]
-    ) -> None:
+    def _fake_apply(config: YamlRoot, password: str, desired: list[DnsRecord]) -> None:
         raise PiholeError("connection refused")
 
     monkeypatch.setattr(dns_cli, "apply_sync", _fake_apply)

@@ -66,7 +66,10 @@ def test_hostname_published_twice_is_a_single_update() -> None:
         _live(("nas.lab", "10.0.0.5"), ("nas.lab", "10.0.0.6")),
     )
     assert len(plan.update) == 1
-    assert plan.update[0].current_ips == [IPv4Address("10.0.0.5"), IPv4Address("10.0.0.6")]
+    assert plan.update[0].current_ips == [
+        IPv4Address("10.0.0.5"),
+        IPv4Address("10.0.0.6"),
+    ]
     assert not plan.remove
     assert not plan.unchanged
 

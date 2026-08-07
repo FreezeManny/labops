@@ -39,9 +39,7 @@ def diff_records(
             update.append(RecordUpdate(record=record, current_ips=published))
 
     wanted: set[str] = {record.hostname for record in desired}
-    remove: list[LiveRecord] = [
-        live for live in current if live.hostname not in wanted
-    ]
+    remove: list[LiveRecord] = [live for live in current if live.hostname not in wanted]
 
     return DnsPlan(
         add=add,

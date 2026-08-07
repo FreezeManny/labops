@@ -56,9 +56,7 @@ def test_empty_dns_name_list_rejected() -> None:
 
 def test_dns_name_rejects_internal_duplicate() -> None:
     with pytest.raises(ValidationError, match="more than once"):
-        Host.model_validate(
-            {"os": "debian", "ip": "10.0.0.5", "dns_name": ["a", "a"]}
-        )
+        Host.model_validate({"os": "debian", "ip": "10.0.0.5", "dns_name": ["a", "a"]})
 
 
 # ─── Node names as DNS labels ─────────────────────────────────────────────────

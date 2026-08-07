@@ -114,9 +114,7 @@ def dns_list() -> None:
         console.print("[dim]No DNS records derived — every node has dns: false.[/dim]")
         raise typer.Exit(0)
 
-    table = Table(
-        title="Local DNS Records", show_header=True, header_style="bold blue"
-    )
+    table = Table(title="Local DNS Records", show_header=True, header_style="bold blue")
     table.add_column("Hostname", style="green")
     table.add_column("IP", style="yellow")
     table.add_column("Node", style="cyan")

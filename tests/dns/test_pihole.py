@@ -225,7 +225,9 @@ def test_unauthenticated_response_is_explained(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _raise(
-        urllib.error.HTTPError("http://x/api/auth", 401, "Unauthorized", email.message.Message(), None),
+        urllib.error.HTTPError(
+            "http://x/api/auth", 401, "Unauthorized", email.message.Message(), None
+        ),
         monkeypatch,
     )
     with pytest.raises(PiholeError, match="unauthenticated"):
@@ -234,7 +236,9 @@ def test_unauthenticated_response_is_explained(
 
 def test_404_points_at_the_pihole_version(monkeypatch: pytest.MonkeyPatch) -> None:
     _raise(
-        urllib.error.HTTPError("http://x/api/auth", 404, "Not Found", email.message.Message(), None),
+        urllib.error.HTTPError(
+            "http://x/api/auth", 404, "Not Found", email.message.Message(), None
+        ),
         monkeypatch,
     )
     with pytest.raises(PiholeError, match="Pi-hole v6"):
@@ -244,7 +248,9 @@ def test_404_points_at_the_pihole_version(monkeypatch: pytest.MonkeyPatch) -> No
 def test_http_error_detail_is_surfaced(monkeypatch: pytest.MonkeyPatch) -> None:
     body = io.BytesIO(json.dumps({"error": {"message": "bad request"}}).encode())
     _raise(
-        urllib.error.HTTPError("http://x/api/config", 400, "Bad Request", email.message.Message(), body),
+        urllib.error.HTTPError(
+            "http://x/api/config", 400, "Bad Request", email.message.Message(), body
+        ),
         monkeypatch,
     )
     with pytest.raises(PiholeError, match="bad request"):

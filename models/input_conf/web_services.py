@@ -27,9 +27,7 @@ class WebService(StrictModel):
         # so it has to satisfy the shared label rule.
         if v is None:
             return v
-        return validate_hostname_label(
-            v, "proxy_name", "settings.proxy.proxy_suffix"
-        )
+        return validate_hostname_label(v, "proxy_name", "settings.proxy.proxy_suffix")
 
 
 class WebServices(RootModel):
