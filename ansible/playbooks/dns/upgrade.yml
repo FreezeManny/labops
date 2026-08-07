@@ -1,0 +1,27 @@
+---
+# Upgrade the Pi-hole software itself by running its own updater.
+#
+# This is the one Pi-hole operation labops cannot do over the REST API: the v6 API
+# manages configuration, not the installation. It is also not something `host
+# update` / `lxc update` cover — those run the package manager, and Pi-hole
+# installs from its own installer rather than a distro repo, so apt never sees it.
+#
+# Bare installs only. A containerised Pi-hole is upgraded by pulling a new image,
+# which is `docker stack update`.
+#
+# Runs against all hosts in the inventory at once: src/dns/upgrade.py puts every
+# settings.dns.upgrade.targets entry in it, so report_run attributes an unreachable
+# or failed instance individually.
+#
+# Required extra vars (set by src/dns/upgrade.py):
+#   pihole_upgrade_command – the updater invocation (settings.dns.upgrade.command)
+
+- name: Upgrade Pi-hole
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Run the Pi-hole updater
+      ansible.builtin.command:
+        cmd: "{{ pihole_upgrade_command }}"
+      become: true
+      changed_when: true
