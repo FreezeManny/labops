@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Iterable, Optional
 
 from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.creds import Creds
+from models.tree import NodeRef
 
 from models.docker.stack_result import StackResult
 
@@ -9,12 +10,16 @@ from models.docker.stack_result import StackResult
 # ─── Public API ───────────────────────────────────────────────────────────────
 
 
-def findAll(config: YamlRoot) -> list[StackResult]:
-    """Return every stack at any nesting depth across all hosts."""
-    default_creds: Creds = config.settings.default_creds
+def stacks_for(refs: Iterable[NodeRef], default_creds: Creds) -> list[StackResult]:
+    """The stacks running on the given nodes.
+
+    A stack is not independently addressable — it has no os, no kind, and its
+    path is its node's path — so selection picks nodes and the stacks come
+    along. This is the whole node-to-stack bridge.
+    """
     results: list[StackResult] = []
 
-    for ref in config.iter_nodes():
+    for ref in refs:
         docker = ref.node.docker
         if not docker:
             continue
@@ -32,6 +37,11 @@ def findAll(config: YamlRoot) -> list[StackResult]:
             )
 
     return results
+
+
+def findAll(config: YamlRoot) -> list[StackResult]:
+    """Return every stack at any nesting depth across all hosts."""
+    return stacks_for(config.iter_nodes(), config.settings.default_creds)
 
 
 def find(

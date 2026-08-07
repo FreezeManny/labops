@@ -18,6 +18,7 @@ class Host(StrictModel):
     os: OSType
     ip: IPv4Address
     creds: Optional[Creds] = None
+    tags: list[str] = []
     lxc: Optional[LXCs] = None
     vm: Optional[VMs] = None
     docker: Optional[Docker] = None

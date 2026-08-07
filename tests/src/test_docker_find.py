@@ -91,3 +91,34 @@ def test_ambiguous_stack_disambiguated_by_node(tmp_docker_dir: Path) -> None:
     results = docker_find.find(model, stack_name="app", node_name="h2")
     assert len(results) == 1
     assert results[0].path == ["h2"]
+
+
+# ─── stacks_for: the node -> stack bridge used by `labops update` ─────────────
+
+
+def test_stacks_for_only_returns_stacks_on_the_given_nodes(model: YamlRoot) -> None:
+    # ct1 runs nothing; vm1 runs `app`. Selecting only ct1 must yield no stacks.
+    by_path = {"/".join(r.path): r for r in model.iter_nodes()}
+    creds = model.settings.default_creds
+
+    assert docker_find.stacks_for([by_path["prox/ct1"]], creds) == []
+
+    results = docker_find.stacks_for([by_path["prox/vm1"]], creds)
+    assert [r.stack.name for r in results] == ["app"]
+    assert results[0].path == ["prox", "vm1"]
+    assert results[0].docker_root == "/srv"
+
+
+def test_stacks_for_falls_back_to_default_creds(model: YamlRoot) -> None:
+    # vm1 declares no creds of its own, so the stack inherits the default.
+    by_path = {"/".join(r.path): r for r in model.iter_nodes()}
+    creds = model.settings.default_creds
+    results = docker_find.stacks_for([by_path["prox/vm1"]], creds)
+    assert results[0].creds == creds
+
+
+def test_find_all_is_stacks_for_over_the_whole_tree(model: YamlRoot) -> None:
+    creds = model.settings.default_creds
+    assert docker_find.findAll(model) == docker_find.stacks_for(
+        model.iter_nodes(), creds
+    )

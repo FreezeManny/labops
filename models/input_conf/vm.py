@@ -18,6 +18,7 @@ class VM(StrictModel):
     ip: IPv4Address
     vmid: int
     creds: Optional[Creds] = None
+    tags: list[str] = []
     lxc: Optional[Dict[str, LXC]] = None
     vm: Optional[Dict[str, "VM"]] = None  ## CHECK THIS
     web_services: Optional[WebServices] = None

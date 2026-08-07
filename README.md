@@ -8,6 +8,7 @@ A declarative, YAML-based homelab manager. `labops` is a CLI tool designed to si
 - **Declarative YAML Configuration**: Define your complete homelab environment comprehensively using simple YAML configuration files.
 - **Host Management**: Automated setup, initialization, and system updates for a variety of host operating systems (Alpine, Debian, RedHat) powered by integrated Ansible playbooks.
 - **Proxmox LXC**: Update Proxmox Linux Containers (LXC) natively (through Proxmox Root Host)
+- **Target Selection**: Update an arbitrary slice of the homelab — by node kind, OS, tag, or position in the tree — either ad-hoc or from a reusable named set in your config.
 
 ### Roadmap & Future Scope
 - **Docker Stack Management**: Seamlessly deploy, spin up, and manage Docker Compose stacks across your nodes.
@@ -41,8 +42,46 @@ Once installed, the `labops` command becomes available. Point it to your YAML co
 # View all available CLI commands
 labops --help
 
-# Example: Run a setup routine for all hosts
-labops host update all
+# Example: Update every host
+labops host update --all
+```
+
+### Custom updates
+
+`labops update` acts on a *selection* rather than a single target. A selection is
+four optional filters — kind, OS, tag and position in the tree — combined as **AND
+across filters and OR within one**, and it covers both the matching nodes and the
+Docker stacks running on them.
+
+```bash
+labops update --kind lxc --os debian     # every Debian container
+labops update --under cprox              # cprox and everything below it
+labops update --tag prod --only stacks   # only the stacks on prod-tagged nodes
+labops update --all --list               # preview everything, run nothing
+```
+
+`--list` prints the resolved targets and exits, and every run shows that same
+preview before it asks to proceed (`--yes` skips the prompt, `--dry-run` runs
+Ansible in check mode).
+
+Tag your nodes to make them selectable. Tags are local — a container is only
+`prod` if it says so itself, so use `--under` to sweep a whole subtree:
+
+```yaml
+hosts:
+  cprox:
+    tags: [prod, proxmox]
+```
+
+Selections you run often belong in the config as named target sets, invoked by
+name (`labops update weekly`):
+
+```yaml
+settings:
+  targets:
+    weekly:
+      kind: [vm, lxc]
+      os: [debian]
 ```
 
 ## Development & Building

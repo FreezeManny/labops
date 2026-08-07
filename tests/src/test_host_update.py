@@ -78,3 +78,17 @@ def test_update_all_unmanaged_runs_nothing(
     assert captured_playbook["called"] is False
     out = capsys.readouterr().out
     assert "No valid hosts found to update." in out
+
+
+def test_update_returns_the_summary(captured_playbook: dict[str, Any]) -> None:
+    # The return value is what lets `labops update` set a non-zero exit code
+    # instead of only printing a failure.
+    summary = update([_managed_host()], _default_creds())
+    assert summary is not None
+    assert summary.rc == 0
+
+
+def test_update_returns_none_when_nothing_ran(
+    captured_playbook: dict[str, Any],
+) -> None:
+    assert update([_unmanaged_host()], _default_creds()) is None
