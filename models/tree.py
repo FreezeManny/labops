@@ -102,3 +102,16 @@ def iter_web_services(hosts: Optional[Mapping[str, Host]]) -> Iterator[WebServic
     """Every web_service in the config — each node's own and its stacks'."""
     for ref in iter_nodes(hosts):
         yield from node_web_services(ref)
+
+
+def node_dns_labels(node: Node) -> list[str]:
+    """The DNS labels a node publishes: its ``dns_name`` entries, or its own name.
+
+    Empty when the node opted out with ``dns: false``. These are bare labels, not
+    hostnames — ``settings.dns.local_dns_suffix`` is appended by ``src/dns/find.py``.
+    Uniqueness is checked on the labels alone (``YamlRoot``), which is equivalent
+    since every record shares the one suffix.
+    """
+    if not node.dns:
+        return []
+    return list(node.dns_name) if node.dns_name else [node.name]
