@@ -1,16 +1,8 @@
-import re
-
 from pydantic import field_validator, RootModel
 from typing import Optional, List
 
 from .custom_types import StrictModel
-
-# A proxy_name becomes both a DNS label (prepended to settings.proxy.proxy_suffix)
-# and a Caddy matcher name (`@<proxy_name>`). Anything outside this shape renders
-# a Caddyfile Caddy refuses to load — a failure that would otherwise only surface
-# on the target during `proxy deploy`, so it is caught here instead.
-_PROXY_NAME_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$")
-_PROXY_NAME_MAX_LEN = 63  # RFC 1035 label limit
+from .common_validators.hostname import validate_hostname_label
 
 
 class WebService(StrictModel):
@@ -31,21 +23,13 @@ class WebService(StrictModel):
     @field_validator("proxy_name")
     @classmethod
     def _validate_proxy_name(cls, v: Optional[str]) -> Optional[str]:
+        # A proxy_name is both a DNS label and a Caddy matcher name (`@<name>`),
+        # so it has to satisfy the shared label rule.
         if v is None:
             return v
-        if len(v) > _PROXY_NAME_MAX_LEN:
-            raise ValueError(
-                f"proxy_name '{v}' is longer than {_PROXY_NAME_MAX_LEN} characters "
-                "(a DNS label limit)."
-            )
-        if not _PROXY_NAME_RE.match(v):
-            raise ValueError(
-                f"proxy_name '{v}' is not a valid hostname label. Use letters, "
-                "digits and inner hyphens only — no dots, spaces or other "
-                "punctuation, and no leading/trailing hyphen. It is prepended to "
-                "settings.proxy.proxy_suffix to form the hostname."
-            )
-        return v
+        return validate_hostname_label(
+            v, "proxy_name", "settings.proxy.proxy_suffix"
+        )
 
 
 class WebServices(RootModel):

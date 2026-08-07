@@ -9,6 +9,7 @@ from .lxc import LXC
 from .custom_types import OSType, HostType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 from .common_validators.managed import forbid_management_fields_when_unmanaged
+from .common_validators.dns import DnsNames
 
 
 class VM(StrictModel):
@@ -23,6 +24,8 @@ class VM(StrictModel):
     vm: Optional[Dict[str, "VM"]] = None  ## CHECK THIS
     web_services: Optional[WebServices] = None
     docker: Optional[Docker] = None
+    dns: bool = True
+    dns_name: DnsNames = None
 
     @model_validator(mode="after")
     def check_unmanaged_constraints(self) -> "VM":

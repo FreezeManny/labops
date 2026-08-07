@@ -10,6 +10,7 @@ from .vm import VMs
 from .custom_types import HostType, OSType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 from .common_validators.managed import forbid_management_fields_when_unmanaged
+from .common_validators.dns import DnsNames
 
 
 class Host(StrictModel):
@@ -23,6 +24,8 @@ class Host(StrictModel):
     vm: Optional[VMs] = None
     docker: Optional[Docker] = None
     web_services: Optional[WebServices] = None
+    dns: bool = True
+    dns_name: DnsNames = None
 
     @model_validator(mode="after")
     def check_proxmox_support(self) -> "Host":
