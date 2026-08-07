@@ -1,14 +1,10 @@
 from ansible_runner import Runner
 
 from models.input_conf.yaml_root import YamlRoot
-from models.input_conf.creds import Creds
 from models.input_conf.proxy import ProxyDeploy
-from src.host.find import find as find_hosts
-from src.vm.find import find as find_vms
-from src.lxc.find import find as find_lxcs
 from src.proxy.render import render_caddyfile
 from src.utils.ansible_runner import run_playbook
-from src.utils.inventory import pct_host_vars, ssh_host_vars
+from src.utils.target import resolve_node_host_vars
 
 # Inventory alias only (single-host run against the Caddy target).
 _ALIAS = "caddy"
@@ -26,55 +22,10 @@ def _require_deploy(config: YamlRoot) -> ProxyDeploy:
     return proxy.deploy
 
 
-def _resolve_connection(config: YamlRoot, deploy: ProxyDeploy) -> dict:
-    """Resolve ``deploy.target`` to a single inventory host_vars dict.
-
-    An LXC is reached via the pct connection (SSH to its parent node); a VM or
-    bare-metal host is reached over direct SSH. Tried most-specific first (LXC
-    also matches by vmid), so the namespaces don't collide. An ambiguous target
-    raises out of the finder rather than resolving here.
-    """
-    target: str = deploy.target
-    default_creds: Creds = config.settings.default_creds
-
-    # LXC → proxmox_pct_remote via the parent node.
-    try:
-        pairs = find_lxcs(config, [target])
-    except KeyError:
-        pairs = []
-    if pairs:
-        node, lxc_obj = pairs[0]
-        creds: Creds = node.creds or default_creds
-        return pct_host_vars(str(node.ip), lxc_obj.vmid, creds)
-
-    # VM → direct SSH.
-    try:
-        vms = find_vms(config, [target])
-    except KeyError:
-        vms = []
-    if vms:
-        vm = vms[0]
-        creds = vm.creds or default_creds
-        return ssh_host_vars(creds, str(vm.ip))
-
-    # Bare-metal / Proxmox host → direct SSH.
-    try:
-        hosts = find_hosts(config, [target])
-    except KeyError:
-        hosts = []
-    if hosts:
-        host = hosts[0]
-        creds = host.creds or default_creds
-        return ssh_host_vars(creds, str(host.ip))
-
-    raise ValueError(
-        f"settings.proxy.deploy.target '{target}' matches no host, VM or LXC in "
-        "the config (checked by name and IP, plus vmid for LXCs)."
-    )
-
-
 def _build_inventory(config: YamlRoot, deploy: ProxyDeploy) -> dict:
-    host_vars = _resolve_connection(config, deploy)
+    host_vars = resolve_node_host_vars(
+        config, deploy.target, "settings.proxy.deploy.target"
+    )
     host_vars["caddyfile_dest"] = deploy.caddyfile_dest
     return {"all": {"hosts": {f"{_ALIAS}_{deploy.target}": host_vars}}}
 
