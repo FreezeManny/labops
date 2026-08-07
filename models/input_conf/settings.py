@@ -1,15 +1,10 @@
 from typing import Dict, Optional
-from ipaddress import IPv4Address
 
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import StrictModel
+from models.input_conf.dns import Dns
 from models.input_conf.proxy import Proxy
 from models.select import Selector
-
-
-class Dns(StrictModel):
-    local_dns_suffix: str
-    pihole_location: IPv4Address
 
 
 class Settings(StrictModel):

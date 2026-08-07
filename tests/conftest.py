@@ -102,3 +102,20 @@ def valid_config_dict(tmp_ssh_key: Path, tmp_docker_dir: Path) -> dict[str, Any]
             },
         },
     }
+
+
+@pytest.fixture
+def dns_config_dict(valid_config_dict: dict[str, Any]) -> dict[str, Any]:
+    """``valid_config_dict`` plus a ``settings.dns`` block.
+
+    Its presence is what switches on the DNS validators in ``YamlRoot`` — without
+    it no records are derived, so node names need not be legal DNS labels.
+    """
+    valid_config_dict["settings"]["dns"] = {
+        "local_dns_suffix": ".lab",
+        # An off-config IP: valid, and the case that exercises records working
+        # for a Pi-hole labops has no shell into. Tests that need the node
+        # reference (dns upgrade) override this with a node name.
+        "pihole_location": "10.0.0.53",
+    }
+    return valid_config_dict

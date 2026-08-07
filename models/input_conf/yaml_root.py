@@ -3,11 +3,18 @@ from typing import Iterator, Optional, Dict
 from ipaddress import IPv4Address
 
 from models.select import Selector, select_nodes, unknown_under_names
-from models.tree import NodeRef, WebServiceRef, iter_nodes, iter_web_services
+from models.tree import (
+    NodeRef,
+    WebServiceRef,
+    iter_nodes,
+    iter_web_services,
+    node_dns_labels,
+)
 
 from .host import Host
 from .settings import Settings
 from .custom_types import StrictModel
+from .common_validators.hostname import validate_hostname_label
 
 
 class YamlRoot(StrictModel):
@@ -113,6 +120,71 @@ class YamlRoot(StrictModel):
                 )
             else:
                 all_proxy_names.add(proxy_name)
+
+        if errors:
+            raise ValueError("\n".join(errors))
+
+        return self
+
+    # ─── DNS ──────────────────────────────────────────────────────────────────
+    #
+    # Both checks are gated on settings.dns: without it no records are derived, so
+    # a name like 'proxmox_test' is inert and rejecting it would be noise. They run
+    # after propagate_host_names, which is what populates node.name.
+
+    @model_validator(mode="after")
+    def validate_dns_node_names(self) -> "YamlRoot":
+        """A published node name becomes a DNS label, so it must be a legal one.
+
+        A node carrying an explicit ``dns_name`` is exempt — its own name is never
+        published, so it may be anything (``proxmox_test``, a serial number).
+        """
+        if self.settings.dns is None:
+            return self
+
+        errors: list[str] = []
+        for ref in self.iter_nodes():
+            node = ref.node
+            if not node.dns or node.dns_name:
+                continue
+            try:
+                validate_hostname_label(
+                    node.name, "node name", "settings.dns.local_dns_suffix"
+                )
+            except ValueError as e:
+                errors.append(
+                    f"{e} Rename the node, set 'dns_name' on it, or exclude it "
+                    "with 'dns: false'."
+                )
+
+        if errors:
+            raise ValueError("\n".join(errors))
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_unique_dns_names(self) -> "YamlRoot":
+        """Two nodes may not publish the same DNS label.
+
+        Every record shares the one ``local_dns_suffix``, so duplicate labels are
+        duplicate hostnames — a name resolving to two addresses, which is a typo
+        far more often than it is intent.
+        """
+        if self.settings.dns is None:
+            return self
+
+        owners: dict[str, str] = {}
+        errors: list[str] = []
+        for ref in self.iter_nodes():
+            where: str = " → ".join(ref.path)
+            for label in node_dns_labels(ref.node):
+                if label in owners:
+                    errors.append(
+                        f"Duplicate DNS name '{label}' found across configuration: "
+                        f"claimed by both '{owners[label]}' and '{where}'."
+                    )
+                else:
+                    owners[label] = where
 
         if errors:
             raise ValueError("\n".join(errors))
