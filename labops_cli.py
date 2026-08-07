@@ -18,6 +18,7 @@ from src.cli.validate import app as validate_app
 from src.cli.docker import app as docker_app
 from src.cli.proxy import app as proxy_app
 from src.cli.update import update as update_command
+from src.cli.dns import app as dns_app
 
 # ------------- APP -----------------
 app = typer.Typer(
@@ -70,6 +71,7 @@ app.add_typer(vm_app, name="vm")
 app.add_typer(lxc_app, name="lxc")
 app.add_typer(docker_app, name="docker")
 app.add_typer(proxy_app, name="proxy")
+app.add_typer(dns_app, name="dns")
 # ------------- Entry -----------------
 
 
