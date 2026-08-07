@@ -1,6 +1,8 @@
-"""Tests for models/input_conf/settings.py — Settings and Dns validation.
+"""Tests for models/input_conf/settings.py — the Settings container.
 
-The proxy models live in models/input_conf/proxy.py; see test_proxy.py.
+The blocks it holds have their own modules and their own tests: proxy.py /
+test_proxy.py, dns.py / test_dns.py, select.py / test_select.py. What is left
+here is Settings itself.
 """
 
 from pathlib import Path
@@ -9,7 +11,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from models.input_conf.settings import Dns, Settings
+from models.input_conf.settings import Settings
 
 
 def _creds(tmp_ssh_key: Path) -> dict[str, Any]:
@@ -60,30 +62,3 @@ def test_settings_with_dns_and_proxy(tmp_ssh_key: Path) -> None:
 def test_settings_rejects_unknown_field(tmp_ssh_key: Path) -> None:
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
         Settings.model_validate({"default_creds": _creds(tmp_ssh_key), "oops": True})
-
-
-# ── Dns ───────────────────────────────────────────────────────────────────────
-
-
-def test_dns_valid() -> None:
-    dns = Dns.model_validate(
-        {"local_dns_suffix": "home.local", "pihole_location": "10.0.0.53"}
-    )
-    assert dns.local_dns_suffix == "home.local"
-
-
-def test_dns_requires_local_dns_suffix() -> None:
-    with pytest.raises(ValidationError, match="local_dns_suffix"):
-        Dns.model_validate({"pihole_location": "10.0.0.53"})
-
-
-def test_dns_requires_pihole_location() -> None:
-    with pytest.raises(ValidationError, match="pihole_location"):
-        Dns.model_validate({"local_dns_suffix": "home.local"})
-
-
-def test_dns_rejects_invalid_ip() -> None:
-    with pytest.raises(ValidationError):
-        Dns.model_validate(
-            {"local_dns_suffix": "home.local", "pihole_location": "not-an-ip"}
-        )
