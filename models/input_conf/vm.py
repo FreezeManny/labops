@@ -1,4 +1,5 @@
 from pydantic import model_validator, DirectoryPath
+from pydantic_extra_types.mac_address import MacAddress
 from typing import Optional, Dict, Any, Literal
 from ipaddress import IPv4Address
 
@@ -10,7 +11,6 @@ from .custom_types import OSType, HostType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 from .common_validators.managed import forbid_management_fields_when_unmanaged
 from .common_validators.dns import DnsNames
-from .common_validators.mac import MacAddress
 
 
 class VM(StrictModel):
@@ -27,7 +27,7 @@ class VM(StrictModel):
     docker: Optional[Docker] = None
     dns: bool = True
     dns_name: DnsNames = None
-    mac: MacAddress = None
+    mac: Optional[MacAddress] = None
 
     @model_validator(mode="after")
     def check_unmanaged_constraints(self) -> "VM":
