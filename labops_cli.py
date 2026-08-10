@@ -19,6 +19,7 @@ from src.cli.docker import app as docker_app
 from src.cli.proxy import app as proxy_app
 from src.cli.update import update as update_command
 from src.cli.dns import app as dns_app
+from src.cli.wake import wake as wake_command
 
 # ------------- APP -----------------
 app = typer.Typer(
@@ -64,8 +65,9 @@ def root_callback(
 
 # ------------- Apps -----------------
 app.add_typer(validate_app, name="validate")
-# A plain command, not a group: see the module docstring in src/cli/update.py.
+# Plain commands, not groups: see the module docstring in src/cli/update.py.
 app.command("update")(update_command)
+app.command("wake")(wake_command)
 app.add_typer(host_app, name="host")
 app.add_typer(vm_app, name="vm")
 app.add_typer(lxc_app, name="lxc")
