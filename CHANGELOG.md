@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0](https://github.com/FreezeManny/labops/compare/labops-v0.8.0...labops-v0.9.0) (2026-08-10)
+
+
+### Features
+
+* 30 pihole support ([#47](https://github.com/FreezeManny/labops/issues/47)) ([ed6e07c](https://github.com/FreezeManny/labops/commit/ed6e07cb687726d35030d19b7ed4c13067de3e25))
+* wake support ([#49](https://github.com/FreezeManny/labops/issues/49)) ([040fad8](https://github.com/FreezeManny/labops/commit/040fad820e79528a900cc62d272202e7a509b0c7))
+
 ## [0.8.0](https://github.com/FreezeManny/labops/compare/labops-v0.7.0...labops-v0.8.0) (2026-08-07)
 
 
