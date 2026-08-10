@@ -1,4 +1,5 @@
 from pydantic import DirectoryPath, model_validator
+from pydantic_extra_types.mac_address import MacAddress
 from ipaddress import IPv4Address
 from typing import Optional, Dict
 
@@ -23,6 +24,7 @@ class LXC(StrictModel):
     docker: Optional[Docker] = None
     dns: bool = True
     dns_name: DnsNames = None
+    mac: Optional[MacAddress] = None
 
     @model_validator(mode="after")
     def check_unmanaged_constraints(self) -> "LXC":

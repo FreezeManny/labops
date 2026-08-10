@@ -67,6 +67,32 @@ class YamlRoot(StrictModel):
         return self
 
     @model_validator(mode="after")
+    def validate_unique_macs(self) -> "YamlRoot":
+        # Same reasoning as the IP check above, with a sharper failure: two nodes
+        # sharing a MAC is a copy-paste, and `labops wake` would silently power on
+        # whichever machine actually owns it.
+        seen: dict[str, str] = {}
+        errors: list[str] = []
+
+        for ref in self.iter_nodes():
+            mac: Optional[str] = ref.node.mac
+            if mac is None:
+                continue
+            where: str = " → ".join(ref.path)
+            if mac in seen:
+                errors.append(
+                    f"Duplicate MAC address found across configuration: '{mac}' "
+                    f"is claimed by both '{seen[mac]}' and '{where}'."
+                )
+            else:
+                seen[mac] = where
+
+        if errors:
+            raise ValueError("\n".join(errors))
+
+        return self
+
+    @model_validator(mode="after")
     def validate_unique_names(self) -> "YamlRoot":
         # Depth 1 only: hosts and their direct lxc/vm children. Names nested
         # deeper may collide; the finders report that as an ambiguous target.

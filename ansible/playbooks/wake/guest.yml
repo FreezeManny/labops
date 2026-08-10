@@ -1,0 +1,43 @@
+---
+# Start a stopped Proxmox guest ("labops wake <vm-or-lxc>").
+#
+# This is what "waking" means for a VM or LXC. A magic packet cannot start one:
+# nothing inside a stopped guest is listening, and Proxmox does not watch for WoL on
+# a guest's behalf. The equivalent is `qm start` / `pct start`, which run on the
+# Proxmox node — so this playbook targets the *parent*, not the guest, and needs no
+# sshd inside it.
+#
+# Status is checked first so waking an already-running guest reports 'ok' instead of
+# failing on "already running". Both CLIs print `status: running`.
+#
+# Single-host run: src/wake/run.py puts only the parent node in the inventory.
+#
+# Required extra vars (set by src/wake/run.py):
+#   wake_cli   – 'qm' for a VM, 'pct' for an LXC
+#   wake_vmid  – the guest's vmid
+
+- name: Start a Proxmox guest
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Read the guest's current status
+      ansible.builtin.command:
+        cmd: "{{ wake_cli }} status {{ wake_vmid }}"
+      become: true
+      register: wake_status
+      changed_when: false
+      # --check must still report what would happen, and reading a status changes
+      # nothing, so this task runs in check mode too.
+      check_mode: false
+
+    - name: Start the guest
+      ansible.builtin.command:
+        cmd: "{{ wake_cli }} start {{ wake_vmid }}"
+      become: true
+      when: "'status: running' not in wake_status.stdout"
+      changed_when: true
+
+    - name: Report a guest that was already running
+      ansible.builtin.debug:
+        msg: "{{ wake_cli }} {{ wake_vmid }} is already running — nothing to do."
+      when: "'status: running' in wake_status.stdout"

@@ -225,6 +225,12 @@ hosts:
         ip: 10.0.50.149
         vmid: 111
         dns_name: fr24         # -> fr24.lab, not fr24-radar.lab
+        # A guest needs no mac to be woken: `labops wake fr24-radar` runs
+        # `qm start 111` on cprox, because a magic packet cannot start a stopped
+        # VM (nothing inside it is listening, and Proxmox does not watch for WoL
+        # on a guest's behalf). Set one only if this guest has a NIC of its own
+        # that really does wake — then ask for it explicitly with `--packet`.
+        mac: bc:24:11:00:11:22
 
       # HomeAssistant OS — a real proxmox VM, but an appliance OS that labops
       # cannot apt-update or SSH-provision. os: unmanaged → skipped by
@@ -260,6 +266,13 @@ hosts:
     type: bare-metal
     os: unmanaged
     ip: 10.0.10.4
+    # Optional, and the only thing `labops wake nas` needs: the NIC that listens
+    # for a Wake-on-LAN magic packet. Colon, dash ('BC-24-11-AA-BB-CC') and dotted
+    # ('bc24.11aa.bbcc') notation are all accepted and normalised.
+    # A magic packet goes to the *broadcast* address (the machine is off, so its
+    # IP resolves to nothing) and routers do not forward that, so run labops on
+    # the same segment or relay it: `labops wake nas --via cprox`.
+    mac: bc:24:11:aa:bb:cc
     web_services:
       - proxy_name: nas
         port: 80

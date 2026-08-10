@@ -1,4 +1,5 @@
 from pydantic import model_validator, DirectoryPath
+from pydantic_extra_types.mac_address import MacAddress
 from typing import Optional, Dict, Any, Literal
 from ipaddress import IPv4Address
 
@@ -26,6 +27,7 @@ class Host(StrictModel):
     web_services: Optional[WebServices] = None
     dns: bool = True
     dns_name: DnsNames = None
+    mac: Optional[MacAddress] = None
 
     @model_validator(mode="after")
     def check_proxmox_support(self) -> "Host":

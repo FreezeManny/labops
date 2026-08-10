@@ -32,6 +32,7 @@ hosts:
   arr:
     os: debian
     ip: 10.0.10.8
+    mac: bc:24:11:de:ad:be   # `labops wake arr` -> magic packet
     docker:
       root_path: "/home/manuel/"
       stacks:

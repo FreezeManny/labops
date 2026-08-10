@@ -1,0 +1,25 @@
+---
+# Broadcast a Wake-on-LAN magic packet from another node ("labops wake X --via Y").
+#
+# labops sends the packet itself when it can (src/wake/packet.py, plain UDP, no
+# Ansible involved). This playbook is for when it cannot: a magic packet goes to the
+# limited broadcast address, which routers do not forward, so a machine on the VPN or
+# on another subnet cannot wake anything on the lab LAN. A node that already sits on
+# that segment can, and this runs there.
+#
+# Single-host run: src/wake/run.py puts only the relay in the inventory.
+#
+# Required extra vars (set by src/wake/run.py):
+#   wake_mac        – the target's MAC (normalised to aa:bb:cc:dd:ee:ff)
+#   wake_broadcast  – broadcast address to send to (--broadcast)
+#   wake_port       – UDP port, 9 by default (--port)
+
+- name: Send a Wake-on-LAN magic packet
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Broadcast the magic packet
+      community.general.wakeonlan:
+        mac: "{{ wake_mac }}"
+        broadcast: "{{ wake_broadcast }}"
+        port: "{{ wake_port }}"
