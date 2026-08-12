@@ -1,4 +1,4 @@
-from pydantic import field_validator, RootModel
+from pydantic import Field, field_validator, RootModel
 from typing import Optional, List
 
 from .custom_types import StrictModel
@@ -6,13 +6,40 @@ from .common_validators.hostname import validate_hostname_label
 
 
 class WebService(StrictModel):
-    port: int
-    proxy_name: Optional[str] = None
-    access: Optional[List[str]] = None
-    # Upstream speaks HTTPS (e.g. Proxmox on :8006). Renders an https:// upstream
-    # with TLS verification skipped, since such services usually present a
-    # self-signed cert.
-    https: bool = False
+    """An HTTP service a node or stack exposes.
+
+    This is how routes get into the proxy: declaring a service next to the node
+    that runs it is the whole configuration. An entry without a `proxy_name` is
+    still tracked — useful for recording what a port is — but is not routed.
+    """
+
+    port: int = Field(
+        ..., description="The port the service listens on, on its node's address."
+    )
+    proxy_name: Optional[str] = Field(
+        None,
+        description=(
+            "Publish this service at `<proxy_name><proxy_suffix>`. Omit to track "
+            "the port without routing it. The value is both a DNS label and a "
+            "Caddy matcher name, so it must be a legal label."
+        ),
+    )
+    access: Optional[List[str]] = Field(
+        None,
+        description=(
+            "Which `settings.proxy.access_lists` may reach this service. Several "
+            "lists are combined as a union. A bare string is accepted for a "
+            "single list. Omit to use the list marked `default: true`."
+        ),
+    )
+    https: bool = Field(
+        False,
+        description=(
+            "Set when the upstream itself speaks HTTPS, such as Proxmox on "
+            ":8006. Renders an `https://` upstream with certificate verification "
+            "skipped, since these services usually present a self-signed cert."
+        ),
+    )
 
     @field_validator("access", mode="before")
     @classmethod

@@ -1,5 +1,5 @@
 from pathlib import Path, PurePosixPath
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 from typing import Optional, Dict, List, Literal
 
 from pydantic import FilePath, IPvAnyNetwork
@@ -8,9 +8,35 @@ from models.input_conf.custom_types import StrictModel
 
 
 class AccessList(StrictModel):
-    default: bool = False
-    accept: List[IPvAnyNetwork]
-    deny: Optional[List[IPvAnyNetwork]] = None
+    """A named set of CIDRs, referenced by a web service's `access`.
+
+    Lists are named rather than written inline so that "who may reach this" is
+    declared once and reused — change the VPN range in one place and every
+    service that names it follows.
+    """
+
+    default: bool = Field(
+        False,
+        description=(
+            "Marks this as the list used by services with no explicit `access`. "
+            "Exactly one list must set it."
+        ),
+    )
+    accept: List[IPvAnyNetwork] = Field(
+        ...,
+        description=(
+            "CIDRs allowed to reach services using this list. At least one is "
+            "required. An IPv4-only list denies IPv6 clients, so a list meant to "
+            "be public needs `::/0` alongside `0.0.0.0/0`."
+        ),
+    )
+    deny: Optional[List[IPvAnyNetwork]] = Field(
+        None,
+        description=(
+            "CIDRs blocked even when `accept` would allow them — deny wins. Use "
+            "it to carve a single host out of an allowed subnet."
+        ),
+    )
 
     @model_validator(mode="after")
     def validate_accept_non_empty(self) -> "AccessList":
@@ -28,16 +54,53 @@ TlsProvider = Literal["none", "cloudflare"]
 
 
 class ProxyTls(StrictModel):
-    provider: TlsProvider = "cloudflare"
-    token: Optional[str] = None
+    """Wildcard TLS for the proxy suffix, via the provider's ACME DNS-01
+    challenge.
+
+    Omit the whole `tls:` block to serve the wildcard over plain HTTP — sensible
+    for an internal suffix with no certificate.
+    """
+
+    provider: TlsProvider = Field(
+        "cloudflare",
+        description=(
+            "One provider at a time; `none` is the off switch. The name fixes "
+            "both the credential env var and the caddy-dns plugin the Caddy "
+            "image must be built with — labops renders the Caddyfile, not the "
+            "image, so it cannot check that the plugin is present."
+        ),
+    )
+    token: Optional[str] = Field(
+        None,
+        description=(
+            "The API token, inline and rendered literally into the Caddyfile — "
+            "discouraged. By default labops renders a reference like "
+            "`{env.CF_API_TOKEN}` that Caddy resolves from its own environment "
+            "at runtime, so the secret never lands in the config or the rendered "
+            "file. labops reads the same key from the secret store only to warn "
+            "when it is missing."
+        ),
+    )
 
 
 class DockerDeploy(StrictModel):
     """Docker-mode settings. Its mere presence on a ProxyDeploy selects docker
     mode; omit the whole block for a host-mode (bare `caddy`) target."""
 
-    container: Optional[str] = None
-    container_caddyfile_path: str = "/etc/caddy/Caddyfile"
+    container: Optional[str] = Field(
+        None,
+        description=(
+            "The container to `docker exec` into for the reload. Required in "
+            "docker mode unless `reload_command` replaces the reload outright."
+        ),
+    )
+    container_caddyfile_path: str = Field(
+        "/etc/caddy/Caddyfile",
+        description=(
+            "Where the Caddyfile is mounted inside the container — the mount "
+            "target that `caddyfile_dest` on the host maps to."
+        ),
+    )
 
 
 # How labops reaches the Caddy process to reload it: `docker exec` into a
@@ -46,10 +109,43 @@ DeployMode = Literal["docker", "host"]
 
 
 class ProxyDeploy(StrictModel):
-    target: str
-    caddyfile_dest: str
-    docker: Optional[DockerDeploy] = None
-    reload_command: Optional[str] = None
+    """Where Caddy runs, so the rendered Caddyfile can be delivered and reloaded.
+
+    Omit the whole block for render-only use: `proxy render` still works, and
+    `sync` / `deploy` / `reload` say what is missing instead of guessing a target.
+    """
+
+    target: str = Field(
+        ...,
+        description=(
+            "The node running Caddy — a host, VM or LXC in this config, by name, "
+            "IP or vmid. Hosts and VMs are reached over SSH; an LXC is reached "
+            "through its Proxmox parent with `pct`, so it needs no sshd."
+        ),
+    )
+    caddyfile_dest: str = Field(
+        ...,
+        description=(
+            "Absolute path the Caddyfile is written to on the target. In docker "
+            "mode this is the host path that is bind-mounted into the container. "
+            "Must be absolute: it is resolved on the target, where a relative "
+            "path would land in the remote login directory."
+        ),
+    )
+    docker: Optional[DockerDeploy] = Field(
+        None,
+        description=(
+            "Present for docker mode, absent for host mode (a bare `caddy` on "
+            "the target). The presence of this block is the mode switch."
+        ),
+    )
+    reload_command: Optional[str] = Field(
+        None,
+        description=(
+            "Replaces the whole reload command, run verbatim over SSH. Overrides "
+            "the mode default; when set, `docker.container` is not required."
+        ),
+    )
 
     @property
     def mode(self) -> DeployMode:
@@ -82,15 +178,54 @@ class ProxyDeploy(StrictModel):
 
 
 class Proxy(StrictModel):
-    proxy_suffix: str
-    tls: Optional[ProxyTls] = None
-    deploy: Optional[ProxyDeploy] = None
-    # A Jinja template to render the Caddyfile from, replacing the built-in one
-    # (ansible/files/proxy/Caddyfile.j2). Relative paths resolve against the
-    # config file's directory. See src/proxy/render.py for the context it is
-    # handed, and the built-in template for the blocks it can override.
-    template: Optional[FilePath] = None
-    access_lists: Dict[str, AccessList]
+    """The Caddy reverse proxy, rendered from the config.
+
+    There is no route list here: every `web_services` entry in the tree that
+    carries a `proxy_name` becomes a route, so a service is published next to
+    the node that runs it. labops owns the Caddyfile only — the image, the
+    caddy-dns plugin and the environment holding the ACME token are yours.
+    """
+
+    proxy_suffix: str = Field(
+        ...,
+        description=(
+            "The domain every route hangs off: a service named `nas` becomes "
+            "`nas<proxy_suffix>`. Caddy serves it as one wildcard site."
+        ),
+    )
+    tls: Optional[ProxyTls] = Field(
+        None,
+        description=(
+            "Wildcard TLS for the suffix. Omit to serve plain HTTP — appropriate "
+            "for an internal suffix with no certificate."
+        ),
+    )
+    deploy: Optional[ProxyDeploy] = Field(
+        None,
+        description=(
+            "Where Caddy runs. Omit for render-only use; `proxy sync`, `deploy` "
+            "and `reload` need it."
+        ),
+    )
+    template: Optional[FilePath] = Field(
+        None,
+        description=(
+            "Render the Caddyfile from your own Jinja template instead of the "
+            "built-in one. Relative to the config file, or absolute; the file "
+            "must exist, so a typo fails at `labops validate` rather than "
+            "part-way through a deploy. A template can replace the built-in one "
+            "outright, or extend it and override only the blocks it cares about. "
+            "See ansible/files/proxy/README.md."
+        ),
+    )
+    access_lists: Dict[str, AccessList] = Field(
+        ...,
+        description=(
+            "Named CIDR sets that web services reference by name. Exactly one "
+            "must be marked `default: true`, since a service with no explicit "
+            "`access` has to resolve to something."
+        ),
+    )
 
     @field_validator("template", mode="before")
     @classmethod

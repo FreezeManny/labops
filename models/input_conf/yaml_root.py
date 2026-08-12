@@ -1,4 +1,4 @@
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from typing import Iterator, Optional, Dict
 from ipaddress import IPv4Address
 
@@ -18,8 +18,23 @@ from .common_validators.hostname import validate_hostname_label
 
 
 class YamlRoot(StrictModel):
-    settings: Settings
-    hosts: Optional[Dict[str, Host]] = None
+    """The whole homelab config — the root of `homelab.yml`.
+
+    Two blocks: `settings` for everything global, and `hosts` for the inventory
+    tree. Unknown keys are rejected everywhere rather than ignored, so a typo is
+    a validation error instead of a setting that silently never applied.
+    """
+
+    settings: Settings = Field(
+        ..., description="Credentials, the secret store, DNS, proxy and target sets."
+    )
+    hosts: Optional[Dict[str, Host]] = Field(
+        None,
+        description=(
+            "The inventory, keyed by node name. Proxmox hosts nest their guests "
+            "underneath as `vm:` and `lxc:`, so this one block is the whole tree."
+        ),
+    )
 
     # ─── Traversal ────────────────────────────────────────────────────────────
     #
@@ -42,9 +57,12 @@ class YamlRoot(StrictModel):
 
     @model_validator(mode="after")
     def propagate_host_names(self) -> "YamlRoot":
+        # The key names the host unless the host overrides it. Runs first, so
+        # every later validator sees effective names rather than keys.
         if self.hosts:
             for k, host in self.hosts.items():
-                host.name = k
+                if not host.name:
+                    host.name = k
         return self
 
     @model_validator(mode="after")
@@ -96,33 +114,29 @@ class YamlRoot(StrictModel):
     def validate_unique_names(self) -> "YamlRoot":
         # Depth 1 only: hosts and their direct lxc/vm children. Names nested
         # deeper may collide; the finders report that as an ambiguous target.
+        #
+        # Checked on the *effective* name — the node's `name` where it set one,
+        # otherwise its key. Keys alone cannot collide, but an override can
+        # collide with another node's key or override, and a duplicate name is
+        # exactly what makes a target unresolvable. Runs after
+        # propagate_host_names and Host.propagate_lxc_vm_names, which are what
+        # populate `name`.
         all_names: set[str] = set()
         errors: list[str] = []
 
+        def claim(name: str) -> None:
+            if name in all_names:
+                errors.append(f"Duplicate name found across configuration: '{name}'")
+            else:
+                all_names.add(name)
+
         if self.hosts:
-            for k, host in self.hosts.items():
-                if k in all_names:
-                    errors.append(f"Duplicate name found across configuration: '{k}'")
-                else:
-                    all_names.add(k)
-
-                if host.lxc:
-                    for lxc_name in host.lxc.keys():
-                        if lxc_name in all_names:
-                            errors.append(
-                                f"Duplicate name found across configuration: '{lxc_name}'"
-                            )
-                        else:
-                            all_names.add(lxc_name)
-
-                if host.vm:
-                    for vm_name in host.vm.keys():
-                        if vm_name in all_names:
-                            errors.append(
-                                f"Duplicate name found across configuration: '{vm_name}'"
-                            )
-                        else:
-                            all_names.add(vm_name)
+            for host in self.hosts.values():
+                claim(host.name)
+                for lxc_obj in (host.lxc or {}).values():
+                    claim(lxc_obj.name)
+                for vm_obj in (host.vm or {}).values():
+                    claim(vm_obj.name)
 
         if errors:
             raise ValueError("\n".join(errors))
