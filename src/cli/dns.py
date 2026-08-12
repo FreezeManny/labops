@@ -1,3 +1,25 @@
+"""`labops dns` — local DNS records, published to Pi-hole v6.
+
+There is no record list in the config. Every host, VM and LXC becomes
+`<name><local_dns_suffix> -> ip`, so a device that exists only to have a DNS
+entry is written as an ordinary node with `os: unmanaged`. Per node, `dns_name`
+renames or aliases it and `dns: false` leaves it out. The consequence is that DNS
+cannot drift from the inventory: they are the same declaration.
+
+Records are derived before any network access, so `dns list` works with no
+Pi-hole configured and no connection — useful for checking what *would* be
+published. `diff` and `sync` need `settings.dns.pihole_location` and the API
+password from the `.env` store.
+
+`upgrade` is the odd one out and does not use the API at all: upgrading Pi-hole
+itself has no endpoint behind it, so it runs Pi-hole's own updater over SSH (or
+`pct` for a container). It exists as a separate command because `host update` /
+`lxc update` run the package manager, and Pi-hole installs from its own
+installer — apt never sees it. A containerised Pi-hole is upgraded by pulling a
+new image instead (`docker stack update`), and `upgrade` refuses that case
+rather than pretending.
+"""
+
 from contextlib import contextmanager
 from typing import Annotated, Callable, Iterator
 
@@ -105,7 +127,12 @@ def _summarize(plan: DnsPlan) -> str:
 
 @app.command(name="list")
 def dns_list() -> None:
-    """[bold]List[/bold] the local DNS records derived from the config [dim](no network)[/dim]."""
+    """[bold]List[/bold] the local DNS records derived from the config [dim](no network)[/dim].
+
+    [dim]Works before you have a Pi-hole to point at: records come from the
+    config tree, not from the server, so this shows what `dns sync` would
+    publish. Needs only settings.dns.local_dns_suffix.[/dim]
+    """
     model: YamlRoot = state.model
     with _clean_errors():
         records: list[DnsRecord] = find_records(model)
@@ -125,7 +152,12 @@ def dns_list() -> None:
 
 @app.command(name="diff")
 def dns_diff() -> None:
-    """[bold]Compare[/bold] the config against the Pi-hole [dim](changes nothing)[/dim]."""
+    """[bold]Compare[/bold] the config against the Pi-hole [dim](changes nothing)[/dim].
+
+    [dim]Shows what `dns sync` would add, change and delete. Reads the Pi-hole
+    over its API, so it needs settings.dns.pihole_location and the API password
+    (PIHOLE_PASSWORD in the .env store).[/dim]
+    """
     model: YamlRoot = state.model
     _emit_warnings(model)
     with _clean_errors():

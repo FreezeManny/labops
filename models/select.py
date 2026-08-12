@@ -18,7 +18,7 @@ door.
 
 from typing import Iterable, Literal, Mapping, Optional
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from models.input_conf.custom_types import OSType, StrictModel
 from models.input_conf.host import Host
@@ -42,12 +42,39 @@ class Selector(StrictModel):
         tags: [prod, edge]         ->  tagged prod OR edge
     """
 
-    kind: list[NodeKind] = []
-    os: list[OSType] = []
-    tags: list[str] = []
-    # A node name. Matches that node *and* everything below it, because
-    # NodeRef.path holds the node's own name plus every ancestor.
-    under: list[str] = []
+    kind: list[NodeKind] = Field(
+        [],
+        description=(
+            "Node classes to include: `host`, `vm`, `lxc`. Note this is the "
+            "node's place in the tree, not a node's `type` field, which means "
+            "bare-metal vs proxmox. A single value may be written unquoted "
+            "instead of as a list."
+        ),
+    )
+    os: list[OSType] = Field(
+        [],
+        description=(
+            "Operating systems to include: `debian`, `alpine`, `redhat`, "
+            "`unmanaged`."
+        ),
+    )
+    tags: list[str] = Field(
+        [],
+        description=(
+            "Match nodes carrying any of these tags. Tags are local to the node "
+            "that declares them and are not inherited, so use `under` to sweep a "
+            "subtree."
+        ),
+    )
+    under: list[str] = Field(
+        [],
+        description=(
+            "Node names. Matches each named node and everything below it, so "
+            "this is how you select a whole Proxmox host with its guests. An "
+            "unknown name is an error rather than an empty selection, which "
+            "would look like a successful no-op."
+        ),
+    )
 
     @field_validator("kind", "os", "tags", "under", mode="before")
     @classmethod

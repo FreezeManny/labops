@@ -1,4 +1,17 @@
-from markdown_it.presets import default
+"""`labops lxc` — the Proxmox containers declared under a host's `lxc:` block.
+
+Unlike hosts and VMs, an LXC is never reached over SSH. Commands run on the
+Proxmox host and enter the container with `pct exec`, so a container needs no
+sshd, no credentials of its own and no network route from the machine running
+labops — only its `vmid` and a reachable Proxmox parent. That is also why the
+unreachable-host hint here talks about the container being stopped rather than
+about SSH keys (see `report_run` in src/cli/core.py).
+
+Consequence worth knowing: software installed outside the package manager is
+invisible to `lxc update`. Pi-hole is the standing example — it ships its own
+installer, so it has its own `labops dns upgrade`.
+"""
+
 from typing import Optional
 import typer
 from rich.table import Table
@@ -16,7 +29,11 @@ app = typer.Typer(
 
 @app.command("list")
 def list_lxcs() -> None:
-    """List all LXCs defined in the homelab config."""
+    """[bold]List[/bold] all LXCs defined in the config, grouped by Proxmox host.
+
+    [dim]Reads the config only — nothing is contacted, so this works offline and
+    against containers that are stopped.[/dim]
+    """
     model: YamlRoot = state.model
     lxcs = lxc.findAll(model)
 
@@ -44,11 +61,22 @@ def list_lxcs() -> None:
 
 @app.command("update")
 def execute_update(
-    target: Optional[str] = typer.Argument(None, help="VMID, LXC name or IP address"),
+    target: Optional[str] = typer.Argument(None, help="LXC name, IP address or vmid."),
     all: bool = typer.Option(False, "--all", help="Update all LXCs."),
 ) -> None:
     """
-    Run package upgrades natively via pct on a target LXC or all LXCs.
+    Run the [bold]package manager upgrade[/bold] on a target LXC or all LXCs.
+
+    [dim]Runs from the Proxmox host via pct — the container needs no sshd, only
+    a vmid and a reachable parent. Containers with os: unmanaged are skipped, and
+    software installed outside the package manager (Pi-hole) is not covered; see
+    `dns upgrade`. Respects global --dry-run and --verbose.[/dim]
+
+    \b
+    Examples:
+      labops lxc update pihole      # by name
+      labops lxc update 105         # by vmid
+      labops lxc update --all
     """
     model: YamlRoot = state.model
     # Resolve config targets into a list of tuples: [(Host, LXC), ...]
