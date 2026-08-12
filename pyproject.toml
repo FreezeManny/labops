@@ -15,6 +15,12 @@ dependencies = [
     "typer>=0.24.1",
 ]
 
+[project.urls]
+Documentation = "https://freezemanny.github.io/labops/"
+Source = "https://github.com/FreezeManny/labops"
+Changelog = "https://github.com/FreezeManny/labops/blob/main/CHANGELOG.md"
+Issues = "https://github.com/FreezeManny/labops/issues"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -36,8 +42,14 @@ dev = [
 test = [
     "pytest>=8",
 ]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocs-include-markdown-plugin>=7",
+]
 
 # Install the test group by default so `uv run pytest` / `uv sync` pick it up.
+# `docs` is deliberately left out: day-to-day work does not need the site
+# toolchain, and `just docs-*` pulls it in on demand.
 [tool.uv]
 default-groups = ["dev", "test"]
 
