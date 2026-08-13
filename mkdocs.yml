@@ -1,0 +1,114 @@
+site_name: labops
+site_description: A declarative, YAML-based homelab manager.
+site_url: https://freezemanny.github.io/labops/
+repo_url: https://github.com/FreezeManny/labops
+repo_name: FreezeManny/labops
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: assets/Cover.png
+  favicon: assets/Cover.png
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+plugins:
+  - search
+  - include-markdown
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+
+# Ordered tutorial → how-to → reference. Getting started is the one path read
+# start to finish; the guides are what you reach for next; Configuration and
+# Commands are lookup material, jumped into from a search or a guide's "See
+# also", so they sit last — and adjacent, because they are the same kind of
+# document.
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Guides:
+      - Selecting targets: guides/targets.md
+      - Pi-hole DNS: guides/dns.md
+      - Caddy reverse proxy: guides/proxy.md
+      - Caddyfile templates: guides/proxy-templates.md
+      - Docker stacks: guides/docker.md
+      - Waking nodes: guides/wake.md
+      # Hand-written, so it lives outside docs/configuration/ — that directory
+      # is generated and git-ignored in full.
+      - Editor setup: editor-setup.md
+  - Configuration:
+      - configuration/index.md
+      # Mirrors the config file's own shape, so a key is where you expect it:
+      # the settings block and its two optional subsystems, then the node tree.
+      - settings: configuration/settings.md
+      - settings.dns: configuration/dns.md
+      - settings.proxy: configuration/proxy.md
+      - hosts, vm, lxc: configuration/nodes.md
+      - web_services: configuration/web-services.md
+      - docker: configuration/docker.md
+  - Commands:
+      - commands/index.md
+      - labops update: commands/update.md
+      - labops wake: commands/wake.md
+      - labops validate: commands/validate.md
+      - labops host: commands/host.md
+      - labops vm: commands/vm.md
+      - labops lxc: commands/lxc.md
+      - labops docker: commands/docker.md
+      - labops proxy: commands/proxy.md
+      - labops dns: commands/dns.md
+  - Development: development.md
+  - Changelog: changelog.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/FreezeManny/labops
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/labops/

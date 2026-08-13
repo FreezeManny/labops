@@ -1,3 +1,26 @@
+"""`labops proxy` — the Caddy reverse proxy, rendered from the config.
+
+There is no route list in the config. Every `web_services` entry anywhere in the
+tree that carries a `proxy_name` becomes a route, so a service is published by
+declaring it on the node that runs it, next to that node's IP. One fact, one
+place: move a service to another node and its route follows.
+
+    homelab.yml  ─►  Caddyfile.j2  ─►  Caddyfile  ─►  target  ─►  caddy reload
+      web_services +                    render        sync        deploy/reload
+      settings.proxy
+
+**labops owns the config file, not the Caddy instance.** The image, the DNS
+provider plugin it must be built with, and the environment holding the ACME
+token are managed outside labops — which is why TLS problems surface as warnings
+rather than errors: labops can see the inline token and the .env store, but not
+the container's own environment, where the token may perfectly well live.
+
+The verbs split along how far they go: `render` produces the file locally,
+`sync` puts it on the target, `reload` restarts Caddy against whatever is
+already there, and `deploy` is sync-then-reload-if-changed. Writing your own
+Caddyfile template is documented in ansible/files/proxy/README.md.
+"""
+
 from pathlib import Path
 from typing import Annotated, Callable, Optional
 
@@ -71,7 +94,13 @@ def _run_playbook_action(run: Callable[[], Runner], action: str) -> None:
 
 @app.command(name="list")
 def proxy_list() -> None:
-    """[bold]List[/bold] all reverse-proxy routes derived from web_services."""
+    """[bold]List[/bold] all reverse-proxy routes derived from web_services.
+
+    [dim]One row per web_services entry that has a proxy_name; entries without
+    one are tracked in the config but not routed. Shows the resolved access
+    lists, so it is the quickest way to check what a service is exposed to.
+    Reads the config only — Caddy is not contacted.[/dim]
+    """
     model: YamlRoot = state.model
     routes: list[RouteResult] = find_routes(model)
     if not routes:
@@ -147,7 +176,12 @@ def proxy_render(
 
 @app.command(name="sync")
 def proxy_sync() -> None:
-    """[bold]Sync[/bold] the rendered Caddyfile to the Caddy host [dim](no reload)[/dim]."""
+    """[bold]Sync[/bold] the rendered Caddyfile to the Caddy host [dim](no reload)[/dim].
+
+    [dim]The file lands on the target but Caddy keeps serving its old config
+    until something reloads it — `proxy reload`, or `proxy deploy` which does
+    both. Requires settings.proxy.deploy.[/dim]
+    """
     model: YamlRoot = state.model
     _require_deploy_configured(model)
     _emit_tls_warnings(model)
@@ -159,7 +193,16 @@ def proxy_sync() -> None:
 
 @app.command(name="deploy")
 def proxy_deploy() -> None:
-    """[bold]Deploy[/bold] the Caddyfile to the Caddy host and [bold]reload[/bold] [dim](only if changed)[/dim]."""
+    """[bold]Deploy[/bold] the Caddyfile to the Caddy host and [bold]reload[/bold] [dim](only if changed)[/dim].
+
+    [dim]sync + reload, and the reload is skipped when the file on the target is
+    already identical — so this is safe to run repeatedly. The usual command
+    after editing web_services. Requires settings.proxy.deploy.[/dim]
+
+    [dim]There is no `caddy validate` step: a Caddyfile that renders but that
+    Caddy rejects lands on the target and fails at reload. Check it first with
+    `proxy render`.[/dim]
+    """
     model: YamlRoot = state.model
     _require_deploy_configured(model)
     _emit_tls_warnings(model)
@@ -171,7 +214,12 @@ def proxy_deploy() -> None:
 
 @app.command(name="reload")
 def proxy_reload() -> None:
-    """[bold]Reload[/bold] Caddy on the target using its on-disk config [dim](no sync)[/dim]."""
+    """[bold]Reload[/bold] Caddy on the target using its on-disk config [dim](no sync)[/dim].
+
+    [dim]Nothing is rendered or copied — this reloads whatever Caddyfile is
+    already on the target. Use it after a `sync`, or to pick up a change made on
+    the target itself. Requires settings.proxy.deploy.[/dim]
+    """
     model: YamlRoot = state.model
     _require_deploy_configured(model)
     _run_playbook_action(

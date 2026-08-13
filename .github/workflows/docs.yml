@@ -1,0 +1,63 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    # Anything that feeds the site: the hand-written pages, the generated ones,
+    # and the sources they are generated from.
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "models/**"
+      - "src/cli/**"
+      - "labops_cli.py"
+      - "ansible/files/proxy/README.md"
+      - "CHANGELOG.md"
+      - ".github/workflows/docs.yml"
+  # So the site can be republished without an intervening commit.
+  workflow_dispatch:
+
+# Never let two deploys race; the newest wins, and an in-flight one is not
+# cancelled half-way through publishing.
+concurrency:
+  group: docs
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: build & deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # mkdocs gh-deploy pushes to the gh-pages branch
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # gh-deploy needs the branch history
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install the project
+        run: uv sync --all-extras --dev --group docs
+
+      # The reference pages and the JSON Schema are not committed — they are
+      # written here, so they cannot be out of date with the code they describe.
+      - name: Generate the reference
+        run: uv run python docs/gen_docs.py
+
+      # --strict turns a broken internal link or a page missing from the nav
+      # into a failure, so the site is checked before it is published.
+      - name: Build
+        run: uv run mkdocs build --strict
+
+      - name: Deploy
+        run: uv run mkdocs gh-deploy --force --no-history

@@ -51,3 +51,11 @@ coverage.xml
 *.swp
 *.swo
 .claude/
+
+# Docs. The site, plus everything docs/gen_docs.py produces — those are built
+# in CI immediately before `mkdocs build`, so there is no committed copy to go
+# stale. Everything else under docs/ is hand-written and tracked.
+site/
+docs/configuration/
+docs/commands/
+docs/labops.schema.json

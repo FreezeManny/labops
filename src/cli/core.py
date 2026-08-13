@@ -1,3 +1,25 @@
+"""Shared plumbing for every `labops` sub-command: config discovery, the loaded
+model, and the conventions for reporting a run.
+
+Three things live here because they must behave identically everywhere:
+
+**Config discovery.** With no `--file`, `find_config` walks up from the current
+directory looking for `homelab.yml` / `homelab.yaml`, the way `docker compose`
+finds its compose file. So labops can be run from anywhere inside a config
+repository, not just its root. An explicit `--file` never searches — a path that
+does not exist is an error rather than a silent fall-back to a different config.
+
+**The loaded model.** `state` holds the parsed `YamlRoot` for the duration of a
+process. The root callback in labops_cli.py fills it before any sub-command
+runs, so commands can treat `state.model` as always present; the property
+asserts rather than returning `None` to keep that guarantee honest.
+
+**Run reporting.** `report_run` separates *unreachable* from *failed*, because
+they are different problems with different fixes: unreachable is a connection,
+credential or powered-off issue, while failed means labops got in and the work
+itself went wrong. Mixing them sends people to debug the wrong layer.
+"""
+
 from pathlib import Path
 from typing import Callable, Optional, Annotated
 from dataclasses import dataclass, field
