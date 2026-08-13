@@ -1,15 +1,22 @@
 name: PR Title
 
 on:
+  # Only the events that can change the title. `synchronize` (a new commit
+  # pushed to the PR) leaves the title untouched, so it re-ran the same check
+  # for the same string on every push.
   pull_request_target:
     types:
       - opened
       - edited
-      - synchronize
       - reopened
 
 permissions:
   pull-requests: read
+
+# Editing a title several times in a row supersedes the earlier checks.
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   lint:

@@ -1,20 +1,13 @@
 name: Docs
 
 on:
-  push:
-    branches: [main]
-    # Anything that feeds the site: the hand-written pages, the generated ones,
-    # and the sources they are generated from.
-    paths:
-      - "docs/**"
-      - "mkdocs.yml"
-      - "models/**"
-      - "src/cli/**"
-      - "labops_cli.py"
-      - "ansible/files/proxy/README.md"
-      - "CHANGELOG.md"
-      - ".github/workflows/docs.yml"
-  # So the site can be republished without an intervening commit.
+  # The site is versioned with the tool. release-please publishes a release when
+  # its release PR is merged, and that is the only thing that republishes the
+  # docs — so the published site always describes the released version, never
+  # unreleased work sitting on main.
+  release:
+    types: [published]
+  # So the site can be republished without an intervening release.
   workflow_dispatch:
 
 # Never let two deploys race; the newest wins, and an in-flight one is not

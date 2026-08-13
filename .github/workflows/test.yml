@@ -1,10 +1,26 @@
 name: Test
 
 on:
-  push:
+  # The pull request is the gate: every change reaches main through one, so
+  # testing pull requests tests everything that can land. The old bare `push:`
+  # fired on every branch as well, which ran a second, identical job before the
+  # PR was even open.
   pull_request:
+  # For re-running against a branch without pushing an empty commit.
+  workflow_dispatch:
+
+# A newer push to the same PR makes an in-flight run obsolete — drop it rather
+# than pay for a result nobody will read.
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
+  # Named `pytest` because the Main-Protection ruleset requires that check by
+  # name; renaming the job silently un-gates the branch.
   pytest:
     name: pytest
     runs-on: ubuntu-latest

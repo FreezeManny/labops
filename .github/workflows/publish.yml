@@ -4,8 +4,14 @@ on:
   release:
     types: [published]
 
+# Two releases published close together must not race for the same version on
+# PyPI; an in-flight upload is never cancelled half-way.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
 jobs:
-  uv-example:
+  publish:
     name: python
     runs-on: ubuntu-latest
 
@@ -30,7 +36,6 @@ jobs:
 
       - name: Install the project
         run: uv sync --all-extras --dev
-
 
       - name: Build
         run: uv build
