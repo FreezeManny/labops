@@ -1,19 +1,27 @@
+name: Release Please
+
 on:
   push:
     branches:
       - main
+
+# Two merges in quick succession would otherwise race to update the same
+# release PR; the newest wins, and an in-flight run is left to finish.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
 
 permissions:
   contents: write
   pull-requests: write
   issues: write
 
-name: Release Please
-
 jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-    - uses: googleapis/release-please-action@v4
-      with:
-        token: ${{ secrets.ACTIONS_TOKEN }}
+      # A PAT rather than GITHUB_TOKEN: releases created with the default token
+      # do not emit events, so Publish and Docs would never fire.
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.ACTIONS_TOKEN }}
