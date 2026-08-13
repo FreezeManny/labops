@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/FreezeManny/labops/compare/labops-v0.9.0...labops-v0.9.1) (2026-08-13)
+
+
+### Documentation
+
+* 50 add initial docs ([#52](https://github.com/FreezeManny/labops/issues/52)) ([e47572c](https://github.com/FreezeManny/labops/commit/e47572c8c24ccaf2d0ea1218db7c96c4251f7d00))
+
 ## [0.9.0](https://github.com/FreezeManny/labops/compare/labops-v0.8.0...labops-v0.9.0) (2026-08-10)
 
 
