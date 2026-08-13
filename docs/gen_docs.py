@@ -84,29 +84,6 @@ the matching commands have nothing to act on and say so.
         ["Settings", "Creds", "Selector"],
     ),
     (
-        "nodes.md",
-        "hosts, vm, lxc",
-        """\
-The inventory. `hosts:` holds the machines labops reaches directly; a host with
-`type: proxmox` nests its guests underneath as `vm:` and `lxc:`, so the one
-block describes the whole tree.
-
-The three node kinds share most of their fields. Where they differ is *how they
-are reached*: a host or VM over SSH, a container through its Proxmox parent with
-`pct exec` — which is why an LXC needs no sshd, no credentials of its own and no
-route from the machine running labops.
-
-The key you write a node under is its name. That name becomes a DNS label once
-`settings.dns` is configured, so it must be a legal one — no underscores —
-unless `dns_name` overrides it.
-
-Any node may be marked `os: unmanaged`. It is then tracked, resolved and proxied
-like any other, but setup and update skip it: an appliance OS or a box you do
-not own has no package manager for labops to drive.
-""",
-        ["Host", "VM", "LXC"],
-    ),
-    (
         "dns.md",
         "settings.dns",
         """\
@@ -136,6 +113,29 @@ plugin it must be built with, and the environment holding your ACME token are
 managed outside labops — see the [Caddy proxy guide](../guides/proxy.md).
 """,
         ["Proxy", "ProxyTls", "ProxyDeploy", "DockerDeploy", "AccessList"],
+    ),
+    (
+        "nodes.md",
+        "hosts, vm, lxc",
+        """\
+The inventory. `hosts:` holds the machines labops reaches directly; a host with
+`type: proxmox` nests its guests underneath as `vm:` and `lxc:`, so the one
+block describes the whole tree.
+
+The three node kinds share most of their fields. Where they differ is *how they
+are reached*: a host or VM over SSH, a container through its Proxmox parent with
+`pct exec` — which is why an LXC needs no sshd, no credentials of its own and no
+route from the machine running labops.
+
+The key you write a node under is its name, unless the node sets `name` itself.
+That name becomes a DNS label once `settings.dns` is configured, so it must be a
+legal one — no underscores — unless `dns_name` overrides it.
+
+Any node may be marked `os: unmanaged`. It is then tracked, resolved and proxied
+like any other, but setup and update skip it: an appliance OS or a box you do
+not own has no package manager for labops to drive.
+""",
+        ["Host", "VM", "LXC"],
     ),
     (
         "web-services.md",

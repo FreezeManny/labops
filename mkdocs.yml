@@ -60,20 +60,14 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
 
+# Ordered tutorial → how-to → reference. Getting started is the one path read
+# start to finish; the guides are what you reach for next; Configuration and
+# Commands are lookup material, jumped into from a search or a guide's "See
+# also", so they sit last — and adjacent, because they are the same kind of
+# document.
 nav:
   - Home: index.md
   - Getting started: getting-started.md
-  - Configuration:
-      - configuration/index.md
-      - settings: configuration/settings.md
-      - hosts, vm, lxc: configuration/nodes.md
-      - web_services: configuration/web-services.md
-      - docker: configuration/docker.md
-      - settings.dns: configuration/dns.md
-      - settings.proxy: configuration/proxy.md
-      # Hand-written, so it lives outside docs/configuration/ — that directory
-      # is generated and git-ignored in full.
-      - Editor setup: editor-setup.md
   - Guides:
       - Selecting targets: guides/targets.md
       - Pi-hole DNS: guides/dns.md
@@ -81,6 +75,19 @@ nav:
       - Caddyfile templates: guides/proxy-templates.md
       - Docker stacks: guides/docker.md
       - Waking nodes: guides/wake.md
+      # Hand-written, so it lives outside docs/configuration/ — that directory
+      # is generated and git-ignored in full.
+      - Editor setup: editor-setup.md
+  - Configuration:
+      - configuration/index.md
+      # Mirrors the config file's own shape, so a key is where you expect it:
+      # the settings block and its two optional subsystems, then the node tree.
+      - settings: configuration/settings.md
+      - settings.dns: configuration/dns.md
+      - settings.proxy: configuration/proxy.md
+      - hosts, vm, lxc: configuration/nodes.md
+      - web_services: configuration/web-services.md
+      - docker: configuration/docker.md
   - Commands:
       - commands/index.md
       - labops update: commands/update.md
