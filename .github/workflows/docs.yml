@@ -50,7 +50,7 @@ jobs:
       # --strict turns a broken internal link or a page missing from the nav
       # into a failure, so the site is checked before it is published.
       - name: Build
-        run: uv run mkdocs build --strict
+        run: uv run --group docs mkdocs build --strict
 
       - name: Deploy
-        run: uv run mkdocs gh-deploy --force --no-history
+        run: uv run --group docs mkdocs gh-deploy --force --no-history
