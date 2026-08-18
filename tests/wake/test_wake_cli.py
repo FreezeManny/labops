@@ -20,8 +20,7 @@ from typing import Any, Optional
 
 import pytest
 import typer
-from click.testing import Result
-from typer.testing import CliRunner
+from typer.testing import CliRunner, Result
 
 from models.input_conf.yaml_root import YamlRoot
 from models.tree import NodeRef
