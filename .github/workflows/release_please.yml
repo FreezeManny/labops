@@ -22,6 +22,6 @@ jobs:
     steps:
       # A PAT rather than GITHUB_TOKEN: releases created with the default token
       # do not emit events, so Publish and Docs would never fire.
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         with:
           token: ${{ secrets.ACTIONS_TOKEN }}
