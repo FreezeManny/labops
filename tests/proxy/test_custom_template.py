@@ -49,6 +49,7 @@ def test_custom_template_receives_the_render_context(
         "custom.j2",
         "suffix={{ proxy_suffix }}\n"
         "plugin={{ tls_plugin }}\n"
+        "matcher={{ ip_matcher }}\n"
         "{% for r in routes %}{{ r.name }} {{ r.host }} {{ r.target }} "
         "{{ r.insecure }} {{ r.accept | join(',') }}\n{% endfor %}",
     )
@@ -56,6 +57,7 @@ def test_custom_template_receives_the_render_context(
 
     assert "suffix=.example.test" in out
     assert "plugin=github.com/caddy-dns/cloudflare" in out
+    assert "matcher=remote_ip" in out
     # edge: no explicit access -> the default list's CIDR.
     assert "edge edge.example.test 10.0.0.4:80 False 10.0.0.0/24" in out
 
