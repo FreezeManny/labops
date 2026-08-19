@@ -10,6 +10,12 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    # Nothing here reaches the published wheel, so it must not cut a release.
+    # Stated explicitly rather than left to Dependabot's inference from commit
+    # history, which now contains `fix(deps)` commits too.
+    commit-message:
+      prefix: "chore"
+      include: "scope"
 
   # Python runtime + tooling deps (pyproject.toml / uv.lock). The `uv`
   # ecosystem maintains the lockfile; `pip` would leave it stale.
@@ -17,6 +23,16 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    # Runtime dependencies ship inside the wheel: bumping one changes what
+    # users install, so it belongs in the changelog. `fix` lands it in a
+    # visible release-please section, which is the whole reason a release PR
+    # gets opened — `chore` is hidden, and a run of `chore(deps)` commits
+    # leaves release-please with nothing user facing to release.
+    # Development dependencies change nothing that ships, so they stay hidden.
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
     groups:
       python-dev:
         patterns: ["*"]
@@ -28,6 +44,10 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    # CI-only, like the devcontainer: never a release on its own.
+    commit-message:
+      prefix: "chore"
+      include: "scope"
     groups:
       actions:
         patterns: ["*"]
