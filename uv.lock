@@ -399,7 +399,6 @@ wheels = [
 
 [[package]]
 name = "labops"
-version = "0.9.1"
 source = { editable = "." }
 dependencies = [
     { name = "ansible-core" },
