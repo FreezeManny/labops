@@ -215,9 +215,12 @@ hosts:
         ip: 10.0.10.5
         os: debian
         vmid: 105
+        # Short form: a map of proxy_name -> port, the same as one list entry
+        # with `proxy_name: pihole` / `port: 8080`. It is a whole block at a
+        # time — use the list (as above) once a service needs `access`, `https`
+        # or no proxy_name.
         web_services:
-          - proxy_name: pihole
-            port: 8080
+          pihole: 8080
 
     vm:
       fr24-radar:
