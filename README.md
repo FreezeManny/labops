@@ -55,8 +55,6 @@ labops host list       # what do I have?
 labops update --all    # patch everything
 ```
 
-A worked example config lives in [`test-samples/homelab-complete.yml`](test-samples/homelab-complete.yml).
-
 → **[Full documentation](https://freezemanny.github.io/labops/)**, including a [configuration reference](https://freezemanny.github.io/labops/configuration/) and a [JSON Schema](https://freezemanny.github.io/labops/configuration/editor-setup/) for editor autocompletion.
 
 ## Development

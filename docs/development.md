@@ -34,15 +34,6 @@ Ansible collections, when you need them locally:
 just install-ansible-collection
 ```
 
-The justfile also carries a `test-*` recipe per command, pointed at
-`test-samples/homelab-test.yml` rather than a real lab:
-
-```bash
-just test-validate
-just test-host-list
-just test-docker-update-all
-```
-
 ## Documentation
 
 Part of the docs is generated from the code by `docs/gen_docs.py`:
