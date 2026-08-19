@@ -146,6 +146,31 @@ how routes get into the proxy.
 
 An entry without a `proxy_name` is tracked but not routed — useful for recording
 what a port is without publishing it.
+
+## Short form
+
+A routed service is usually nothing but a name and a port, so a `web_services`
+block may be written as a map of `proxy_name: port` instead of a list:
+
+```yaml
+web_services:
+  nas: 8080
+  pihole: 80
+```
+
+That is exactly the list below, spelled shorter:
+
+```yaml
+web_services:
+  - proxy_name: nas
+    port: 8080
+  - proxy_name: pihole
+    port: 80
+```
+
+The choice is per block, not per entry — one `web_services` is either a map or a
+list. Use the list as soon as a service in that block needs `access`, `https`,
+or no `proxy_name` at all.
 """,
         ["WebService"],
     ),
@@ -202,9 +227,12 @@ def type_name(spec: dict[str, Any], page: str) -> str:
     if "$ref" in spec:
         target = spec["$ref"].rsplit("/", 1)[-1]
         definition = DEFS.get(target, {})
-        # A RootModel (WebServices wraps a list of WebService) has no properties
-        # of its own and nothing to link to — render what it actually is.
-        if "properties" not in definition and definition.get("type") == "array":
+        # A RootModel (WebServices wraps a list of WebService, or the mapping
+        # shorthand) has no properties of its own and nothing to link to —
+        # render what it actually is.
+        if "properties" not in definition and (
+            definition.get("type") == "array" or "anyOf" in definition
+        ):
             return type_name(definition, page)
         return link_to(target, page)
 
@@ -367,9 +395,12 @@ def fence_example_blocks(text: str) -> str:
         if is_examples:
             block: list[str] = []
             j = i + 1
-            while j < len(lines) and (lines[j].startswith("  ") or not lines[j].strip()):
+            while j < len(lines) and (
+                lines[j].startswith("  ") or not lines[j].strip()
+            ):
                 if not lines[j].strip() and not any(
-                    lines[k].startswith("  ") for k in range(j + 1, min(j + 3, len(lines)))
+                    lines[k].startswith("  ")
+                    for k in range(j + 1, min(j + 3, len(lines)))
                 ):
                     break
                 block.append(lines[j][2:] if lines[j].startswith("  ") else "")
@@ -406,7 +437,16 @@ COMMAND_PAGES: dict[str, str] = {
 
 def write_command_reference() -> list[Path]:
     raw = subprocess.run(
-        [sys.executable, "-m", "typer", "labops_cli.py", "utils", "docs", "--name", "labops"],
+        [
+            sys.executable,
+            "-m",
+            "typer",
+            "labops_cli.py",
+            "utils",
+            "docs",
+            "--name",
+            "labops",
+        ],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
