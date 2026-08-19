@@ -7,18 +7,16 @@ it never writes it and never renders its values unless explicitly asked to.
 from pathlib import Path
 
 
-def resolve_env_file(config_path: Path, override: str | None) -> Path:
+def resolve_env_file(config_path: Path, override: Path | None) -> Path:
     """Locate the secret store.
 
-    ``override`` is ``settings.env_file``: used as-is if absolute, otherwise
-    resolved relative to the config file's directory. When unset, defaults to a
-    ``.env`` alongside the config file.
+    ``override`` is ``settings.env_file``, already resolved to an absolute path
+    by the model validator when set. When unset, defaults to a ``.env``
+    alongside the config file.
     """
-    base: Path = config_path.parent
     if override:
-        p = Path(override).expanduser()
-        return p if p.is_absolute() else (base / p)
-    return base / ".env"
+        return override
+    return config_path.parent / ".env"
 
 
 def read_env_file(path: Path) -> dict[str, str]:

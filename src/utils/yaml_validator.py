@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Dict, Any, Optional
 from pydantic import ValidationError
@@ -12,14 +11,12 @@ console = Console()
 
 def validate_yaml(raw: Dict[str, Any], rootPath: str) -> Optional[YamlRoot]:
     base_dir: Path = Path(rootPath).parent.resolve()
-    original_dir: str = os.getcwd()
-
-    os.chdir(base_dir)
 
     model = None
     try:
-        # model_validate is the standard Pydantic V2 way to load from dictionaries
-        model: YamlRoot = YamlRoot.model_validate(raw)
+        model: YamlRoot = YamlRoot.model_validate(
+            raw, context={"base_dir": base_dir}
+        )
 
     except ValidationError as e:
         error_messages = []
@@ -50,9 +47,5 @@ def validate_yaml(raw: Dict[str, Any], rootPath: str) -> Optional[YamlRoot]:
                 expand=False,
             )
         )
-
-    finally:
-        # Always ensure we return to the original working directory
-        os.chdir(original_dir)
 
     return model

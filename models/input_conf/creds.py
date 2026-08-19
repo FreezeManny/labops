@@ -1,8 +1,8 @@
-from pydantic import Field, model_validator, field_validator, FilePath
+from pydantic import Field, model_validator
 from typing import Optional, Dict, Any, Literal
-import os
 import typer
 
+from .paths import ConfigRelativeFile
 from .custom_types import StrictModel
 
 
@@ -24,7 +24,7 @@ class Creds(StrictModel):
             "when this is the only method available."
         ),
     )
-    ssh_key_path: Optional[FilePath] = Field(
+    ssh_key_path: Optional[ConfigRelativeFile] = Field(
         None,
         description=(
             "Path to a private key. `~` is expanded. Mutually exclusive with "
@@ -32,13 +32,6 @@ class Creds(StrictModel):
             "`labops validate` rather than at connection time."
         ),
     )
-
-    @field_validator("ssh_key_path", mode="before")
-    @classmethod
-    def expand_tilde(cls, v: object) -> object:
-        if isinstance(v, str) and v.startswith("~"):
-            return os.path.expanduser(v)
-        return v
 
     @model_validator(mode="after")
     def check_auth_method(self) -> "Creds":
