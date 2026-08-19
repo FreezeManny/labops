@@ -37,11 +37,13 @@ def test_settings_env_file_defaults_none(tmp_ssh_key: Path) -> None:
     assert s.env_file is None
 
 
-def test_settings_accepts_env_file(tmp_ssh_key: Path) -> None:
+def test_settings_accepts_env_file(tmp_ssh_key: Path, tmp_path: Path) -> None:
+    env = tmp_path / "secrets.env"
+    env.write_text("")
     s = Settings.model_validate(
-        {"default_creds": _creds(tmp_ssh_key), "env_file": "secrets.env"}
+        {"default_creds": _creds(tmp_ssh_key), "env_file": str(env)}
     )
-    assert s.env_file == "secrets.env"
+    assert s.env_file == env
 
 
 def test_settings_with_dns_and_proxy(tmp_ssh_key: Path) -> None:

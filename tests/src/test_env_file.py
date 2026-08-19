@@ -10,16 +10,15 @@ def test_resolve_defaults_to_dotenv_next_to_config() -> None:
     assert resolve_env_file(cfg, None) == Path("/home/me/infra/.env")
 
 
-def test_resolve_relative_override_is_anchored_to_config_dir() -> None:
+def test_resolve_override_is_used_verbatim() -> None:
+    override = Path("/home/me/infra/secrets/prod.env")
     cfg = Path("/home/me/infra/homelab.yml")
-    assert resolve_env_file(cfg, "secrets/prod.env") == Path(
-        "/home/me/infra/secrets/prod.env"
-    )
+    assert resolve_env_file(cfg, override) == override
 
 
 def test_resolve_absolute_override_is_used_verbatim() -> None:
     cfg = Path("/home/me/infra/homelab.yml")
-    assert resolve_env_file(cfg, "/etc/labops/prod.env") == Path("/etc/labops/prod.env")
+    assert resolve_env_file(cfg, Path("/etc/labops/prod.env")) == Path("/etc/labops/prod.env")
 
 
 def test_read_missing_file_returns_empty(tmp_path: Path) -> None:

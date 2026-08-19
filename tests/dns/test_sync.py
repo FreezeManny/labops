@@ -85,7 +85,8 @@ def test_custom_env_file_is_honoured(
     (tmp_path / "secrets.env").write_text("PIHOLE_PASSWORD=elsewhere\n")
     dns_config_dict["settings"]["env_file"] = "secrets.env"
     config_path: Path = tmp_path / "homelab.yml"
-    assert resolve_password(_model(dns_config_dict), config_path) == "elsewhere"
+    model = YamlRoot.model_validate(dns_config_dict, context={"base_dir": tmp_path})
+    assert resolve_password(model, config_path) == "elsewhere"
 
 
 # ─── dns_warnings ─────────────────────────────────────────────────────────────

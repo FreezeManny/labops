@@ -10,6 +10,7 @@ from models.input_conf.docker import Docker, StackEntry
 def test_resolve_config_path_makes_relative_absolute(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    # With no base_dir context, the cwd fallback resolves relative paths.
     (tmp_path / "caddy").mkdir()
     monkeypatch.chdir(tmp_path)
 
