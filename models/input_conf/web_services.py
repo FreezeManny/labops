@@ -1,5 +1,5 @@
-from pydantic import Field, field_validator, RootModel
-from typing import Optional, List
+from pydantic import BeforeValidator, Field, field_validator, RootModel
+from typing import Annotated, Dict, List, Optional, Union
 
 from .custom_types import StrictModel
 from .common_validators.hostname import validate_hostname_label
@@ -57,8 +57,38 @@ class WebService(StrictModel):
         return validate_hostname_label(v, "proxy_name", "settings.proxy.proxy_suffix")
 
 
+def _expand_shorthand(v: object) -> object:
+    """Accept the mapping shorthand ``{proxy_name: port}`` beside the list form.
+
+    A routed service is usually nothing but a name and a port, so
+
+    .. code-block:: yaml
+
+        web_services:
+          nas: 8080
+
+    means the same as the long form with ``proxy_name`` and ``port`` spelled
+    out. The two forms are per block, not per entry: reach for the list as soon
+    as one service needs `access`, `https`, or no `proxy_name` at all.
+    """
+    if isinstance(v, dict):
+        return [{"proxy_name": name, "port": port} for name, port in v.items()]
+    return v
+
+
+WebServiceEntries = Annotated[
+    List[WebService],
+    BeforeValidator(
+        _expand_shorthand,
+        # Without this the schema would advertise only the list, and an editor
+        # would flag the shorthand as invalid while labops accepts it.
+        json_schema_input_type=Union[List[WebService], Dict[str, int]],
+    ),
+]
+
+
 class WebServices(RootModel):
-    root: List[WebService]
+    root: WebServiceEntries
 
     def __getitem__(self, item: int) -> WebService:
         return self.root[item]
