@@ -1,5 +1,5 @@
 from pathlib import Path, PurePosixPath
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from typing import Optional, Dict, List, Literal
 
 from pydantic import IPvAnyNetwork
@@ -219,6 +219,17 @@ class Proxy(StrictModel):
             "See ansible/files/proxy/README.md."
         ),
     )
+    trusted_proxies: Optional[List[IPvAnyNetwork]] = Field(
+        None,
+        description=(
+            "CIDRs of reverse proxies (e.g. a CDN) directly in front of Caddy. "
+            "When set, access-list matchers use Caddy's `client_ip` (which reads "
+            "`X-Forwarded-For`) instead of `remote_ip` (the connecting socket). "
+            "List only the proxy in front of Caddy — never `0.0.0.0/0`. Trusting "
+            "an address that is not a proxy under your control lets anyone at "
+            "that address forge their apparent IP and bypass every access list."
+        ),
+    )
     access_lists: Dict[str, AccessList] = Field(
         ...,
         description=(
@@ -227,6 +238,18 @@ class Proxy(StrictModel):
             "`access` has to resolve to something."
         ),
     )
+
+    @field_validator("trusted_proxies", mode="after")
+    @classmethod
+    def validate_trusted_proxies_non_empty(
+        cls, v: Optional[List[IPvAnyNetwork]],
+    ) -> Optional[List[IPvAnyNetwork]]:
+        if v is not None and len(v) == 0:
+            raise ValueError(
+                "settings.proxy.trusted_proxies must not be empty — omit the "
+                "field entirely to keep using remote_ip."
+            )
+        return v
 
     @model_validator(mode="after")
     def validate_access_lists(self) -> "Proxy":

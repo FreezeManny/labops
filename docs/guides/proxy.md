@@ -131,6 +131,35 @@ an internal suffix with no certificate.
     labops can see your config and your `.env`, but not the container's own
     environment — where the token may perfectly well live.
 
+## Trusted proxies
+
+When a CDN or reverse proxy (e.g. Cloudflare in proxied/orange-cloud mode) sits
+in front of Caddy, every request arrives from the proxy's IP. Access lists based
+on `remote_ip` see the proxy, not the real client — so they either block
+everyone or, if you add the proxy's ranges, allow everyone.
+
+`trusted_proxies` tells Caddy which addresses are proxies so it reads the real
+client IP from `X-Forwarded-For` instead:
+
+```yaml
+settings:
+  proxy:
+    trusted_proxies:
+      - 173.245.48.0/20
+      - 103.21.244.0/22
+```
+
+When set, access-list matchers switch from `remote_ip` to `client_ip`. When
+unset (the default), nothing changes — `remote_ip` is used as before.
+
+!!! danger "List only the proxy directly in front of Caddy"
+    Trusting an address that is not a proxy under your control lets anyone at
+    that address forge their apparent IP via `X-Forwarded-For` and bypass every
+    access list. Never set this to `0.0.0.0/0`.
+
+If you don't proxy traffic through a CDN — i.e. clients connect to Caddy
+directly or through a NAT router — leave this field unset.
+
 ## Delivering it
 
 ```bash
