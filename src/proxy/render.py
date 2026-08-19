@@ -43,7 +43,7 @@ def _dedup(nets: list) -> list[str]:
     return out
 
 
-def _resolve_acl(
+def resolve_acl(
     route: RouteResult, proxy: Proxy
 ) -> tuple[Optional[list[str]], Optional[list[str]]]:
     """
@@ -166,7 +166,7 @@ def _render_context(
 
     rendered_routes = []
     for r in routes:
-        accept, deny = _resolve_acl(r, proxy)
+        accept, deny = resolve_acl(r, proxy)
         scheme = "https://" if r.https else ""
         rendered_routes.append(
             {

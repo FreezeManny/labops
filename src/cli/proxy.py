@@ -34,6 +34,7 @@ from models.proxy.route_result import RouteResult
 from src.proxy import (
     find_routes,
     render_caddyfile,
+    resolve_acl,
     tls_warnings,
     sync_proxy,
     deploy_proxy,
@@ -122,6 +123,47 @@ def proxy_list() -> None:
             f"{scheme}{r.target_ip}:{r.port}",
             _access_label(r, default_list),
             " → ".join(r.path),
+        )
+    console.print(table)
+
+
+@app.command(name="access")
+def proxy_access() -> None:
+    """[bold]Show[/bold] the resolved CIDR accept/deny sets for each proxy route.
+
+    [dim]Resolves the named access lists to their actual CIDRs — the union
+    across all lists a service references, after dedup.  Use this to verify
+    what can reach a service before opening it up.  Reads the config only —
+    Caddy is not contacted.[/dim]
+    """
+    model: YamlRoot = state.model
+    proxy = model.settings.proxy
+    if proxy is None:
+        console.print("[red]Error:[/red] settings.proxy is not configured.")
+        raise typer.Exit(1)
+
+    routes: list[RouteResult] = find_routes(model)
+    if not routes:
+        console.print("[dim]No web_services / proxy routes defined.[/dim]")
+        raise typer.Exit(0)
+
+    default_list: str = proxy.default_access_list
+    table = Table(title="Proxy Access", show_header=True, header_style="bold blue")
+    table.add_column("Service", style="green")
+    table.add_column("Host", style="green")
+    table.add_column("Node", style="cyan")
+    table.add_column("Lists", style="magenta")
+    table.add_column("Accept", style="yellow")
+    table.add_column("Deny", style="red")
+    for r in routes:
+        accept, deny = resolve_acl(r, proxy)
+        table.add_row(
+            r.proxy_name,
+            f"{r.proxy_name}{proxy.proxy_suffix}",
+            " → ".join(r.path),
+            _access_label(r, default_list),
+            " ".join(accept) if accept else "—",
+            " ".join(deny) if deny else "—",
         )
     console.print(table)
 
