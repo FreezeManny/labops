@@ -23,7 +23,15 @@
 # This config needs a Caddy build carrying the DNS plugin: {{ tls_plugin }}
 {% endif %}
 {% endblock %}
-{% block global_options %}{% endblock %}
+{% block global_options %}
+{% if trusted_proxies %}
+{
+	servers {
+		trusted_proxies static {{ trusted_proxies | join(" ") }}
+	}
+}
+{% endif %}
+{% endblock %}
 
 {% if tls_lines %}
 *{{ proxy_suffix }} {
@@ -50,11 +58,11 @@ http://*{{ proxy_suffix }} {
 	@{{ r.name }} host {{ r.host }}
 	handle @{{ r.name }} {
 {% if r.deny %}
-		@{{ r.name }}_deny remote_ip {{ r.deny | join(" ") }}
+		@{{ r.name }}_deny {{ ip_matcher }} {{ r.deny | join(" ") }}
 		respond @{{ r.name }}_deny "Forbidden" 403
 {% endif %}
 {% if r.accept %}
-		@{{ r.name }}_notallowed not remote_ip {{ r.accept | join(" ") }}
+		@{{ r.name }}_notallowed not {{ ip_matcher }} {{ r.accept | join(" ") }}
 		respond @{{ r.name }}_notallowed "Forbidden" 403
 {% endif %}
 {% if r.insecure %}

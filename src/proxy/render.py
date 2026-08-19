@@ -149,6 +149,9 @@ def _render_context(
     * ``tls_lines``   — directives for the ``tls`` block, or None when TLS is off
       (no ``tls:`` block, or ``provider: none``) and the site is plain HTTP.
     * ``tls_plugin``  — caddy-dns module the image needs, or None when TLS is off.
+    * ``trusted_proxies`` — CIDR strings, or None when unset.
+    * ``ip_matcher`` — ``"client_ip"`` when ``trusted_proxies`` is set, else
+      ``"remote_ip"``.
     * ``routes``      — one dict per routed web_service, each with:
         ``name``     matcher label (the validated proxy_name),
         ``host``     full hostname (name + proxy_suffix),
@@ -178,6 +181,11 @@ def _render_context(
                 "deny": deny,
             }
         )
+    tp = (
+        [str(n) for n in proxy.trusted_proxies]
+        if proxy.trusted_proxies
+        else None
+    )
     return {
         "proxy_suffix": proxy.proxy_suffix,
         # Both None when TLS is off -> the template renders a plain-HTTP site.
@@ -187,6 +195,8 @@ def _render_context(
         # Recorded as a header comment: the image must carry this plugin, and
         # labops can't check that for you.
         "tls_plugin": spec.plugin if spec else None,
+        "trusted_proxies": tp,
+        "ip_matcher": "client_ip" if tp else "remote_ip",
         "routes": rendered_routes,
     }
 
