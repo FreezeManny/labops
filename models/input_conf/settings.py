@@ -1,10 +1,12 @@
-from typing import Dict, Optional
+from pathlib import Path
+from typing import Optional, Dict
 
 from pydantic import Field
 
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import StrictModel
 from models.input_conf.dns import Dns
+from models.input_conf.paths import ConfigRelativeFile
 from models.input_conf.proxy import Proxy
 from models.select import Selector
 
@@ -24,10 +26,10 @@ class Settings(StrictModel):
             "Credentials used for every node that does not carry its own `creds`."
         ),
     )
-    env_file: Optional[str] = Field(
+    env_file: Optional[ConfigRelativeFile] = Field(
         None,
         description=(
-            "The secret store labops reads API tokens from."
+            "The secret store labops reads API tokens from. "
             "Defaults to a `.env` next to the config file; set "
             "this to point elsewhere, relative to the config file or absolute. "
             "labops only ever reads it, and it is git-ignored."

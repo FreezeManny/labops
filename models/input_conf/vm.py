@@ -1,4 +1,4 @@
-from pydantic import Field, model_validator, DirectoryPath
+from pydantic import Field, model_validator
 from pydantic_extra_types.mac_address import MacAddress
 from typing import Optional, Dict, Any, Literal
 from ipaddress import IPv4Address

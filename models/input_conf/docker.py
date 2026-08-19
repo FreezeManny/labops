@@ -1,7 +1,8 @@
 from pathlib import Path
-from pydantic import Field, model_validator, field_validator, DirectoryPath
+from pydantic import Field, model_validator
 from typing import Optional, Dict
 
+from .paths import ConfigRelativeDir
 from .web_services import WebServices
 from .custom_types import StrictModel
 
@@ -23,7 +24,7 @@ class StackEntry(StrictModel):
             "into on the node."
         ),
     )
-    config_path: DirectoryPath = Field(
+    config_path: ConfigRelativeDir = Field(
         ...,
         description=(
             "The local directory holding this stack's compose files, copied to "
@@ -39,11 +40,6 @@ class StackEntry(StrictModel):
             "becomes a route pointing at the node running the stack."
         ),
     )
-
-    @field_validator("config_path", mode="before")
-    @classmethod
-    def resolve_config_path(cls, v: object) -> Path:
-        return Path(str(v)).resolve()
 
 
 class Docker(StrictModel):

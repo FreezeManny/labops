@@ -1,9 +1,10 @@
 from pathlib import Path, PurePosixPath
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, model_validator
 from typing import Optional, Dict, List, Literal
 
-from pydantic import FilePath, IPvAnyNetwork
+from pydantic import IPvAnyNetwork
 
+from models.input_conf.paths import ConfigRelativeFile
 from models.input_conf.custom_types import StrictModel
 
 
@@ -207,7 +208,7 @@ class Proxy(StrictModel):
             "and `reload` need it."
         ),
     )
-    template: Optional[FilePath] = Field(
+    template: Optional[ConfigRelativeFile] = Field(
         None,
         description=(
             "Render the Caddyfile from your own Jinja template instead of the "
@@ -226,16 +227,6 @@ class Proxy(StrictModel):
             "`access` has to resolve to something."
         ),
     )
-
-    @field_validator("template", mode="before")
-    @classmethod
-    def resolve_template(cls, v: object) -> object:
-        # Resolved to an absolute path here, matching StackEntry.config_path:
-        # validation runs with the cwd set to the config file's directory, but
-        # rendering happens later from wherever the user invoked labops.
-        if v is None:
-            return v
-        return Path(str(v)).expanduser().resolve()
 
     @model_validator(mode="after")
     def validate_access_lists(self) -> "Proxy":

@@ -173,8 +173,7 @@ def test_missing_template_is_rejected_at_validation(
 def test_relative_template_resolves_against_the_cwd_at_validation(
     valid_config_dict: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # validate_yaml chdirs to the config file's directory, so a relative path in
-    # the YAML is relative to the config file. Model-level, that is the cwd.
+    # With no base_dir context, the cwd fallback resolves relative paths.
     _write(tmp_path, "rel.j2", "# relative\n")
     monkeypatch.chdir(tmp_path)
     model = _model(valid_config_dict, Path("rel.j2"))
