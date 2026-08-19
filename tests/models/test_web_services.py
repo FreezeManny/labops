@@ -1,5 +1,5 @@
-"""Tests for web-service port collision (shared validator), proxy_name shape and
-WebServices indexing."""
+"""Tests for web-service port collision (shared validator), proxy_name shape,
+the `{proxy_name: port}` short form and WebServices indexing."""
 
 import pytest
 from pydantic import ValidationError
@@ -108,3 +108,51 @@ def test_absent_proxy_name_still_allowed() -> None:
     # No proxy_name means "not routed" — still a legal web_service.
     ws = WebServices.model_validate([{"port": 80}])
     assert ws[0].proxy_name is None
+
+
+# ─── Short form ───────────────────────────────────────────────────────────────
+#
+# `web_services: {nas: 8080}` is sugar for the one-name-one-port list entry, so
+# everything downstream (duplicate ports, proxy_name shape, routing) has to see
+# the same objects it sees for the long form.
+
+
+def test_shorthand_map_expands_to_entries() -> None:
+    ws = WebServices.model_validate({"nas": 8080, "pihole": 80})
+    assert [(w.proxy_name, w.port) for w in ws.root] == [("nas", 8080), ("pihole", 80)]
+    # Defaults come from WebService, exactly as for the long form.
+    assert ws[0].access is None
+    assert ws[0].https is False
+
+
+def test_shorthand_on_a_node() -> None:
+    node = Host.model_validate(
+        {"os": "debian", "ip": "10.0.0.5", "web_services": {"nas": 8080}}
+    )
+    assert node.web_services is not None
+    assert node.web_services[0].proxy_name == "nas"
+
+
+def test_shorthand_empty_map_is_no_services() -> None:
+    assert WebServices.model_validate({}).root == []
+
+
+def test_shorthand_key_must_be_a_valid_proxy_name() -> None:
+    with pytest.raises(ValidationError, match="not a valid hostname label"):
+        WebServices.model_validate({"has space": 8080})
+
+
+def test_shorthand_value_must_be_a_port() -> None:
+    with pytest.raises(ValidationError, match="port"):
+        WebServices.model_validate({"nas": "eighty"})
+
+
+def test_shorthand_duplicate_ports_still_rejected() -> None:
+    with pytest.raises(ValidationError, match="Duplicate port found: 8080"):
+        Host.model_validate(
+            {
+                "os": "debian",
+                "ip": "10.0.0.5",
+                "web_services": {"nas": 8080, "media": 8080},
+            }
+        )

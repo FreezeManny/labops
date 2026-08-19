@@ -33,6 +33,18 @@ def test_find_routes_skips_entries_without_proxy_name(
     assert "edge" in names  # the named one survives; the unnamed one is skipped
 
 
+def test_find_routes_accepts_the_short_form(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    # `web_services: {name: port}` has to reach the Caddyfile like the list form.
+    valid_config_dict["hosts"]["prox"]["lxc"]["ct1"]["web_services"] = {"ct1web": 8080}
+    route = next(
+        r for r in find_routes(_model(valid_config_dict)) if r.proxy_name == "ct1web"
+    )
+    assert str(route.target_ip) == "10.0.0.2"
+    assert route.port == 8080
+
+
 # ── render_caddyfile ────────────────────────────────────────────────────────
 
 
