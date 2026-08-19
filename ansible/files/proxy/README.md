@@ -166,6 +166,8 @@ breaking; the authoritative definition lives in
 | `proxy_suffix` | `str` | e.g. `.example.com`. The site address is `*` + this. |
 | `tls_lines` | `list[str]` or `None` | Directives for the `tls` block, e.g. `dns cloudflare {env.CF_API_TOKEN}`. `None` when TLS is off — no `tls:` block, or `provider: none` — in which case the site should be plain `http://`. |
 | `tls_plugin` | `str` or `None` | The caddy-dns module the Caddy image must be built with, e.g. `github.com/caddy-dns/cloudflare`. `None` when TLS is off. labops cannot check that the image carries it, so the built-in template records it as a comment. |
+| `trusted_proxies` | `list[str]` or `None` | CIDRs of reverse proxies in front of Caddy. `None` when unset. |
+| `ip_matcher` | `str` | `"client_ip"` when `trusted_proxies` is set, `"remote_ip"` otherwise. Use this in matchers so the right directive is selected automatically. |
 | `routes` | `list[dict]` | One entry per routed web_service. Fields below. |
 
 Each entry in `routes`:
@@ -191,9 +193,10 @@ Syntax errors are reported the same way, naming the file.
 
 ## Caveats
 
-**Overriding `routes` takes on the access lists.** The generated `handle` blocks
-are what apply `accept` / `deny`. If you replace that block, `settings.proxy.access_lists`
-stops having any effect unless your template implements the matchers itself. For
+**Overriding `routes` takes on the access lists and the matcher choice.** The generated `handle` blocks
+are what apply `accept` / `deny` via `{{ ip_matcher }}`. If you replace that block, `settings.proxy.access_lists`
+stops having any effect unless your template implements the matchers itself — and
+you must use `{{ ip_matcher }}` (not a hard-coded `remote_ip`) to respect `trusted_proxies`. For
 "add a directive to every service", use `extra` instead.
 
 **Directive order is Caddy's, not the file's.** Caddy sorts directives inside a

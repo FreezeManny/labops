@@ -2,6 +2,8 @@
 
 from typing import Any
 
+import pytest
+
 from models.input_conf.yaml_root import YamlRoot
 from src.proxy import find_routes, render_caddyfile
 
@@ -170,3 +172,46 @@ def test_render_union_of_named_lists(valid_config_dict: dict[str, Any]) -> None:
     valid_config_dict["hosts"]["edge"]["web_services"][0]["access"] = ["local", "vpn"]
     out = render_caddyfile(_model(valid_config_dict))
     assert "@edge_notallowed not remote_ip 10.0.0.0/24 100.64.0.0/10" in out
+
+
+# ── trusted_proxies / ip_matcher ────────────────────────────────────────────
+
+
+def test_render_without_trusted_proxies_uses_remote_ip(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    out = render_caddyfile(_model(valid_config_dict))
+    assert "remote_ip" in out
+    assert "client_ip" not in out
+    assert "trusted_proxies static" not in out
+
+
+def test_render_with_trusted_proxies_uses_client_ip(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    valid_config_dict["settings"]["proxy"]["trusted_proxies"] = [
+        "173.245.48.0/20",
+        "103.21.244.0/22",
+    ]
+    out = render_caddyfile(_model(valid_config_dict))
+    assert "client_ip" in out
+    assert "not client_ip" in out
+    # Matchers must not use remote_ip when trusted_proxies is set.
+    assert "not remote_ip" not in out
+    assert "trusted_proxies static 173.245.48.0/20 103.21.244.0/22" in out
+
+
+def test_render_trusted_proxies_global_options_precede_site(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    valid_config_dict["settings"]["proxy"]["trusted_proxies"] = ["10.0.0.1/32"]
+    out = render_caddyfile(_model(valid_config_dict))
+    assert out.index("trusted_proxies static") < out.index("*.example.test {")
+
+
+def test_render_trusted_proxies_empty_list_rejected(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    valid_config_dict["settings"]["proxy"]["trusted_proxies"] = []
+    with pytest.raises(Exception, match="must not be empty"):
+        _model(valid_config_dict)
