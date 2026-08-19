@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.10.0](https://github.com/FreezeManny/labops/compare/labops-v0.9.1...labops-v0.10.0) (2026-08-19)
+
+
+### Features
+
+* short web service ([#69](https://github.com/FreezeManny/labops/issues/69)) ([a526369](https://github.com/FreezeManny/labops/commit/a5263697d1d55ee9af9a8c66026950f3a2888565))
+
+
+### Bug Fixes
+
+* build pipeline ([#72](https://github.com/FreezeManny/labops/issues/72)) ([c8b9de6](https://github.com/FreezeManny/labops/commit/c8b9de62738af7f8cbde12636f26cb7c3d5a2991))
+* derive the version from src/__about__.py ([#74](https://github.com/FreezeManny/labops/issues/74)) ([d5b8511](https://github.com/FreezeManny/labops/commit/d5b8511ebe605083dceae42563f2241fa4959b39))
+
 ## [0.9.1](https://github.com/FreezeManny/labops/compare/labops-v0.9.0...labops-v0.9.1) (2026-08-13)
 
 
