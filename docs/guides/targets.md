@@ -15,14 +15,19 @@ within one**:
 | `--os` | Its operating system | `debian`, `alpine`, `redhat`, `unmanaged` |
 | `--tag` | A label you put on the node | anything |
 | `--under` | A subtree | any node name |
+| `--exclude` | Nodes (and subtrees) to remove | any node name |
 
 So `--kind lxc --os debian` means *containers **and** Debian*, while
 `--tag a --tag b` means *tagged a **or** b*.
+
+`--exclude` is applied **after** the positive filters: it removes nodes (and
+their entire subtree) from whatever the other filters matched.
 
 ```bash
 labops update --kind lxc --os debian     # every Debian container
 labops update --under cprox              # cprox and everything below it
 labops update --tag prod --only stacks   # only the stacks on prod-tagged nodes
+labops update --all --exclude pihole     # everything except pihole
 labops update --all --list               # preview everything, run nothing
 ```
 
@@ -85,6 +90,8 @@ settings:
       tags: [prod]
     containers:
       kind: lxc              # a single value need not be a list
+    no-pihole:               # everything except the Pi-hole and its subtree
+      exclude: [pihole]
 ```
 
 Then invoke it by name:

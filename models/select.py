@@ -1,9 +1,9 @@
 """Selecting a subset of the config tree.
 
 ``models/tree.py`` walks every node; this decides which of them a command acts
-on. A ``Selector`` is four optional lists — kind, os, tags, under — combined as
-AND across fields and OR within a field, so ``kind: [lxc], os: [debian]`` reads
-as "debian containers" and ``tags: [prod, edge]`` as "tagged prod or edge".
+on. A ``Selector`` is four optional positive lists — kind, os, tags, under —
+combined as AND across fields and OR within a field, plus an ``exclude`` list
+that subtracts nodes after the positive filters.
 
 It is a Pydantic model rather than a parsed string because it has two front
 doors that must agree: the ``labops update`` CLI options, and the reusable named
@@ -75,8 +75,16 @@ class Selector(StrictModel):
             "would look like a successful no-op."
         ),
     )
+    exclude: list[str] = Field(
+        [],
+        description=(
+            "Node names to exclude. Each named node and everything below it "
+            "is removed after the positive filters have run. An unknown name "
+            "is an error, same as `under`."
+        ),
+    )
 
-    @field_validator("kind", "os", "tags", "under", mode="before")
+    @field_validator("kind", "os", "tags", "under", "exclude", mode="before")
     @classmethod
     def _to_list(cls, v: object) -> object:
         # `kind: lxc` is the obvious way to write a single value; accept it,
@@ -85,7 +93,7 @@ class Selector(StrictModel):
 
     @property
     def is_empty(self) -> bool:
-        return not (self.kind or self.os or self.tags or self.under)
+        return not (self.kind or self.os or self.tags or self.under or self.exclude)
 
     def describe(self) -> str:
         """The selector as the flags that would produce it — for error output."""
@@ -95,6 +103,7 @@ class Selector(StrictModel):
             ("--os", self.os),
             ("--tag", self.tags),
             ("--under", self.under),
+            ("--exclude", self.exclude),
         ):
             parts += [f"{flag} {v}" for v in values]
         return " ".join(parts) if parts else "(everything)"
@@ -117,6 +126,8 @@ def matches(ref: NodeRef, sel: Selector) -> bool:
         return False
     if sel.under and not (set(sel.under) & set(ref.path)):
         return False
+    if sel.exclude and (set(sel.exclude) & set(ref.path)):
+        return False
     return True
 
 
@@ -135,6 +146,7 @@ def select_nodes(hosts: Optional[Mapping[str, Host]], sel: Selector) -> list[Nod
     which would otherwise silently select nothing and look like "all done".
     """
     missing: list[str] = unknown_under_names(hosts, sel.under)
+    missing += unknown_under_names(hosts, sel.exclude)
     if missing:
         raise KeyError(
             f"No host, VM or LXC named {', '.join(repr(m) for m in missing)}."
