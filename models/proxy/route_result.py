@@ -10,8 +10,8 @@ class RouteResult:
     proxy_name: str  # subdomain label; hostname = proxy_name + proxy_suffix
     target_ip: IPv4Address  # IP of the node the web_service lives on
     port: int  # upstream port on target_ip
-    access: Optional[
-        list[str]
-    ]  # access-list names (union); None -> local; ["public"] -> open
+    # The access lists this route names, unioned. None means the service named
+    # none, so it resolves to settings.proxy.default_access.
+    access: Optional[list[str]]
     path: list[str]  # node path for diagnostics, e.g. ["cprox", "home"]
     https: bool = False  # upstream speaks HTTPS (self-signed cert tolerated)

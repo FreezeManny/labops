@@ -110,7 +110,7 @@ def proxy_list() -> None:
 
     proxy = model.settings.proxy
     suffix: str = proxy.proxy_suffix if proxy else ""
-    default_list: str = proxy.default_access_list if proxy else ""
+    default_list: str = proxy.default_access if proxy else ""
     table = Table(title="Proxy Routes", show_header=True, header_style="bold blue")
     table.add_column("Hostname", style="green")
     table.add_column("Upstream", style="yellow")
@@ -147,7 +147,7 @@ def proxy_access() -> None:
         console.print("[dim]No web_services / proxy routes defined.[/dim]")
         raise typer.Exit(0)
 
-    default_list: str = proxy.default_access_list
+    default_list: str = proxy.default_access
     table = Table(title="Proxy Access", show_header=True, header_style="bold blue")
     table.add_column("Service", style="green")
     table.add_column("Host", style="green")
