@@ -22,7 +22,7 @@ def _key_creds(tmp_ssh_key: Path) -> Creds:
 
 
 def _pass_creds() -> Creds:
-    return Creds.model_validate({"username": "ansible", "passwd": "secret"})
+    return Creds.model_validate({"username": "ansible", "password": "secret"})
 
 
 def _stack(tmp_docker_dir: Path, name: str = "app") -> StackEntry:

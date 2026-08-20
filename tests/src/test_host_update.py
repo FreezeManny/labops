@@ -22,7 +22,7 @@ _update_module: ModuleType = importlib.import_module("src.host.update")
 
 
 def _default_creds() -> Creds:
-    return Creds.model_validate({"username": "ansible", "passwd": "secret"})
+    return Creds.model_validate({"username": "ansible", "password": "secret"})
 
 
 def _managed_host(name: str = "edge", ip: str = "10.0.0.4") -> Host:

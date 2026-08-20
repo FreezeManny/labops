@@ -66,7 +66,7 @@ def _two_stacks_same_name(key_dir: Path) -> dict[str, Any]:
 
     return {
         "settings": {
-            "default_creds": {"username": "u", "passwd": "p"},
+            "default_creds": {"username": "u", "password": "p"},
             "proxy": {
                 "proxy_suffix": ".example.test",
                 "tls": {"provider": "cloudflare"},

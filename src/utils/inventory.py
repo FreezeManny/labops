@@ -50,9 +50,9 @@ def ssh_host_vars(creds: Creds, ip: Optional[str] = None) -> dict:
     if ip is not None:
         host_vars["ansible_host"] = ip
     host_vars["ansible_user"] = creds.username
-    if creds.passwd:
-        host_vars["ansible_password"] = creds.passwd
-        host_vars["ansible_become_password"] = creds.passwd
+    if creds.password:
+        host_vars["ansible_password"] = creds.password
+        host_vars["ansible_become_password"] = creds.password
     if creds.ssh_key_path:
         host_vars["ansible_ssh_private_key_file"] = str(creds.ssh_key_path)
     return host_vars
@@ -73,8 +73,8 @@ def pct_host_vars(node_ip: str, vmid: int, creds: Creds) -> dict:
     }
     if creds.ssh_key_path:
         host_vars["ansible_ssh_private_key_file"] = str(creds.ssh_key_path)
-    if creds.passwd:
-        host_vars["ansible_password"] = creds.passwd
+    if creds.password:
+        host_vars["ansible_password"] = creds.password
     return host_vars
 
 
