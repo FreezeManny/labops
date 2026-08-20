@@ -208,6 +208,59 @@ def test_named_set_error_names_the_set(valid_config_dict: dict[str, Any]) -> Non
         YamlRoot.model_validate(valid_config_dict)
 
 
+# ─── Exclude ──────────────────────────────────────────────────────────────────
+
+
+def test_exclude_drops_a_named_node(valid_config_dict: dict[str, Any]) -> None:
+    paths = _paths(valid_config_dict, Selector(exclude=["edge"]))
+    assert "edge" not in paths
+    assert "prox" in paths
+
+
+def test_exclude_drops_subtree(valid_config_dict: dict[str, Any]) -> None:
+    paths = _paths(valid_config_dict, Selector(exclude=["prox"]))
+    assert paths == ["edge", "nas"]
+
+
+def test_exclude_combines_with_positive_filters(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    sel = Selector(kind=["host"], exclude=["edge"])
+    paths = _paths(valid_config_dict, sel)
+    assert "edge" not in paths
+    assert "prox" in paths
+    assert "nas" in paths
+
+
+def test_exclude_scalar_coerced_to_list() -> None:
+    sel = Selector.model_validate({"exclude": "pihole"})
+    assert sel.exclude == ["pihole"]
+
+
+def test_exclude_unknown_name_raises(valid_config_dict: dict[str, Any]) -> None:
+    model = YamlRoot.model_validate(valid_config_dict)
+    with pytest.raises(KeyError, match="nope"):
+        model.select(Selector(exclude=["nope"]))
+
+
+def test_exclude_in_named_set_unknown_fails_validation(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    valid_config_dict["settings"]["targets"] = {"weekly": {"exclude": ["ghost"]}}
+    with pytest.raises(ValidationError, match="ghost"):
+        YamlRoot.model_validate(valid_config_dict)
+
+
+def test_describe_includes_exclude() -> None:
+    sel = Selector(kind=["lxc"], exclude=["pihole"])
+    assert sel.describe() == "--kind lxc --exclude pihole"
+
+
+def test_selector_with_only_exclude_is_not_empty() -> None:
+    sel = Selector(exclude=["pihole"])
+    assert sel.is_empty is False
+
+
 def test_config_without_targets_still_validates(
     valid_config_dict: dict[str, Any],
 ) -> None:
