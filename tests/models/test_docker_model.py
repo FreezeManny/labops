@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from models.input_conf.docker import Docker, StackEntry
 
@@ -28,3 +29,27 @@ def test_propagate_stack_names(tmp_docker_dir: Path) -> None:
         }
     )
     assert docker.stacks["caddy"].name == "caddy"
+
+
+def test_relative_root_path_rejected(tmp_docker_dir: Path) -> None:
+    # Resolved on the node, so a relative value would land in whatever directory
+    # SSH logged into. Same rule as settings.proxy.deploy.caddyfile_dest.
+    with pytest.raises(ValidationError, match="must be an absolute path"):
+        Docker.model_validate(
+            {
+                "root_path": "srv/stacks",
+                "stacks": {"caddy": {"config_path": str(tmp_docker_dir)}},
+            }
+        )
+
+
+def test_absolute_root_path_keeps_its_trailing_slash(tmp_docker_dir: Path) -> None:
+    # Tolerated, not normalised: src/docker/common.py rstrips it when building
+    # compose_dest, and stripping it here would be a second place to keep in step.
+    docker = Docker.model_validate(
+        {
+            "root_path": "/srv/",
+            "stacks": {"caddy": {"config_path": str(tmp_docker_dir)}},
+        }
+    )
+    assert docker.root_path == "/srv/"

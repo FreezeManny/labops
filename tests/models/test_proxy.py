@@ -202,10 +202,11 @@ def test_proxy_deploy_host_needs_no_docker_block() -> None:
 
 
 def test_proxy_deploy_rejects_relative_caddyfile_dest() -> None:
-    with pytest.raises(
-        ValidationError, match="caddyfile_dest must be an absolute path"
-    ):
+    with pytest.raises(ValidationError, match="must be an absolute path") as excinfo:
         ProxyDeploy.model_validate(_deploy(caddyfile_dest="caddy/Caddyfile"))
+    # Which field is pydantic's to report now that the rule is a shared annotated
+    # type (models/input_conf/paths.py) rather than a sentence naming the key.
+    assert excinfo.value.errors()[0]["loc"] == ("caddyfile_dest",)
 
 
 def test_proxy_deploy_rejects_unknown_docker_field() -> None:

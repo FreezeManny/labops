@@ -1,8 +1,7 @@
-from pathlib import Path
 from pydantic import Field, model_validator
 from typing import Optional, Dict
 
-from .paths import ConfigRelativeDir
+from .paths import ConfigRelativeDir, RemoteAbsolutePath
 from .web_services import WebServices
 from .custom_types import StrictModel
 
@@ -45,11 +44,12 @@ class StackEntry(StrictModel):
 class Docker(StrictModel):
     """The Docker Compose stacks running on a node."""
 
-    root_path: str = Field(
+    root_path: RemoteAbsolutePath = Field(
         ...,
         description=(
             "The directory on the node that stacks are copied into; each stack "
-            "lands in a subdirectory named after it."
+            "lands in a subdirectory named after it. Must be absolute — it is a "
+            "path on the node, not on the machine running labops."
         ),
     )
     stacks: Dict[str, StackEntry] = Field(

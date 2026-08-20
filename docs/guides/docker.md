@@ -33,7 +33,8 @@ hosts:
   exist, so a typo fails at `labops validate` rather than part-way through a
   deploy.
 - `root_path` is the directory on the node that stacks are copied into; each
-  lands in a subdirectory named after it.
+  lands in a subdirectory named after it. It must be absolute: it is resolved on
+  the node, so a relative value would land wherever SSH logged in.
 - `web_services` here work exactly as they do on a node — the resulting route
   points at whichever node runs the stack. See [Caddy reverse proxy](proxy.md).
 
