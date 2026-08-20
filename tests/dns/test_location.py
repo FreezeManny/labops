@@ -42,11 +42,14 @@ def test_node_by_ip(dns_config_dict: dict[str, Any]) -> None:
     assert found.node is not None
 
 
-def test_node_by_vmid(dns_config_dict: dict[str, Any]) -> None:
-    # vmid only matches LXCs, which is where the finder's precedence matters.
-    found = _resolve(dns_config_dict, "101")
-    assert found.address == "10.0.0.2"
-    assert found.node is not None
+def test_a_vmid_is_not_a_node_id(dns_config_dict: dict[str, Any]) -> None:
+    """A vmid names a guest only per Proxmox node, so it is not accepted here.
+
+    It falls through the node lookup like any other unknown string and is reported
+    against every shape the setting does accept.
+    """
+    with pytest.raises(ValueError, match="matches no host, VM, LXC or docker stack"):
+        _resolve(dns_config_dict, "101")  # ct1's vmid
 
 
 def test_unmanaged_node_still_resolves(dns_config_dict: dict[str, Any]) -> None:
@@ -110,21 +113,6 @@ def test_a_name_that_is_both_node_and_stack_is_ambiguous(
     }
     with pytest.raises(ValueError, match="is ambiguous"):
         _resolve(dns_config_dict, "app")
-
-
-def test_ambiguous_node_match_is_not_swallowed(
-    dns_config_dict: dict[str, Any],
-) -> None:
-    # Two LXCs sharing a vmid: the finder's ambiguity error must propagate rather
-    # than being mistaken for "not a node" and falling through to the stack lookup.
-    dns_config_dict["hosts"]["prox2"] = {
-        "type": "proxmox",
-        "os": "debian",
-        "ip": "10.0.0.20",
-        "lxc": {"ct2": {"os": "alpine", "ip": "10.0.0.21", "vmid": 101}},
-    }
-    with pytest.raises(ValueError, match="ambiguous"):
-        _resolve(dns_config_dict, "101")
 
 
 def test_unset_location_is_reported_clearly(dns_config_dict: dict[str, Any]) -> None:

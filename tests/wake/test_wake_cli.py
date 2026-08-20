@@ -132,10 +132,12 @@ def test_packet_on_a_host_is_a_no_op_flag(calls: list[tuple[str, Any]]) -> None:
     assert _paths(calls) == ["packet"]
 
 
-def test_a_target_can_be_given_by_vmid(calls: list[tuple[str, Any]]) -> None:
-    result = runner.invoke(app, ["101"])
-    assert result.exit_code == 0
-    assert calls == [("guest", ("ct1", False))]
+def test_a_target_given_by_vmid_is_refused(calls: list[tuple[str, Any]]) -> None:
+    """A vmid names a guest only per Proxmox node, so it is not a target."""
+    result = runner.invoke(app, ["101"])  # ct1's vmid
+    assert result.exit_code == 1
+    assert calls == []
+    assert "Traceback" not in result.output
 
 
 def test_a_target_can_be_given_by_ip(calls: list[tuple[str, Any]]) -> None:

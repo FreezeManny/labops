@@ -1,4 +1,4 @@
-"""Tests for src/lxc/find.py — LXC lookup by name, IP, or vmid (proxmox only)."""
+"""Tests for src/lxc/find.py — LXC lookup by name or IP (proxmox only)."""
 
 from typing import Any
 
@@ -33,9 +33,10 @@ def test_find_by_ip(model: YamlRoot) -> None:
     assert lxc.name == "ct1"
 
 
-def test_find_by_vmid(model: YamlRoot) -> None:
-    [(_, lxc)] = lxc_find.find(model, ["101"])
-    assert lxc.vmid == 101
+def test_a_vmid_is_not_a_node_id(model: YamlRoot) -> None:
+    """vmid is unique only per Proxmox node, so it never identifies a guest."""
+    with pytest.raises(KeyError, match="was not found"):
+        lxc_find.find(model, ["101"])  # ct1's vmid
 
 
 def test_find_unknown_raises(model: YamlRoot) -> None:
