@@ -1,3 +1,6 @@
+# Local planning docs — kept out of the repo on purpose (see plans/ purge)
+plans/
+
 # Ansible Artifacts
 .ansible-autogenerate/
 artifacts
