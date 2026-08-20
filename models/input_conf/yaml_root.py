@@ -12,6 +12,7 @@ from models.tree import (
 )
 
 from .host import Host
+from .proxy import AccessList
 from .settings import Settings
 from .custom_types import StrictModel
 from .common_validators.hostname import validate_hostname_label
@@ -262,32 +263,53 @@ class YamlRoot(StrictModel):
     @model_validator(mode="after")
     def validate_access_references(self) -> "YamlRoot":
         """
-        Ensure every web_service is routable and its access lists are defined:
+        Ensure every web_service is routable and its access lists are usable:
         - if any web_services exist, settings.proxy must be configured;
         - every name in a web_service's `access` is a key in
-          settings.proxy.access_lists.
+          settings.proxy.access_lists;
+        - a service naming several lists names none that carries a `deny`.
+
+        The last one is about what a union means. `access: [local, vpn]` unions
+        both lists' `accept` *and* their `deny`, so `local`'s LAN-scoped deny
+        would silently ban that address on the VPN route too — a statement about
+        one network turned into a global one. Rather than guess, reject it.
         """
         errors: list[str] = []
-        known_lists: set[str] = (
-            set(self.settings.proxy.access_lists) if self.settings.proxy else set()
+        known_lists: dict[str, AccessList] = (
+            self.settings.proxy.access_lists if self.settings.proxy else {}
         )
         has_web_services = False
 
         for ref in self.iter_web_services():
             has_web_services = True
             ws = ref.web_service
-            for name in ws.access or []:
+            where = " → ".join(ref.path)
+            named = ws.access or []
+            for name in named:
                 if name not in known_lists:
                     errors.append(
-                        f"web_service '{ws.proxy_name or ws.port}' references unknown "
-                        f"access list '{name}'. Define it under settings.proxy.access_lists."
+                        f"web_service '{ws.proxy_name or ws.port}' on '{where}' references "
+                        f"unknown access list '{name}'. Define it under "
+                        f"settings.proxy.access_lists."
                     )
+            if len(named) > 1:
+                for name in named:
+                    al = known_lists.get(name)
+                    if al is not None and al.deny:
+                        errors.append(
+                            f"web_service '{ws.proxy_name or ws.port}' on '{where}' names "
+                            f"several access lists, and '{name}' carries a 'deny'. A union "
+                            f"applies that deny to every listed range, so it would block "
+                            f"the address on routes it was never meant to cover. Give the "
+                            f"service its own access list instead."
+                        )
 
         if has_web_services and self.settings.proxy is None:
             errors.insert(
                 0,
                 "web_services are defined but settings.proxy is missing. "
-                "Configure settings.proxy (proxy_suffix, access_lists) to route them.",
+                "Configure settings.proxy (proxy_suffix, access_lists, default_access) "
+                "to route them.",
             )
 
         if errors:

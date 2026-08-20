@@ -29,7 +29,7 @@ class WebService(StrictModel):
         description=(
             "Which `settings.proxy.access_lists` may reach this service. Several "
             "lists are combined as a union. A bare string is accepted for a "
-            "single list. Omit to use the list marked `default: true`."
+            "single list. Omit to use `settings.proxy.default_access`."
         ),
     )
     https: bool = Field(
