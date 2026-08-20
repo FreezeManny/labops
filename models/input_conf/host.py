@@ -8,9 +8,10 @@ from .web_services import WebServices
 from .docker import Docker
 from .lxc import LXCs
 from .vm import VMs
-from .custom_types import HostType, OSType, StrictModel
+from .custom_types import Hypervisor, OSType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 from .common_validators.managed import forbid_management_fields_when_unmanaged
+from .common_validators.proxmox import forbid_guests_without_proxmox
 from .common_validators.dns import DnsNames
 
 
@@ -26,16 +27,18 @@ class Host(StrictModel):
     name: str = Field(
         "",
         description=(
-            "Filled in from the key this node is written under; do not set it. "
-            "Present so code that receives a node still knows what it is called."
+            "Overrides the key this node is written under. Leave it unset — the "
+            "usual case — and the key is the name. Set it when the key is not the "
+            "name you want to target and publish, e.g. a key that is not a legal "
+            "DNS label. Must be unique across the config either way."
         ),
     )
-    type: HostType = Field(
-        "bare-metal",
+    hypervisor: Hypervisor = Field(
+        "none",
         description=(
             "`proxmox` unlocks the `vm:` and `lxc:` blocks and makes this node "
-            "the parent that guest commands run through. `bare-metal` is "
-            "anything else."
+            "the parent that guest commands run through. `none`, the default, is "
+            "a node that hosts no guests labops manages."
         ),
     )
     os: OSType = Field(
@@ -72,14 +75,15 @@ class Host(StrictModel):
     lxc: Optional[LXCs] = Field(
         None,
         description=(
-            "Proxmox containers on this node, keyed by name. Requires `type: proxmox`."
+            "Proxmox containers on this node, keyed by name. Requires "
+            "`hypervisor: proxmox`."
         ),
     )
     vm: Optional[VMs] = Field(
         None,
         description=(
             "Proxmox virtual machines on this node, keyed by name. Requires "
-            "`type: proxmox`."
+            "`hypervisor: proxmox`."
         ),
     )
     docker: Optional[Docker] = Field(
@@ -121,12 +125,7 @@ class Host(StrictModel):
 
     @model_validator(mode="after")
     def check_proxmox_support(self) -> "Host":
-        if self.type != "proxmox":
-            if self.lxc is not None or self.vm is not None:
-                raise ValueError(
-                    "Fields 'lxc' and 'vm' are only allowed when type is 'proxmox'"
-                )
-        return self
+        return forbid_guests_without_proxmox(self)
 
     @model_validator(mode="after")
     def check_unmanaged_constraints(self) -> "Host":

@@ -1,16 +1,21 @@
 from ansible_runner.runner import Runner
 from pathlib import Path
+from typing import Optional
 import getpass
 
 from models.input_conf.host import Host
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import UNMANAGED_OS
 from src.utils.ansible_runner import run_playbook, summarize_run
+from src.utils.inventory import creds_for
 from src.cli.core import report_run
 
 
 def setup(
-    host: Host, default_creds: Creds, dry_run: bool = False, verbose: bool = False
+    host: Host,
+    default_creds: Optional[Creds],
+    dry_run: bool = False,
+    verbose: bool = False,
 ) -> None:
     if host.os == UNMANAGED_OS:
         print(
@@ -18,7 +23,7 @@ def setup(
         )
         return
 
-    creds: Creds = host.creds or default_creds
+    creds: Creds = creds_for(host, default_creds)
 
     if not creds.ssh_key_path:
         print("No SSH key path defined in credentials.")

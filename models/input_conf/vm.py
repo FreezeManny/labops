@@ -7,9 +7,10 @@ from .creds import Creds
 from .web_services import WebServices
 from .docker import Docker
 from .lxc import LXC
-from .custom_types import OSType, HostType, StrictModel
+from .custom_types import OSType, Hypervisor, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 from .common_validators.managed import forbid_management_fields_when_unmanaged
+from .common_validators.proxmox import forbid_guests_without_proxmox
 from .common_validators.dns import DnsNames
 
 
@@ -32,11 +33,12 @@ class VM(StrictModel):
             "DNS label. Must be unique across the config either way."
         ),
     )
-    type: HostType = Field(
-        "bare-metal",
+    hypervisor: Hypervisor = Field(
+        "none",
         description=(
             "`proxmox` if this guest is itself a Proxmox node with guests of its "
-            "own (nested virtualisation). Otherwise leave it."
+            "own (nested virtualisation), which is what unlocks the `lxc:` and "
+            "`vm:` blocks below. Otherwise leave it."
         ),
     )
     os: OSType = Field(
@@ -79,14 +81,15 @@ class VM(StrictModel):
     lxc: Optional[Dict[str, LXC]] = Field(
         None,
         description=(
-            "Containers on this VM, when it is itself a Proxmox node. Keyed by name."
+            "Containers on this VM, when it is itself a Proxmox node. Keyed by "
+            "name. Requires `hypervisor: proxmox`."
         ),
     )
     vm: Optional[Dict[str, "VM"]] = Field(
         None,
         description=(
             "Virtual machines on this VM, when it is itself a Proxmox node. "
-            "Keyed by name."
+            "Keyed by name. Requires `hypervisor: proxmox`."
         ),
     )
     web_services: Optional[WebServices] = Field(
@@ -119,6 +122,10 @@ class VM(StrictModel):
             "that really does wake, then ask for it with `wake --packet`."
         ),
     )
+
+    @model_validator(mode="after")
+    def check_proxmox_support(self) -> "VM":
+        return forbid_guests_without_proxmox(self)
 
     @model_validator(mode="after")
     def check_unmanaged_constraints(self) -> "VM":

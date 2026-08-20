@@ -44,7 +44,7 @@ def test_a_vmid_target_never_reaches_the_command(
 ) -> None:
     """A vmid is not a node id — unique only per Proxmox node, as prox2 shows here."""
     valid_config_dict["hosts"]["prox2"] = {
-        "type": "proxmox",
+        "hypervisor": "proxmox",
         "os": "debian",
         "ip": "10.0.0.20",
         "lxc": {"ct2": {"os": "alpine", "ip": "10.0.0.21", "vmid": 101}},

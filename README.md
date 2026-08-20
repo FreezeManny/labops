@@ -11,7 +11,7 @@ You describe your homelab once — the machines, the containers, the services th
 ```yaml
 hosts:
   cprox:
-    type: proxmox
+    hypervisor: proxmox
     os: debian
     ip: 10.0.10.3
     lxc:

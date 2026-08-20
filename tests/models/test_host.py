@@ -9,26 +9,30 @@ from models.input_conf.host import Host
 
 
 def _base_host(**extra: object) -> dict[str, Any]:
-    base: dict[str, Any] = {"type": "proxmox", "os": "debian", "ip": "10.0.0.1"}
+    base: dict[str, Any] = {"hypervisor": "proxmox", "os": "debian", "ip": "10.0.0.1"}
     base.update(extra)
     return base
 
 
 def test_lxc_on_non_proxmox_rejected() -> None:
     data = _base_host(
-        type="bare-metal",
+        hypervisor="none",
         lxc={"ct1": {"os": "alpine", "ip": "10.0.0.2", "vmid": 101}},
     )
-    with pytest.raises(ValidationError, match="only allowed when type is 'proxmox'"):
+    with pytest.raises(
+        ValidationError, match="only allowed when hypervisor is 'proxmox'"
+    ):
         Host.model_validate(data)
 
 
 def test_vm_on_non_proxmox_rejected() -> None:
     data = _base_host(
-        type="bare-metal",
+        hypervisor="none",
         vm={"vm1": {"os": "debian", "ip": "10.0.0.3", "vmid": 201}},
     )
-    with pytest.raises(ValidationError, match="only allowed when type is 'proxmox'"):
+    with pytest.raises(
+        ValidationError, match="only allowed when hypervisor is 'proxmox'"
+    ):
         Host.model_validate(data)
 
 
@@ -81,4 +85,4 @@ def test_unmanaged_os_host_is_valid() -> None:
 def test_os_is_required() -> None:
     # Regression guard: `os` stays mandatory for every host.
     with pytest.raises(ValidationError):
-        Host.model_validate({"type": "bare-metal", "ip": "10.0.0.1"})
+        Host.model_validate({"hypervisor": "none", "ip": "10.0.0.1"})

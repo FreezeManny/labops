@@ -1,4 +1,4 @@
-"""Tests for models/input_conf/vm.py — os handling and the unmanaged OS.
+"""Tests for models/input_conf/vm.py — os handling, nesting and the unmanaged OS.
 
 A VM running an appliance OS (e.g. HomeAssistant OS) is a real proxmox VM
 (keeps its vmid) but can't be apt-updated or SSH-provisioned, so it carries
@@ -31,6 +31,42 @@ def test_managed_vm_is_valid() -> None:
 def test_vm_requires_os() -> None:
     with pytest.raises(ValidationError):
         VM.model_validate({"ip": "10.0.0.3", "vmid": 201})
+
+
+# ── Nested guests ─────────────────────────────────────────────────────────────
+# A VM may itself be a Proxmox node, and then gates `lxc:`/`vm:` exactly as a
+# Host does. The check used to live on Host alone, so these two validated
+# silently while the identical Host config was rejected.
+
+
+def test_lxc_on_a_non_proxmox_vm_rejected() -> None:
+    data = _base_vm(lxc={"ct1": {"os": "alpine", "ip": "10.0.0.10", "vmid": 301}})
+    with pytest.raises(
+        ValidationError, match="only allowed when hypervisor is 'proxmox'"
+    ):
+        VM.model_validate(data)
+
+
+def test_nested_vm_on_a_non_proxmox_vm_rejected() -> None:
+    data = _base_vm(vm={"vm2": {"os": "debian", "ip": "10.0.0.11", "vmid": 302}})
+    with pytest.raises(
+        ValidationError, match="only allowed when hypervisor is 'proxmox'"
+    ):
+        VM.model_validate(data)
+
+
+def test_nested_guests_allowed_on_a_proxmox_vm() -> None:
+    data = _base_vm(
+        hypervisor="proxmox",
+        lxc={"ct1": {"os": "alpine", "ip": "10.0.0.10", "vmid": 301}},
+        vm={"vm2": {"os": "debian", "ip": "10.0.0.11", "vmid": 302}},
+    )
+    vm = VM.model_validate(data)
+    assert vm.lxc is not None and vm.vm is not None
+
+
+def test_hypervisor_defaults_to_none() -> None:
+    assert VM.model_validate(_base_vm()).hypervisor == "none"
 
 
 # ── Unmanaged OS ──────────────────────────────────────────────────────────────

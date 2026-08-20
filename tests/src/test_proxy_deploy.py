@@ -132,6 +132,7 @@ def test_nested_lxc_target_uses_its_vm_as_the_pct_node(
 ) -> None:
     # A Caddy container nested under vm1 can carry routes, so it must also be a
     # legal deploy target — reached by pct from vm1, not from the Proxmox host.
+    valid_config_dict["hosts"]["prox"]["vm"]["vm1"]["hypervisor"] = "proxmox"
     valid_config_dict["hosts"]["prox"]["vm"]["vm1"]["lxc"] = {
         "deep-ct": {"os": "alpine", "ip": "10.0.0.10", "vmid": 301},
     }

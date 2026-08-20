@@ -1,10 +1,10 @@
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from pydantic import Field, field_validator, model_validator
 from typing import Optional, Dict, List, Literal
 
 from pydantic import IPvAnyNetwork
 
-from models.input_conf.paths import ConfigRelativeFile
+from models.input_conf.paths import ConfigRelativeFile, RemoteAbsolutePath
 from models.input_conf.custom_types import StrictModel
 
 
@@ -117,7 +117,7 @@ class ProxyDeploy(StrictModel):
             "Proxmox parent with `pct`, so it needs no sshd."
         ),
     )
-    caddyfile_dest: str = Field(
+    caddyfile_dest: RemoteAbsolutePath = Field(
         ...,
         description=(
             "Absolute path the Caddyfile is written to on the target. In docker "
@@ -144,17 +144,6 @@ class ProxyDeploy(StrictModel):
     @property
     def mode(self) -> DeployMode:
         return "docker" if self.docker is not None else "host"
-
-    @model_validator(mode="after")
-    def validate_caddyfile_dest_absolute(self) -> "ProxyDeploy":
-        # Resolved on the target, not here, so a relative path has no meaningful
-        # base — Ansible would write it relative to the remote login directory.
-        if not PurePosixPath(self.caddyfile_dest).is_absolute():
-            raise ValueError(
-                "settings.proxy.deploy.caddyfile_dest must be an absolute path on "
-                f"the target (got '{self.caddyfile_dest}')."
-            )
-        return self
 
     @model_validator(mode="after")
     def validate_docker_container(self) -> "ProxyDeploy":

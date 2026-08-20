@@ -49,7 +49,7 @@ def calls(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, list[str]]]:
         log.append(("lxc", [lxc.name for _, lxc in pairs]))
         return _ok()
 
-    def _stacks(stacks: list[Any], creds: object) -> RunSummary:
+    def _stacks(stacks: list[Any]) -> RunSummary:
         log.append(("docker", [s.stack.name for s in stacks]))
         return _ok()
 

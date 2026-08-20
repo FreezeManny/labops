@@ -11,24 +11,24 @@ from models.input_conf.creds import Creds
 
 def test_ssh_key_only_is_valid(tmp_ssh_key: Path) -> None:
     creds = Creds.model_validate({"username": "u", "ssh_key_path": str(tmp_ssh_key)})
-    assert creds.passwd is None
+    assert creds.password is None
     assert creds.ssh_key_path == tmp_ssh_key
 
 
 def test_password_only_is_valid() -> None:
-    creds = Creds.model_validate({"username": "u", "passwd": "secret"})
-    assert creds.passwd == "secret"
+    creds = Creds.model_validate({"username": "u", "password": "secret"})
+    assert creds.password == "secret"
     assert creds.ssh_key_path is None
 
 
-def test_both_passwd_and_key_rejected(tmp_ssh_key: Path) -> None:
+def test_both_password_and_key_rejected(tmp_ssh_key: Path) -> None:
     with pytest.raises(ValidationError, match="Cannot set both"):
         Creds.model_validate(
-            {"username": "u", "passwd": "secret", "ssh_key_path": str(tmp_ssh_key)}
+            {"username": "u", "password": "secret", "ssh_key_path": str(tmp_ssh_key)}
         )
 
 
-def test_neither_passwd_nor_key_rejected() -> None:
+def test_neither_password_nor_key_rejected() -> None:
     with pytest.raises(ValidationError, match="Must set either"):
         Creds.model_validate({"username": "u"})
 

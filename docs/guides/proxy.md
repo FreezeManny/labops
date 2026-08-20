@@ -26,7 +26,6 @@ settings:
 
 hosts:
   nas:
-    type: bare-metal
     os: unmanaged
     ip: 10.0.10.4
     web_services:

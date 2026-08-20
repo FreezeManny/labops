@@ -87,11 +87,12 @@ def vm_list() -> None:
         console.print("[dim]No hosts defined, so no VMs.[/dim]")
         raise typer.Exit(0)
 
+    # Effective names throughout — see the note in `host list`.
     vms_with_host = []
-    for host_name, h in model.hosts.items():
+    for h in model.hosts.values():
         if h.vm:
-            for vm_name, v in h.vm.items():
-                vms_with_host.append((host_name, vm_name, v))
+            for v in h.vm.values():
+                vms_with_host.append((h.name, v.name, v))
 
     if not vms_with_host:
         console.print("[dim]No VMs defined.[/dim]")
@@ -100,16 +101,18 @@ def vm_list() -> None:
     table = Table(title="Homelab VMs", show_header=True, header_style="bold blue")
     table.add_column("Host", style="magenta")
     table.add_column("VM Name", style="cyan")
-    table.add_column("Type", style="cyan")
+    # The same column `host list` shows, reading the same field: whether this node
+    # nests guests of its own. It used to render as "bare-metal (in VM)" on every
+    # row — the suffix restated the table's title, and the value was the default
+    # nobody had set.
+    table.add_column("Hypervisor", style="cyan")
     table.add_column("OS", style="green")
     table.add_column("IP Address", style="yellow")
 
     current_host = None
     for host_name, vm_name, v in vms_with_host:
         host_display = host_name if host_name != current_host else "╰─> "
-        table.add_row(
-            host_display, vm_name, str(v.type) + " (in VM)", str(v.os), str(v.ip)
-        )
+        table.add_row(host_display, vm_name, str(v.hypervisor), str(v.os), str(v.ip))
         current_host = host_name
 
     console.print(table)

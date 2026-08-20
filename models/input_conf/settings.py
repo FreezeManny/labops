@@ -15,15 +15,19 @@ class Settings(StrictModel):
     """Everything that is not a node: credentials, the secret store, and the
     optional DNS, proxy and target-set subsystems.
 
-    Only `default_creds` is required. Leaving `dns` or `proxy` out does not
-    disable a feature you were using — it means the corresponding commands have
-    nothing to act on and say so, rather than guessing.
+    Nothing here is required. Leaving `dns` or `proxy` out does not disable a
+    feature you were using — it means the corresponding commands have nothing to
+    act on and say so, rather than guessing.
     """
 
-    default_creds: Creds = Field(
-        ...,
+    default_creds: Optional[Creds] = Field(
+        None,
         description=(
-            "Credentials used for every node that does not carry its own `creds`."
+            "Credentials used for every node that does not carry its own `creds`. "
+            "Required only when some node labops manages (`os` other than "
+            "`unmanaged`) has no `creds` of its own — a render-only or DNS-only "
+            "config never connects to anything and so needs none. `YamlRoot` "
+            "enforces that, because it is the only place that can see both."
         ),
     )
     env_file: Optional[ConfigRelativeFile] = Field(

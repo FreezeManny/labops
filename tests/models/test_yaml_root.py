@@ -195,3 +195,73 @@ def test_no_server_block_is_not_checked(valid_config_dict: dict[str, Any]) -> No
     resolve — and `dns list` must keep working offline."""
     valid_config_dict["settings"]["dns"] = {"suffix": ".lab"}
     assert YamlRoot.model_validate(valid_config_dict).settings.dns is not None
+
+
+# ─── default_creds ────────────────────────────────────────────────────────────
+#
+# `settings.default_creds` is optional, but "optional" is a statement about the
+# whole config rather than about Settings: a node labops manages has to be
+# reachable, and only YamlRoot can see both halves.
+
+
+def test_default_creds_may_be_omitted_when_nothing_is_managed(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    """A render-only config — every node unmanaged — needs no credentials."""
+    del valid_config_dict["settings"]["default_creds"]
+    hosts: dict[str, Any] = valid_config_dict["hosts"]
+    # Only `nas` may keep its web_service: the others are dropped rather than
+    # marked unmanaged, which forbids the docker/lxc/vm blocks they carry.
+    valid_config_dict["hosts"] = {"nas": hosts["nas"]}
+
+    model = YamlRoot.model_validate(valid_config_dict)
+
+    assert model.settings.default_creds is None
+
+
+def test_default_creds_may_be_omitted_when_every_node_carries_its_own(
+    valid_config_dict: dict[str, Any], tmp_ssh_key: Path
+) -> None:
+    del valid_config_dict["settings"]["default_creds"]
+    own: dict[str, Any] = {"username": "ansible", "ssh_key_path": str(tmp_ssh_key)}
+    hosts: dict[str, Any] = valid_config_dict["hosts"]
+    hosts["prox"]["creds"] = own
+    hosts["prox"]["lxc"]["ct1"]["creds"] = own
+    hosts["prox"]["vm"]["vm1"]["creds"] = own
+    hosts["edge"]["creds"] = own
+
+    model = YamlRoot.model_validate(valid_config_dict)
+
+    assert model.settings.default_creds is None
+
+
+def test_default_creds_required_when_a_managed_node_has_none(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    del valid_config_dict["settings"]["default_creds"]
+
+    with pytest.raises(ValidationError, match="settings.default_creds is required"):
+        YamlRoot.model_validate(valid_config_dict)
+
+
+def test_the_message_names_the_nodes_with_no_credentials(
+    valid_config_dict: dict[str, Any], tmp_ssh_key: Path
+) -> None:
+    """Naming them is the point: otherwise the fix is a hunt through the tree."""
+    del valid_config_dict["settings"]["default_creds"]
+    own: dict[str, Any] = {"username": "ansible", "ssh_key_path": str(tmp_ssh_key)}
+    hosts: dict[str, Any] = valid_config_dict["hosts"]
+    hosts["prox"]["creds"] = own
+    hosts["prox"]["lxc"]["ct1"]["creds"] = own
+    hosts["edge"]["creds"] = own
+
+    with pytest.raises(ValidationError) as excinfo:
+        YamlRoot.model_validate(valid_config_dict)
+
+    # The validator's own message, not the ValidationError repr, which echoes the
+    # whole input dict back and so contains every node name either way.
+    message: str = excinfo.value.errors()[0]["msg"]
+    assert "prox → vm1" in message
+    # The ones that are covered stay out of it, `nas` because it is unmanaged.
+    assert "'edge'" not in message
+    assert "'nas'" not in message

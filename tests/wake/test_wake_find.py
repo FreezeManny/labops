@@ -29,6 +29,7 @@ from src.wake import resolve_wake_target, wakeable
 
 def _nest_under_vm1(cfg: dict[str, Any], name: str, vmid: int) -> dict[str, Any]:
     """Add an LXC at depth 2 — deeper than any per-parent check reaches."""
+    cfg["hosts"]["prox"]["vm"]["vm1"]["hypervisor"] = "proxmox"
     cfg["hosts"]["prox"]["vm"]["vm1"]["lxc"] = {
         name: {"os": "alpine", "ip": "10.0.0.9", "vmid": vmid},
     }

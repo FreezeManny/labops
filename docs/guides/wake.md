@@ -27,7 +27,6 @@ Give the node the MAC of the NIC that listens:
 ```yaml
 hosts:
   nas:
-    type: bare-metal
     os: unmanaged
     ip: 10.0.10.4
     mac: bc:24:11:aa:bb:cc

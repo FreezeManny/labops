@@ -197,7 +197,7 @@ def test_starting_a_guest_uses_the_parents_credentials(
     """The parent's, not the guest's — the guest is never connected to."""
     wake_config_dict["hosts"]["prox"]["creds"] = {
         "username": "root",
-        "passwd": "s3cret",
+        "password": "s3cret",
     }
     config = YamlRoot.model_validate(wake_config_dict)
 

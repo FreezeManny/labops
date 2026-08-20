@@ -16,7 +16,7 @@ class Creds(StrictModel):
     """
 
     username: str = Field(..., description="The SSH user labops connects as.")
-    passwd: Optional[str] = Field(
+    password: Optional[str] = Field(
         None,
         description=(
             "Password authentication. Mutually exclusive with `ssh_key_path`. "
@@ -28,24 +28,24 @@ class Creds(StrictModel):
         None,
         description=(
             "Path to a private key. `~` is expanded. Mutually exclusive with "
-            "`passwd`. The file must exist, so a typo fails at "
+            "`password`. The file must exist, so a typo fails at "
             "`labops validate` rather than at connection time."
         ),
     )
 
     @model_validator(mode="after")
     def check_auth_method(self) -> "Creds":
-        has_passwd = self.passwd is not None
+        has_password = self.password is not None
         has_key = self.ssh_key_path is not None
-        if has_passwd and has_key:
+        if has_password and has_key:
             raise ValueError(
-                "Mutual exclusion error: Cannot set both passwd and ssh_key_path."
+                "Mutual exclusion error: Cannot set both password and ssh_key_path."
             )
-        if not has_passwd and not has_key:
+        if not has_password and not has_key:
             raise ValueError(
-                "Missing credentials: Must set either passwd or ssh_key_path."
+                "Missing credentials: Must set either password or ssh_key_path."
             )
-        if has_passwd and not has_key:
+        if has_password and not has_key:
             typer.secho(
                 "WARNING: Using only password authentication. Some features only work with an SSH key.",
                 fg=typer.colors.YELLOW,
