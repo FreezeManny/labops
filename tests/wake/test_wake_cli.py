@@ -23,7 +23,7 @@ import typer
 from typer.testing import CliRunner, Result
 
 from models.input_conf.yaml_root import YamlRoot
-from models.tree import NodeRef
+from models.nodes import NodeRef
 from src.cli.core import state
 
 _module: ModuleType = importlib.import_module("src.cli.wake")

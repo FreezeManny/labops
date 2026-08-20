@@ -21,7 +21,7 @@ from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
 from models.input_conf.vm import VM
 from models.input_conf.yaml_root import YamlRoot
-from models.tree import NodeRef
+from models.nodes import NodeRef
 from src.wake import resolve_wake_target, wakeable
 
 

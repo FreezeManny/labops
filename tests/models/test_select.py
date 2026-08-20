@@ -12,7 +12,7 @@ import pytest
 from pydantic import ValidationError
 
 from models.input_conf.yaml_root import YamlRoot
-from models.select import Selector, node_kind, select_nodes
+from models.nodes import Selector, node_kind, select_nodes
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 

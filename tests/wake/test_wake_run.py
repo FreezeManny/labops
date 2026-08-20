@@ -22,7 +22,7 @@ from typing import Any
 import pytest
 
 from models.input_conf.yaml_root import YamlRoot
-from models.tree import NodeRef
+from models.nodes import NodeRef
 from src.utils.inventory import PCT_CONNECTION
 from src.wake import DEFAULT_BROADCAST, DEFAULT_PORT, guest_cli, send_via, start_guest
 from src.wake.find import resolve_wake_target
