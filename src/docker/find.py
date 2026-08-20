@@ -5,12 +5,15 @@ from models.input_conf.creds import Creds
 from models.nodes import NodeRef
 
 from models.docker.stack_result import StackResult
+from src.utils.inventory import creds_for
 
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
 
-def stacks_for(refs: Iterable[NodeRef], default_creds: Creds) -> list[StackResult]:
+def stacks_for(
+    refs: Iterable[NodeRef], default_creds: Optional[Creds]
+) -> list[StackResult]:
     """The stacks running on the given nodes.
 
     A stack is not independently addressable — it has no os, no kind, and its
@@ -30,14 +33,11 @@ def stacks_for(refs: Iterable[NodeRef], default_creds: Creds) -> list[StackResul
                     target_ip=ref.node.ip,
                     docker_root=docker.root_path,
                     stack=stack,
-                    creds=(
-                        ref.node.creds if ref.node.creds is not None else default_creds
-                    ),
+                    creds=creds_for(ref.node, default_creds),
                 )
             )
 
     return results
-
 
 def findAll(config: YamlRoot) -> list[StackResult]:
     """Return every stack at any nesting depth across all hosts."""

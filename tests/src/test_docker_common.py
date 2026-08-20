@@ -55,7 +55,7 @@ def test_ssh_key_creds_set_key_file_not_password(
     tmp_ssh_key: Path, tmp_docker_dir: Path
 ) -> None:
     creds = _key_creds(tmp_ssh_key)
-    inv = _build_multi_inventory([_result(tmp_docker_dir, creds)], creds)
+    inv = _build_multi_inventory([_result(tmp_docker_dir, creds)])
     h = inv["all"]["hosts"]["app_10.0.0.5"]
     assert h["ansible_ssh_private_key_file"] == str(tmp_ssh_key)
     assert "ansible_password" not in h
@@ -64,7 +64,7 @@ def test_ssh_key_creds_set_key_file_not_password(
 
 def test_password_creds_set_password_not_key_file(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
-    inv = _build_multi_inventory([_result(tmp_docker_dir, creds)], creds)
+    inv = _build_multi_inventory([_result(tmp_docker_dir, creds)])
     h = inv["all"]["hosts"]["app_10.0.0.5"]
     assert h["ansible_password"] == "secret"
     assert h["ansible_become_password"] == "secret"
@@ -73,7 +73,7 @@ def test_password_creds_set_password_not_key_file(tmp_docker_dir: Path) -> None:
 
 def test_ansible_user_comes_from_creds(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
-    inv = _build_multi_inventory([_result(tmp_docker_dir, creds)], creds)
+    inv = _build_multi_inventory([_result(tmp_docker_dir, creds)])
     assert inv["all"]["hosts"]["app_10.0.0.5"]["ansible_user"] == "ansible"
 
 
@@ -83,29 +83,28 @@ def test_ansible_user_comes_from_creds(tmp_docker_dir: Path) -> None:
 def test_alias_is_stack_name_and_ip(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
     inv = _build_multi_inventory(
-        [_result(tmp_docker_dir, creds, stack_name="grafana", ip="192.168.1.10")], creds
+        [_result(tmp_docker_dir, creds, stack_name="grafana", ip="192.168.1.10")]
     )
     assert "grafana_192.168.1.10" in inv["all"]["hosts"]
 
 
 def test_ansible_host_is_target_ip(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
-    inv = _build_multi_inventory([_result(tmp_docker_dir, creds, ip="10.1.2.3")], creds)
+    inv = _build_multi_inventory([_result(tmp_docker_dir, creds, ip="10.1.2.3")])
     assert inv["all"]["hosts"]["app_10.1.2.3"]["ansible_host"] == "10.1.2.3"
 
 
 def test_compose_dest_strips_trailing_slash(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
     inv = _build_multi_inventory(
-        [_result(tmp_docker_dir, creds, stack_name="myapp", docker_root="/data/")],
-        creds,
+        [_result(tmp_docker_dir, creds, stack_name="myapp", docker_root="/data/")]
     )
     assert inv["all"]["hosts"]["myapp_10.0.0.5"]["compose_dest"] == "/data/myapp"
 
 
 def test_compose_src_is_stack_config_path(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
-    inv = _build_multi_inventory([_result(tmp_docker_dir, creds)], creds)
+    inv = _build_multi_inventory([_result(tmp_docker_dir, creds)])
     assert inv["all"]["hosts"]["app_10.0.0.5"]["compose_src"] == str(
         tmp_docker_dir.resolve()
     )
@@ -114,7 +113,7 @@ def test_compose_src_is_stack_config_path(tmp_docker_dir: Path) -> None:
 def test_stack_name_var_is_set(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
     inv = _build_multi_inventory(
-        [_result(tmp_docker_dir, creds, stack_name="prometheus")], creds
+        [_result(tmp_docker_dir, creds, stack_name="prometheus")]
     )
     assert inv["all"]["hosts"]["prometheus_10.0.0.5"]["stack_name"] == "prometheus"
 
@@ -128,11 +127,11 @@ def test_multiple_stacks_produce_distinct_aliases(tmp_docker_dir: Path) -> None:
         _result(tmp_docker_dir, creds, stack_name="a", ip="10.0.0.1"),
         _result(tmp_docker_dir, creds, stack_name="b", ip="10.0.0.2"),
     ]
-    inv = _build_multi_inventory(results, creds)
+    inv = _build_multi_inventory(results)
     assert set(inv["all"]["hosts"]) == {"a_10.0.0.1", "b_10.0.0.2"}
 
 
 def test_empty_results_produces_empty_hosts(tmp_docker_dir: Path) -> None:
     creds = _pass_creds()
-    inv = _build_multi_inventory([], creds)
+    inv = _build_multi_inventory([])
     assert inv["all"]["hosts"] == {}

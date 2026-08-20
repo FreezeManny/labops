@@ -1,7 +1,7 @@
 from typing import Optional, Sequence
 
 from src.utils.ansible_runner import RunSummary, run_playbook, summarize_run
-from src.utils.inventory import pct_host_vars
+from src.utils.inventory import creds_for, pct_host_vars
 from src.cli.core import report_run
 from models.input_conf.lxc import LXC
 from models.input_conf.creds import Creds
@@ -11,7 +11,7 @@ from models.nodes import Parent
 
 def update(
     proxmox_lxc_pairs: Sequence[tuple[Parent, LXC]],
-    default_creds: Creds,
+    default_creds: Optional[Creds],
     dry_run: bool = False,
     verbose: bool = False,
 ) -> Optional[RunSummary]:
@@ -42,8 +42,8 @@ def update(
         if group_name not in inventory["all"]["children"]:
             inventory["all"]["children"][group_name] = {"hosts": {}}
 
-        # Connect to the parent Proxmox host to proxy the execution
-        creds: Creds = host.creds or default_creds
+        # Connect to the parent Proxmox host to proxy the execution.
+        creds: Creds = creds_for(host, default_creds)
         host_vars = pct_host_vars(str(host.ip), lxc_obj.vmid, creds)
 
         inventory["all"]["children"][group_name]["hosts"][lxc_obj.name] = host_vars

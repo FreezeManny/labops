@@ -25,7 +25,7 @@ from models.docker.lookup import (
 from .host import Host
 from .proxy import AccessList
 from .settings import Settings
-from .custom_types import StrictModel
+from .custom_types import UNMANAGED_OS, StrictModel
 from .common_validators.hostname import validate_hostname_label
 
 
@@ -79,6 +79,38 @@ class YamlRoot(StrictModel):
             for k, host in self.hosts.items():
                 if not host.name:
                     host.name = k
+        return self
+
+    @model_validator(mode="after")
+    def validate_creds_available(self) -> "YamlRoot":
+        """Every node labops connects to must have credentials from somewhere.
+
+        `settings.default_creds` is optional because a config that only renders a
+        Caddyfile or publishes DNS records never opens an SSH connection, and
+        inventing an unused username to satisfy the schema is worse than not
+        requiring one. But the moment a node is managed, something has to log in.
+
+        Checked here rather than on `Settings`, which cannot see the host tree.
+        An unmanaged node is exempt: setup and update skip it, and it is kept for
+        its ip, DNS records and proxy routes alone.
+        """
+        if self.settings.default_creds is not None:
+            return self
+
+        missing: list[str] = [
+            " → ".join(ref.path)
+            for ref in self.iter_nodes()
+            if ref.node.os != UNMANAGED_OS and ref.node.creds is None
+        ]
+        if missing:
+            raise ValueError(
+                "settings.default_creds is required: "
+                + ", ".join(f"'{where}'" for where in missing)
+                + " have no 'creds' of their own. Set settings.default_creds, give "
+                "each of them 'creds', or mark the ones labops should not touch "
+                "with 'os: unmanaged'."
+            )
+
         return self
 
     @model_validator(mode="after")

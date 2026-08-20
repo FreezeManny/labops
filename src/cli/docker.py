@@ -204,7 +204,6 @@ def docker_deploy(
     runner: Runner = run_stacks_playbook(
         "docker/deploy.yml",
         [result],
-        result.creds,
         dry_run=state.dry_run,
         verbose=state.verbose,
     )
@@ -240,7 +239,6 @@ def docker_update(
     runner: Runner = run_stacks_playbook(
         "docker/update.yml",
         results,
-        results[0].creds,
         dry_run=state.dry_run,
         verbose=state.verbose,
     )
@@ -275,7 +273,6 @@ def docker_sync(
     runner: Runner = run_stacks_playbook(
         "docker/sync.yml",
         [result],
-        result.creds,
         dry_run=state.dry_run,
         verbose=state.verbose,
     )

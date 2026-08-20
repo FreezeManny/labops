@@ -6,13 +6,13 @@ from models.input_conf.creds import Creds
 from models.input_conf.custom_types import UNMANAGED_OS
 from models.nodes import Node
 from src.utils.ansible_runner import RunSummary, run_playbook, summarize_run
-from src.utils.inventory import ssh_host_vars
+from src.utils.inventory import creds_for, ssh_host_vars
 from src.cli.core import report_run
 
 
 def update(
     hosts: Sequence[Node],
-    default_creds: Creds,
+    default_creds: Optional[Creds],
     dry_run: bool = False,
     verbose: bool = False,
 ) -> Optional[RunSummary]:
@@ -41,7 +41,7 @@ def update(
         group_name = f"{os_name}_servers"
         group_hosts_dict = {}
         for host in os_hosts:
-            creds: Creds = host.creds or default_creds
+            creds: Creds = creds_for(host, default_creds)
             # Keyed by IP, so no ansible_host is needed.
             group_hosts_dict[str(host.ip)] = ssh_host_vars(creds)
 

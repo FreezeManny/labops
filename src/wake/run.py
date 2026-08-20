@@ -24,7 +24,7 @@ from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
 from models.nodes import Node, NodeRef, Parent
 from src.utils.ansible_runner import run_playbook
-from src.utils.inventory import ssh_host_vars
+from src.utils.inventory import creds_for, ssh_host_vars
 from src.utils.inventory import NodeConnection, connection_for
 from src.wake.packet import DEFAULT_BROADCAST, DEFAULT_PORT
 
@@ -84,7 +84,7 @@ def start_guest(
             "it from. Wake it with a magic packet instead (give it a 'mac')."
         )
 
-    creds: Creds = parent.creds or config.settings.default_creds
+    creds: Creds = creds_for(parent, config.settings.default_creds)
     inventory: dict = {
         "all": {
             "hosts": {

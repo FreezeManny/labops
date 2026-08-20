@@ -27,9 +27,12 @@ def test_settings_creds_only_is_valid(tmp_ssh_key: Path) -> None:
     assert s.proxy is None
 
 
-def test_settings_requires_default_creds() -> None:
-    with pytest.raises(ValidationError, match="default_creds"):
-        Settings.model_validate({})
+def test_settings_default_creds_is_optional() -> None:
+    # A render-only or DNS-only config connects to nothing, so it needs no SSH
+    # credentials. Whether one is nevertheless required is a question about the
+    # host tree, which only YamlRoot can see — see test_yaml_root.py.
+    s = Settings.model_validate({})
+    assert s.default_creds is None
 
 
 def test_settings_env_file_defaults_none(tmp_ssh_key: Path) -> None:

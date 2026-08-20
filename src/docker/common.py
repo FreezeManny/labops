@@ -1,6 +1,5 @@
 from ansible_runner import Runner
 
-from models.input_conf.creds import Creds
 from models.docker.stack_result import StackResult
 from src.utils.ansible_runner import run_playbook
 from src.utils.inventory import ssh_host_vars
@@ -9,27 +8,32 @@ from src.utils.inventory import ssh_host_vars
 def run_stacks_playbook(
     playbook: str,
     results: list[StackResult],
-    default_creds: Creds,
     dry_run: bool = False,
     verbose: bool = False,
 ) -> Runner:
     """Run a playbook once across multiple stacks using per-host inventory variables."""
     return run_playbook(
         playbook=playbook,
-        inventory=_build_multi_inventory(results, default_creds),
+        inventory=_build_multi_inventory(results),
         dry_run=dry_run,
         verbose=verbose,
     )
 
 
-def _build_multi_inventory(results: list[StackResult], default_creds: Creds) -> dict:
-    """Build an inventory with one aliased entry per stack, carrying per-host vars."""
+def _build_multi_inventory(results: list[StackResult]) -> dict:
+    """Build an inventory with one aliased entry per stack, carrying per-host vars.
+
+    No fallback credentials here: ``stacks_for`` resolved each stack's before it
+    built the StackResult, so the node-or-default question is already answered.
+    The parameter that used to be threaded in was never a default — every caller
+    passed some stack's own creds back in, one of them the *first* stack's on
+    behalf of a whole list.
+    """
     hosts: dict = {}
     for r in results:
-        creds: Creds = r.creds or default_creds
         # Use a unique alias so multiple stacks on the same host are distinct entries.
         alias = f"{r.stack.name}_{r.target_ip}"
-        host_vars: dict = ssh_host_vars(creds, str(r.target_ip))
+        host_vars: dict = ssh_host_vars(r.creds, str(r.target_ip))
         host_vars.update(_extravars(r))
         hosts[alias] = host_vars
     return {"all": {"hosts": hosts}}

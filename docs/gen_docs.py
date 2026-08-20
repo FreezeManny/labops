@@ -77,9 +77,10 @@ never applied.
         "settings.md",
         "settings",
         """\
-Everything that is not a machine. Only `default_creds` is required — the `dns`
-and `proxy` blocks are subsystems you opt into, and leaving one out simply means
-the matching commands have nothing to act on and say so.
+Everything that is not a machine. Nothing here is required: `default_creds` is
+needed only once some node labops manages has no `creds` of its own, and the
+`dns` and `proxy` blocks are subsystems you opt into — leaving one out simply
+means the matching commands have nothing to act on and say so.
 """,
         ["Settings", "Creds", "Selector"],
     ),

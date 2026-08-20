@@ -23,7 +23,6 @@ import typer
 from rich.table import Table
 
 from models.docker.stack_result import StackResult
-from models.input_conf.creds import Creds
 from models.input_conf.custom_types import OSType
 from models.input_conf.lxc import LXC
 from models.input_conf.yaml_root import YamlRoot
@@ -318,7 +317,7 @@ def _run_phases(
 
     if stacks:
         _phase("Docker stacks")
-        summaries.append(_run_stacks(stacks, creds))
+        summaries.append(_run_stacks(stacks))
 
     _report_total(summaries)
 
@@ -327,7 +326,7 @@ def _phase(name: str) -> None:
     console.print(f"\n[bold blue]── {name} ──[/bold blue]")
 
 
-def _run_stacks(stacks: list[StackResult], creds: Creds) -> RunSummary:
+def _run_stacks(stacks: list[StackResult]) -> RunSummary:
     """Update stacks, reported like every other phase.
 
     `src/cli/docker.py` checks `runner.rc` directly, which loses the
@@ -337,7 +336,6 @@ def _run_stacks(stacks: list[StackResult], creds: Creds) -> RunSummary:
     runner = docker.run_stacks_playbook(
         "docker/update.yml",
         stacks,
-        creds,
         dry_run=state.dry_run,
         verbose=state.verbose,
     )
