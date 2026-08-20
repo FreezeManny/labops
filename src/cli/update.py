@@ -72,6 +72,13 @@ def update(
         help="A host/VM/LXC name: selects it and everything below it. Repeatable.",
         show_default=False,
     ),
+    exclude: List[str] = typer.Option(
+        [],
+        "--exclude",
+        "-e",
+        help="A host/VM/LXC name to exclude (with its subtree). Repeatable.",
+        show_default=False,
+    ),
     only: Optional[Only] = typer.Option(
         None, "--only", help="Restrict to nodes or to docker stacks."
     ),
@@ -102,7 +109,7 @@ def update(
     """
     model: YamlRoot = state.model
     selector: Selector = _resolve_selector(
-        model, target_set, kind, os_, tag, under, target_all
+        model, target_set, kind, os_, tag, under, exclude, target_all
     )
 
     try:
@@ -154,6 +161,7 @@ def _resolve_selector(
     os_: List[OsOpt],
     tag: List[str],
     under: List[str],
+    exclude: List[str],
     target_all: bool,
 ) -> Selector:
     """A named set or ad-hoc options — never a mix.
@@ -162,7 +170,7 @@ def _resolve_selector(
     replaces its tags; one error message is cheaper than a semantics people have
     to remember.
     """
-    ad_hoc: bool = bool(kind or os_ or tag or under)
+    ad_hoc: bool = bool(kind or os_ or tag or under or exclude)
 
     if target_set and ad_hoc:
         typer.secho(
@@ -201,6 +209,7 @@ def _resolve_selector(
             os=[o.value for o in os_],
             tags=tag,
             under=under,
+            exclude=exclude,
         )
 
     if target_all:

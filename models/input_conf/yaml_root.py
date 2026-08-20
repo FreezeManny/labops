@@ -248,6 +248,11 @@ class YamlRoot(StrictModel):
                     f"Target set '{set_name}' references unknown node "
                     f"'{missing}' in 'under'."
                 )
+            for missing in unknown_under_names(self.hosts, sel.exclude):
+                errors.append(
+                    f"Target set '{set_name}' references unknown node "
+                    f"'{missing}' in 'exclude'."
+                )
 
         if errors:
             raise ValueError("\n".join(errors))
