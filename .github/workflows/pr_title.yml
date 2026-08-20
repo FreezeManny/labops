@@ -1,14 +1,19 @@
 name: PR Title
 
 on:
-  # Only the events that can change the title. `synchronize` (a new commit
-  # pushed to the PR) leaves the title untouched, so it re-ran the same check
-  # for the same string on every push.
+  # `pr-title` is a required check (see the job comment below), and required
+  # checks are validated per commit SHA. Without `synchronize`, pushing a new
+  # commit leaves no check run for that SHA at all, so the PR hangs on
+  # "Expected — waiting for status to be reported" until someone manually
+  # re-runs the workflow. Including it re-checks an unchanged title on every
+  # push, but that's cheap, and it's the only way each new commit gets its own
+  # passing check.
   pull_request_target:
     types:
       - opened
       - edited
       - reopened
+      - synchronize
 
 permissions:
   pull-requests: read
