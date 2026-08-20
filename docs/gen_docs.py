@@ -120,8 +120,8 @@ managed outside labops — see the [Caddy proxy guide](../guides/proxy.md).
         "hosts, vm, lxc",
         """\
 The inventory. `hosts:` holds the machines labops reaches directly; a host with
-`type: proxmox` nests its guests underneath as `vm:` and `lxc:`, so the one
-block describes the whole tree.
+`hypervisor: proxmox` nests its guests underneath as `vm:` and `lxc:`, so the
+one block describes the whole tree.
 
 The three node kinds share most of their fields. Where they differ is *how they
 are reached*: a host or VM over SSH, a container through its Proxmox parent with

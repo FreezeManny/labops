@@ -88,14 +88,14 @@ these is optional and independent:
 
 === "Proxmox guests"
 
-    A host with `type: proxmox` nests its guests underneath. Containers are
+    A host with `hypervisor: proxmox` nests its guests underneath. Containers are
     reached through the Proxmox parent with `pct`, so they need no sshd of their
     own.
 
     ```yaml
     hosts:
       cprox:
-        type: proxmox
+        hypervisor: proxmox
         os: debian
         ip: 10.0.10.3
         lxc:

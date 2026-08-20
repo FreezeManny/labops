@@ -25,7 +25,7 @@ settings:
 
 hosts:
   cprox:
-    type: proxmox
+    hypervisor: proxmox
     os: debian
     ip: 10.0.10.3               # -> cprox.lab
 ```
@@ -38,7 +38,6 @@ everything else, but skipped by setup and update:
 
 ```yaml
   nas:
-    type: bare-metal
     os: unmanaged
     ip: 10.0.10.4               # -> nas.lab
 ```

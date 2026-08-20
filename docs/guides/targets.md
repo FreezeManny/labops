@@ -34,10 +34,9 @@ labops update --all --list               # preview everything, run nothing
 A selection covers both the matching nodes *and* the Docker stacks running on
 them. Narrow that with `--only nodes` or `--only stacks`.
 
-!!! note "`--kind` is not a node's `type`"
-    `--kind` is the node's position in the tree — host, VM or container. A
-    node's `type` field is a different thing: the hardware kind, `bare-metal` or
-    `proxmox`. The two are deliberately not named the same.
+!!! note "`--kind` is where a node sits, not what it runs"
+    `--kind` is the node's position in the tree — host, VM or container — not
+    its `os` and not its `hypervisor`.
 
 ## Preview before you run
 
