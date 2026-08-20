@@ -3,6 +3,8 @@ from typing import Iterator, Optional, Dict
 from ipaddress import IPv4Address
 
 from models.nodes import (
+    UNDECLARED_MACHINE_HINT,
+    NodeNotFound,
     NodeRef,
     Selector,
     WebServiceRef,
@@ -207,9 +209,7 @@ class YamlRoot(StrictModel):
             if not node.dns or node.dns_name:
                 continue
             try:
-                validate_hostname_label(
-                    node.name, "node name", "settings.dns.suffix"
-                )
+                validate_hostname_label(node.name, "node name", "settings.dns.suffix")
             except ValueError as e:
                 errors.append(
                     f"{e} Rename the node, set 'dns_name' on it, or exclude it "
@@ -328,7 +328,13 @@ class YamlRoot(StrictModel):
             return self
 
         if pihole.target is not None:
-            find_node(self.hosts, pihole.target, "settings.dns.pihole.target")
+            try:
+                find_node(self.hosts, pihole.target, "settings.dns.pihole.target")
+            except NodeNotFound as miss:
+                # The sentence the resolver adds too: this is the error someone
+                # upgrading from a bare address lands on, and the only one that
+                # says where such a machine goes now.
+                raise NodeNotFound(f"{miss} {UNDECLARED_MACHINE_HINT}") from None
 
         if pihole.docker_stack is not None:
             setting: str = "settings.dns.pihole.docker_stack"

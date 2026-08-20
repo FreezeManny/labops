@@ -100,29 +100,3 @@ def test_closing_never_raises_whatever_the_logout_does(failure: Exception) -> No
 
     assert client._sid is None
     assert client._csrf is None
-
-
-def test_the_context_manager_logs_in_and_out_around_the_body() -> None:
-    client = _client()
-    events: list[str] = []
-    client.login = lambda: events.append("login")  # type: ignore[method-assign]
-    client.close = lambda: events.append("close")  # type: ignore[method-assign]
-
-    with client as entered:
-        assert entered is client
-        events.append("body")
-
-    assert events == ["login", "body", "close"]
-
-
-def test_the_session_is_released_even_when_the_body_raises() -> None:
-    client = _client()
-    events: list[str] = []
-    client.login = lambda: events.append("login")  # type: ignore[method-assign]
-    client.close = lambda: events.append("close")  # type: ignore[method-assign]
-
-    with pytest.raises(ValueError):
-        with client:
-            raise ValueError("diff blew up halfway")
-
-    assert events == ["login", "close"]

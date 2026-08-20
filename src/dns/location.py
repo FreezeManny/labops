@@ -29,7 +29,7 @@ from typing import ClassVar, Optional, Union
 from models.docker.lookup import ambiguous_stack_message, no_stack_message
 from models.docker.stack_result import StackResult
 from models.input_conf.yaml_root import YamlRoot
-from models.nodes import NodeNotFound
+from models.nodes import UNDECLARED_MACHINE_HINT, NodeNotFound
 from src.docker.find import findAll as find_all_stacks
 from src.utils.inventory import NodeConnection, connection_for
 
@@ -115,10 +115,7 @@ def _resolve_machine(config: YamlRoot, target: str, setting: str) -> NodeLocatio
     try:
         resolved: NodeConnection = connection_for(config, target, setting)
     except NodeNotFound as miss:
-        raise NodeNotFound(
-            f"{miss} Declare the machine under `hosts:` — with `os: unmanaged` if "
-            "labops does not otherwise manage it — and name it here."
-        ) from None
+        raise NodeNotFound(f"{miss} {UNDECLARED_MACHINE_HINT}") from None
 
     return NodeLocation(
         address=str(resolved.node.ip), target=target, setting=setting, node=resolved

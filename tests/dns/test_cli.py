@@ -1,11 +1,16 @@
-"""Tests for the `dns list` / `diff` / `sync` commands.
+"""Tests for the `dns list` / `diff` / `sync` / `upgrade` commands.
 
-Two things are being pinned down here. First, that every expected failure reads as
-a one-line message rather than a traceback — same contract as
+Two things are being pinned down. First, that every expected failure reads as a
+one-line message rather than a traceback — same contract as
 tests/proxy/test_deploy_cli.py. Second, the sync guard rail: a plan that deletes
 must not be applied without consent, since labops owns the record list outright.
 
-``plan_sync`` / ``apply_sync`` are stubbed, so nothing here touches a network.
+Nothing here touches a network. ``resolve_backend`` is replaced by a server that
+holds records in a list, so the CLI's own plumbing — which command reads, which
+writes, and what each says — runs for real against it.
+
+A target that names nothing is *not* here: it fails when the config loads
+(tests/models/test_yaml_root.py), so it can never reach a command.
 """
 
 from ipaddress import IPv4Address
@@ -16,11 +21,10 @@ import pytest
 from typer.testing import CliRunner
 
 from models.dns.record import DnsPlan, DnsRecord, LiveRecord
-from models.input_conf.dns import Dns
 from models.input_conf.yaml_root import YamlRoot
 from src.cli import dns as dns_cli
 from src.cli.core import state
-from src.dns import PiholeError
+from src.dns import DnsBackendError
 
 runner = CliRunner()
 app = dns_cli.app
@@ -40,6 +44,31 @@ def _reset_state(tmp_path: Path) -> None:
 
 def _load(cfg: dict[str, Any]) -> None:
     state.model = YamlRoot.model_validate(cfg)
+
+
+class _Backend:
+    """A stand-in DNS server. Records what was written to it, and nothing else."""
+
+    name = "Pi-hole"
+
+    def __init__(self) -> None:
+        self.applied: Optional[list[DnsRecord]] = None
+
+    @property
+    def where(self) -> str:
+        return "edge"
+
+    def read(self) -> tuple[list[LiveRecord], list[str]]:
+        return [], []
+
+    def apply(self, desired: list[DnsRecord]) -> None:
+        self.applied = desired
+
+
+def _stub_backend(monkeypatch: pytest.MonkeyPatch) -> _Backend:
+    backend = _Backend()
+    monkeypatch.setattr(dns_cli, "resolve_backend", lambda config, config_path: backend)
+    return backend
 
 
 def _plan(
@@ -63,24 +92,7 @@ def _plan(
 
 
 def _stub_plan(monkeypatch: pytest.MonkeyPatch, plan: DnsPlan) -> None:
-    def _fake(config: YamlRoot, password: str, desired: list[DnsRecord]) -> DnsPlan:
-        return plan
-
-    monkeypatch.setattr(dns_cli, "plan_sync", _fake)
-
-
-def _stub_apply(monkeypatch: pytest.MonkeyPatch) -> list[str]:
-    """Record the location each write went to."""
-    applied: list[str] = []
-
-    def _fake(config: YamlRoot, password: str, desired: list[DnsRecord]) -> None:
-        assert config.settings.dns is not None
-        location = config.settings.dns.pihole_location
-        assert location is not None  # sync cannot get here without one
-        applied.append(location)
-
-    monkeypatch.setattr(dns_cli, "apply_sync", _fake)
-    return applied
+    monkeypatch.setattr(dns_cli, "plan_sync", lambda backend, desired: plan)
 
 
 # ─── dns list ─────────────────────────────────────────────────────────────────
@@ -95,7 +107,7 @@ def test_list_renders_derived_records(dns_config_dict: dict[str, Any]) -> None:
 
 
 def test_list_needs_no_password(dns_config_dict: dict[str, Any]) -> None:
-    # Derivation is offline, so a missing secret store must not block it.
+    """Derivation is offline, so a missing secret store must not block it."""
     assert state.config_path is not None
     (state.config_path.parent / ".env").unlink()
     _load(dns_config_dict)
@@ -125,7 +137,7 @@ def test_list_with_everything_opted_out(dns_config_dict: dict[str, Any]) -> None
     assert "No DNS records derived" in result.output
 
 
-# ─── missing password ─────────────────────────────────────────────────────────
+# ─── failures that reach the server ───────────────────────────────────────────
 
 
 @pytest.mark.parametrize("command", ["diff", "sync"])
@@ -142,11 +154,13 @@ def test_missing_password_exits_cleanly(
 
 
 @pytest.mark.parametrize("command", ["diff", "sync"])
-def test_unreachable_pihole_exits_cleanly(
+def test_unreachable_server_exits_cleanly(
     command: str, dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    def _boom(*_: object, **__: object) -> DnsPlan:
-        raise PiholeError("could not reach the Pi-hole API at http://x: refused")
+    _stub_backend(monkeypatch)
+
+    def _boom(backend: object, desired: object) -> DnsPlan:
+        raise DnsBackendError("could not reach the Pi-hole API at http://x: refused")
 
     monkeypatch.setattr(dns_cli, "plan_sync", _boom)
     _load(dns_config_dict)
@@ -162,23 +176,33 @@ def test_unreachable_pihole_exits_cleanly(
 def test_diff_prints_the_plan(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    backend = _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(add=[("new.lab", "10.0.0.9")], unchanged=3))
-    applied = _stub_apply(monkeypatch)
     _load(dns_config_dict)
     result = runner.invoke(app, ["diff"])
     assert result.exit_code == 0
     assert "new.lab" in result.output
     assert "3 unchanged" in result.output
-    assert applied == []  # diff never writes
+    assert backend.applied is None  # diff never writes
 
 
 def test_diff_reports_a_match(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(unchanged=5))
     _load(dns_config_dict)
+    assert "already matches the config" in runner.invoke(app, ["diff"]).output
+
+
+def test_diff_names_the_server_it_read(
+    dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _stub_backend(monkeypatch)
+    _stub_plan(monkeypatch, _plan(unchanged=1))
+    _load(dns_config_dict)
     result = runner.invoke(app, ["diff"])
-    assert "already matches the config" in result.output
+    assert "Pi-hole" in result.output
 
 
 # ─── dns sync ─────────────────────────────────────────────────────────────────
@@ -187,85 +211,97 @@ def test_diff_reports_a_match(
 def test_sync_applies_additions_without_prompting(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    backend = _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(add=[("new.lab", "10.0.0.9")]))
-    applied = _stub_apply(monkeypatch)
     _load(dns_config_dict)
     result = runner.invoke(app, ["sync"])
     assert result.exit_code == 0
-    assert applied == ["10.0.0.53"]
+    assert backend.applied is not None
+
+
+def test_sync_applies_the_config_not_the_plan(
+    dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The write is the desired state, so a re-run after a failure is safe."""
+    backend = _stub_backend(monkeypatch)
+    _stub_plan(monkeypatch, _plan(add=[("new.lab", "10.0.0.9")]))
+    _load(dns_config_dict)
+    runner.invoke(app, ["sync"])
+    assert backend.applied is not None
+    assert "nas.lab" in [record.hostname for record in backend.applied]
 
 
 def test_sync_prompts_before_deleting(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    backend = _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(remove=[("stale.lab", "10.0.0.99")]))
-    applied = _stub_apply(monkeypatch)
     _load(dns_config_dict)
     result = runner.invoke(app, ["sync"], input="n\n")
     assert result.exit_code == 1
     assert "1 record(s) will be deleted" in result.output
-    assert applied == []  # declined -> nothing written
+    assert backend.applied is None  # declined -> nothing written
 
 
 def test_sync_deletes_when_confirmed(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    backend = _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(remove=[("stale.lab", "10.0.0.99")]))
-    applied = _stub_apply(monkeypatch)
     _load(dns_config_dict)
     result = runner.invoke(app, ["sync"], input="y\n")
     assert result.exit_code == 0
-    assert applied == ["10.0.0.53"]
+    assert backend.applied is not None
 
 
 def test_sync_yes_skips_the_prompt(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    backend = _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(remove=[("stale.lab", "10.0.0.99")]))
-    applied = _stub_apply(monkeypatch)
     _load(dns_config_dict)
     result = runner.invoke(app, ["sync", "--yes"])
     assert result.exit_code == 0
-    assert applied == ["10.0.0.53"]
+    assert backend.applied is not None
     assert "Continue?" not in result.output
 
 
 def test_dry_run_writes_nothing(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    backend = _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(add=[("new.lab", "10.0.0.9")]))
-    applied = _stub_apply(monkeypatch)
     state.dry_run = True
     _load(dns_config_dict)
     result = runner.invoke(app, ["sync"])
     assert result.exit_code == 0
     assert "nothing was written" in result.output
-    assert applied == []
+    assert backend.applied is None
 
 
 def test_sync_with_no_changes_writes_nothing(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    backend = _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(unchanged=4))
-    applied = _stub_apply(monkeypatch)
     _load(dns_config_dict)
     result = runner.invoke(app, ["sync"])
     assert result.exit_code == 0
     assert "already matches" in result.output
-    assert applied == []
+    assert backend.applied is None
 
 
-def test_apply_failure_exits_cleanly(
+def test_a_failed_write_exits_cleanly(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # The plan read fine and the Pi-hole died before the write — still a one-line
-    # message, not a traceback.
+    """The read succeeded and the server died before the write — still one line."""
+    backend = _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(add=[("new.lab", "10.0.0.9")]))
 
-    def _fake_apply(config: YamlRoot, password: str, desired: list[DnsRecord]) -> None:
-        raise PiholeError("connection refused")
+    def _boom(desired: list[DnsRecord]) -> None:
+        raise DnsBackendError("connection refused")
 
-    monkeypatch.setattr(dns_cli, "apply_sync", _fake_apply)
+    monkeypatch.setattr(backend, "apply", _boom)
     _load(dns_config_dict)
     result = runner.invoke(app, ["sync"])
     assert result.exit_code == 1
@@ -273,20 +309,37 @@ def test_apply_failure_exits_cleanly(
     assert "Traceback" not in result.output
 
 
+# ─── warnings ─────────────────────────────────────────────────────────────────
+
+
 def test_inline_password_warning_is_shown(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    dns_config_dict["settings"]["dns"]["password"] = "inline"
+    dns_config_dict["settings"]["dns"]["pihole"]["password"] = "inline"
+    _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(unchanged=1))
-    _stub_apply(monkeypatch)
     _load(dns_config_dict)
-    result = runner.invoke(app, ["sync"])
-    assert "clear text" in result.output
+    assert "clear text" in runner.invoke(app, ["sync"]).output
+
+
+def test_http_warning_is_shown(
+    dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Choosing http puts the API password on the network; that is worth saying."""
+    dns_config_dict["settings"]["dns"]["pihole"]["scheme"] = "http"
+    _stub_backend(monkeypatch)
+    _stub_plan(monkeypatch, _plan(unchanged=1))
+    _load(dns_config_dict)
+    assert "clear text" in runner.invoke(app, ["diff"]).output
+
+
+# ─── unreadable records ───────────────────────────────────────────────────────
 
 
 def test_unparsed_records_are_surfaced(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(unchanged=1, unparsed=["fe80::1 v6.lab"]))
     _load(dns_config_dict)
     result = runner.invoke(app, ["diff"])
@@ -297,25 +350,25 @@ def test_unparsed_records_are_surfaced(
 def test_unparsed_records_alone_still_prompt(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # Nothing to add, update or remove — but the write drops the unreadable line, so
-    # it is a destructive change and must ask first.
+    """Nothing to add, update or remove — but the write drops the unreadable line,
+    so it is a destructive change and must ask first."""
+    backend = _stub_backend(monkeypatch)
     _stub_plan(monkeypatch, _plan(unchanged=1, unparsed=["fe80::1 v6.lab"]))
-    applied = _stub_apply(monkeypatch)
     _load(dns_config_dict)
     result = runner.invoke(app, ["sync"], input="n\n")
     assert result.exit_code == 1
     assert "1 record(s) will be deleted" in result.output
-    assert applied == []
+    assert backend.applied is None
 
 
 def test_unparsed_records_counted_in_the_summary(
     dns_config_dict: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    _stub_backend(monkeypatch)
     _stub_plan(
         monkeypatch,
         _plan(remove=[("stale.lab", "10.0.0.99")], unparsed=["fe80::1 v6.lab"]),
     )
-    _stub_apply(monkeypatch)
     _load(dns_config_dict)
     result = runner.invoke(app, ["sync", "--yes"])
     assert result.exit_code == 0
@@ -325,7 +378,7 @@ def test_unparsed_records_counted_in_the_summary(
 # ─── dns upgrade ──────────────────────────────────────────────────────────────
 #
 # The one command that does not touch the API. These never reach Ansible: the
-# config checks and target resolution fail first, which is what a typo produces.
+# refusals fire while the inventory is being built.
 
 
 def test_upgrade_without_dns_settings_exits_cleanly(
@@ -339,35 +392,22 @@ def test_upgrade_without_dns_settings_exits_cleanly(
 
 
 def test_upgrade_needs_no_api_password(dns_config_dict: dict[str, Any]) -> None:
-    # Upgrading goes over SSH, so a missing PIHOLE_PASSWORD must not block it — the
-    # failure below is target resolution, not credentials.
+    """Upgrading goes over SSH, so a missing PIHOLE_PASSWORD must not block it —
+    the failure below is the node's os, not credentials."""
     assert state.config_path is not None
     (state.config_path.parent / ".env").unlink()
-    dns_config_dict["settings"]["dns"]["pihole_location"] = "nope"
+    dns_config_dict["settings"]["dns"]["pihole"] = {"target": "nas"}
     _load(dns_config_dict)
     result = runner.invoke(app, ["upgrade"])
     assert result.exit_code == 1
     assert "PIHOLE_PASSWORD" not in result.output
-    # Short fragment: rich wraps the full sentence across lines.
-    assert "matches no host" in result.output
-
-
-def test_upgrade_of_an_off_config_ip_exits_cleanly(
-    dns_config_dict: dict[str, Any],
-) -> None:
-    # The fixture's location is a bare IP naming no node: records work, upgrading
-    # cannot, and the message has to distinguish the two.
-    _load(dns_config_dict)
-    result = runner.invoke(app, ["upgrade"])
-    assert result.exit_code == 1
-    assert "is an address, not a node" in result.output
-    assert "Traceback" not in result.output
+    assert "os: unmanaged" in result.output
 
 
 def test_upgrade_of_a_docker_stack_exits_cleanly(
     dns_config_dict: dict[str, Any],
 ) -> None:
-    dns_config_dict["settings"]["dns"]["pihole_location"] = "app"  # a stack
+    dns_config_dict["settings"]["dns"]["pihole"] = {"docker_stack": "app"}
     _load(dns_config_dict)
     result = runner.invoke(app, ["upgrade"])
     assert result.exit_code == 1
@@ -379,7 +419,7 @@ def test_upgrade_of_a_docker_stack_exits_cleanly(
 def test_upgrade_of_an_unmanaged_node_exits_cleanly(
     dns_config_dict: dict[str, Any],
 ) -> None:
-    dns_config_dict["settings"]["dns"]["pihole_location"] = "nas"  # os: unmanaged
+    dns_config_dict["settings"]["dns"]["pihole"] = {"target": "nas"}
     _load(dns_config_dict)
     result = runner.invoke(app, ["upgrade"])
     assert result.exit_code == 1
@@ -387,48 +427,14 @@ def test_upgrade_of_an_unmanaged_node_exits_cleanly(
     assert "Traceback" not in result.output
 
 
-def test_upgrade_ambiguous_location_exits_cleanly(
-    dns_config_dict: dict[str, Any],
-) -> None:
-    # A name that is both a node and a docker stack: legal config, and the one
-    # ambiguity still reachable now that names and IPs are unique tree-wide.
-    dns_config_dict["hosts"]["app"] = {
-        "type": "bare-metal",
-        "os": "debian",
-        "ip": "10.0.0.7",
-    }
-    dns_config_dict["settings"]["dns"]["pihole_location"] = "app"
-    _load(dns_config_dict)
-    result = runner.invoke(app, ["upgrade"])
-    assert result.exit_code == 1
-    assert "ambiguous" in result.output
-    assert "Traceback" not in result.output
-
-
-def test_upgrade_of_a_vmid_location_exits_cleanly(
-    dns_config_dict: dict[str, Any],
-) -> None:
-    """A vmid is not a node id, and saying so must not read as a traceback."""
-    dns_config_dict["settings"]["dns"]["pihole_location"] = "101"  # ct1's vmid
-    _load(dns_config_dict)
-    result = runner.invoke(app, ["upgrade"])
-    assert result.exit_code == 1
-    # Fragments only: typer hard-wraps the rendered error mid-sentence.
-    assert "matches no host, VM, LXC or docker" in result.output
-    assert "is not an IP address" in result.output
-    assert "Traceback" not in result.output
-
-
-# ─── pihole_location left unset ───────────────────────────────────────────────
+# ─── no server block ──────────────────────────────────────────────────────────
 #
 # Optional, so `dns list` must keep working while everything that talks to a
-# Pi-hole explains what is missing.
+# server explains what is missing.
 
 
-def test_list_works_without_a_pihole_location(
-    dns_config_dict: dict[str, Any],
-) -> None:
-    del dns_config_dict["settings"]["dns"]["pihole_location"]
+def test_list_works_without_a_server_block(dns_config_dict: dict[str, Any]) -> None:
+    del dns_config_dict["settings"]["dns"]["pihole"]
     _load(dns_config_dict)
     result = runner.invoke(app, ["list"])
     assert result.exit_code == 0
@@ -436,12 +442,12 @@ def test_list_works_without_a_pihole_location(
 
 
 @pytest.mark.parametrize("command", ["diff", "sync", "upgrade"])
-def test_unset_location_exits_cleanly(
+def test_no_server_block_exits_cleanly(
     command: str, dns_config_dict: dict[str, Any]
 ) -> None:
-    del dns_config_dict["settings"]["dns"]["pihole_location"]
+    del dns_config_dict["settings"]["dns"]["pihole"]
     _load(dns_config_dict)
     result = runner.invoke(app, [command])
     assert result.exit_code == 1
-    assert "is not set" in result.output
+    assert "no DNS server" in result.output
     assert "Traceback" not in result.output

@@ -1,17 +1,23 @@
-"""Tests for src/dns/upgrade.py — running Pi-hole's own updater over SSH.
+"""Tests for src/dns/upgrade.py and src/dns/pihole/upgrade.py.
 
-Ansible is never invoked: ``run_playbook`` is monkeypatched to capture the inventory
-and extravars it would have received. Mirrors tests/src/test_proxy_deploy.py, since
+Ansible is never invoked: ``run_playbook`` is monkeypatched to capture the
+inventory it would have received. Mirrors tests/src/test_proxy_deploy.py, since
 both resolve a named config node to a connection the same way
 (src/utils/inventory.py).
 
-The target is ``settings.dns.pihole_location`` — the same field the API uses. It may
-be a bare IP of something outside the config, which is fine for records but has
-nothing to SSH into, so the interesting cases here are the ones that refuse to run.
+Upgrading is a dispatch rather than part of ``DnsBackend``: not every server can
+upgrade itself, and where one can the mechanism is entirely its own. So the two
+halves tested here are the dispatch (which server, or a clear refusal) and
+Pi-hole's own half (which node, or a clear refusal).
+
+A target that names nothing is *not* here — that fails when the config loads, in
+tests/models/test_yaml_root.py. What is left at run time are the two refusals that
+depend on more than the name resolving: a container, and a node labops is told not
+to manage.
 
 In ``valid_config_dict``: proxmox host ``prox`` (10.0.0.1) holds lxc ``ct1``
-(10.0.0.2, vmid 101) and vm ``vm1`` (10.0.0.3); bare-metal ``edge`` is 10.0.0.4 and
-``nas`` is 10.0.0.5 with ``os: unmanaged``.
+(10.0.0.2, vmid 101) and vm ``vm1`` (10.0.0.3, running the docker stack ``app``);
+bare-metal ``edge`` is 10.0.0.4 and ``nas`` is 10.0.0.5 with ``os: unmanaged``.
 """
 
 import importlib
@@ -21,10 +27,10 @@ from typing import Any
 import pytest
 
 from models.input_conf.yaml_root import YamlRoot
-from src.dns import upgrade_pihole
+from src.dns import upgrade_dns
 from src.utils.inventory import PCT_CONNECTION
 
-_module: ModuleType = importlib.import_module("src.dns.upgrade")
+_module: ModuleType = importlib.import_module("src.dns.pihole.upgrade")
 
 
 @pytest.fixture
@@ -44,9 +50,8 @@ def captured(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     return record
 
 
-def _config(cfg: dict[str, Any], location: str, **dns: object) -> YamlRoot:
-    cfg["settings"]["dns"]["pihole_location"] = location
-    cfg["settings"]["dns"].update(dns)
+def _config(cfg: dict[str, Any], **pihole: object) -> YamlRoot:
+    cfg["settings"]["dns"]["pihole"] = pihole
     return YamlRoot.model_validate(cfg)
 
 
@@ -62,32 +67,28 @@ def _host_vars(record: dict[str, Any]) -> dict[str, Any]:
 def test_uses_the_upgrade_playbook(
     captured: dict[str, Any], dns_config_dict: dict[str, Any]
 ) -> None:
-    upgrade_pihole(_config(dns_config_dict, "edge"))
+    upgrade_dns(_config(dns_config_dict, target="edge"))
     assert captured["playbook"] == "dns/upgrade.yml"
 
 
-def test_default_command_is_the_pihole_updater(
+def test_the_command_is_not_passed_in(
     captured: dict[str, Any], dns_config_dict: dict[str, Any]
 ) -> None:
-    upgrade_pihole(_config(dns_config_dict, "edge"))
-    assert captured["extravars"]["pihole_upgrade_command"] == "pihole -up"
+    """`pihole -up` lives in the playbook, beside the probe that assumes it.
 
-
-def test_command_override_is_passed(
-    captured: dict[str, Any], dns_config_dict: dict[str, Any]
-) -> None:
-    upgrade_pihole(
-        _config(dns_config_dict, "edge", upgrade_command="pihole -up --check-only")
-    )
-    assert captured["extravars"]["pihole_upgrade_command"] == "pihole -up --check-only"
+    There is exactly one correct invocation — the playbook already checks that
+    Pi-hole's own installer put `pihole` on PATH — so nothing configures it.
+    """
+    upgrade_dns(_config(dns_config_dict, target="edge"))
+    assert not captured["extravars"]
 
 
 def test_dry_run_and_verbose_are_forwarded(
     captured: dict[str, Any], dns_config_dict: dict[str, Any]
 ) -> None:
-    # --dry-run passes --check, under which ansible.builtin.command skips rather
-    # than upgrading — so a dry run genuinely cannot upgrade anything.
-    upgrade_pihole(_config(dns_config_dict, "edge"), dry_run=True, verbose=True)
+    """--dry-run passes --check, under which ansible.builtin.command skips rather
+    than upgrading — so a dry run genuinely cannot upgrade anything."""
+    upgrade_dns(_config(dns_config_dict, target="edge"), dry_run=True, verbose=True)
     assert captured["dry_run"] is True
     assert captured["verbose"] is True
 
@@ -95,114 +96,102 @@ def test_dry_run_and_verbose_are_forwarded(
 # ── Target resolution ─────────────────────────────────────────────────────────
 
 
-def test_lxc_location_uses_pct_via_its_node(
+def test_an_lxc_target_is_reached_with_pct_via_its_node(
     captured: dict[str, Any], dns_config_dict: dict[str, Any]
 ) -> None:
-    # The common real shape: Pi-hole in a container, reached through the Proxmox
-    # node with no sshd inside it.
-    upgrade_pihole(_config(dns_config_dict, "ct1"))
+    """The common real shape: Pi-hole in a container with no sshd inside it."""
+    upgrade_dns(_config(dns_config_dict, target="ct1"))
     host_vars = _host_vars(captured)
     assert host_vars["ansible_connection"] == PCT_CONNECTION
     assert host_vars["ansible_host"] == "10.0.0.1"  # the *node*, not the container
     assert host_vars["proxmox_vmid"] == 101
 
 
-def test_bare_metal_location_uses_direct_ssh(
+def test_a_bare_metal_target_is_reached_over_ssh(
     captured: dict[str, Any], dns_config_dict: dict[str, Any]
 ) -> None:
-    upgrade_pihole(_config(dns_config_dict, "edge"))
+    upgrade_dns(_config(dns_config_dict, target="edge"))
     host_vars = _host_vars(captured)
     assert "ansible_connection" not in host_vars
     assert host_vars["ansible_host"] == "10.0.0.4"
 
 
-def test_vm_location_uses_direct_ssh(
+def test_a_vm_target_is_reached_over_ssh(
     captured: dict[str, Any], dns_config_dict: dict[str, Any]
 ) -> None:
-    upgrade_pihole(_config(dns_config_dict, "vm1"))
+    upgrade_dns(_config(dns_config_dict, target="vm1"))
     assert _host_vars(captured)["ansible_host"] == "10.0.0.3"
 
 
-def test_location_given_as_an_in_config_ip_resolves(
+def test_a_target_given_as_an_ip_resolves_to_the_same_node(
     captured: dict[str, Any], dns_config_dict: dict[str, Any]
 ) -> None:
-    # The same field works either way round — an IP that happens to name a node
-    # still finds the node, so upgrading works without renaming anything.
-    upgrade_pihole(_config(dns_config_dict, "10.0.0.2"))
+    upgrade_dns(_config(dns_config_dict, target="10.0.0.2"))
     host_vars = _host_vars(captured)
     assert host_vars["ansible_connection"] == PCT_CONNECTION
     assert host_vars["proxmox_vmid"] == 101
 
 
-def test_inventory_is_keyed_by_the_node_name(
+def test_the_inventory_is_keyed_by_the_node_name(
     captured: dict[str, Any], dns_config_dict: dict[str, Any]
 ) -> None:
-    # So a failure names the Pi-hole rather than an opaque address.
-    upgrade_pihole(_config(dns_config_dict, "10.0.0.2"))
+    """So a failure names the Pi-hole rather than an opaque address."""
+    upgrade_dns(_config(dns_config_dict, target="10.0.0.2"))
     assert set(captured["inventory"]["all"]["hosts"]) == {"pihole_ct1"}
 
 
 # ── Refusals ──────────────────────────────────────────────────────────────────
 
 
-def test_off_config_ip_cannot_be_upgraded(dns_config_dict: dict[str, Any]) -> None:
-    # A bare IP is a fine API endpoint, but there is no node behind it and so no
-    # credentials to connect with. Records still work; only upgrading refuses.
-    with pytest.raises(ValueError, match="is an address, not a node"):
-        upgrade_pihole(_config(dns_config_dict, "10.0.0.53"))
-
-
-def test_docker_stack_cannot_be_upgraded(dns_config_dict: dict[str, Any]) -> None:
-    # `app` is the stack on vm1. Naming it is the user saying Pi-hole runs in a
-    # container, so `pihole -up` is the wrong tool and labops says which is right.
+def test_a_containerised_pihole_is_refused(dns_config_dict: dict[str, Any]) -> None:
+    """Writing `docker_stack:` is the user saying Pi-hole is containerised, so the
+    refusal is something they declared rather than something labops guessed."""
     with pytest.raises(ValueError, match="is a docker stack"):
-        upgrade_pihole(_config(dns_config_dict, "app"))
+        upgrade_dns(_config(dns_config_dict, docker_stack="app"))
 
 
-def test_docker_stack_refusal_points_at_the_right_command(
+def test_the_container_refusal_points_at_the_right_command(
     dns_config_dict: dict[str, Any],
 ) -> None:
     with pytest.raises(ValueError, match="docker stack --stack app update"):
-        upgrade_pihole(_config(dns_config_dict, "app"))
+        upgrade_dns(_config(dns_config_dict, docker_stack="app"))
 
 
-def test_unmanaged_node_is_refused(dns_config_dict: dict[str, Any]) -> None:
-    # `nas` is os: unmanaged — labops does not run commands on a box it is told it
-    # does not manage, and failing here beats an SSH error halfway through.
+def test_an_unmanaged_node_is_refused(dns_config_dict: dict[str, Any]) -> None:
+    """labops does not run commands on a box it is told it does not manage, and
+    refusing here beats an SSH failure halfway through that reads like a fault."""
     with pytest.raises(ValueError, match="os: unmanaged"):
-        upgrade_pihole(_config(dns_config_dict, "nas"))
+        upgrade_dns(_config(dns_config_dict, target="nas"))
 
 
-def test_unmanaged_refusal_says_how_to_fix_it(
+def test_the_unmanaged_refusal_says_how_to_fix_it(
     dns_config_dict: dict[str, Any],
 ) -> None:
     with pytest.raises(ValueError, match="debian, alpine, redhat"):
-        upgrade_pihole(_config(dns_config_dict, "nas"))
+        upgrade_dns(_config(dns_config_dict, target="nas"))
 
 
-def test_unknown_location_raises(dns_config_dict: dict[str, Any]) -> None:
-    with pytest.raises(ValueError, match="matches no host, VM, LXC or docker stack"):
-        upgrade_pihole(_config(dns_config_dict, "nope"))
-
-
-def test_missing_dns_block_raises(valid_config_dict: dict[str, Any]) -> None:
+def test_no_dns_block_at_all(valid_config_dict: dict[str, Any]) -> None:
     with pytest.raises(ValueError, match="settings.dns is not configured"):
-        upgrade_pihole(YamlRoot.model_validate(valid_config_dict))
+        upgrade_dns(YamlRoot.model_validate(valid_config_dict))
 
 
+def test_a_suffix_with_no_server_has_nothing_to_upgrade(
+    valid_config_dict: dict[str, Any],
+) -> None:
+    valid_config_dict["settings"]["dns"] = {"suffix": ".lab"}
+    with pytest.raises(ValueError, match="names no DNS server"):
+        upgrade_dns(YamlRoot.model_validate(valid_config_dict))
+
+
+@pytest.mark.parametrize(
+    "pihole", [{"target": "nas"}, {"docker_stack": "app"}], ids=["unmanaged", "stack"]
+)
 def test_nothing_runs_when_a_refusal_fires(
-    captured: dict[str, Any], dns_config_dict: dict[str, Any]
+    captured: dict[str, Any], dns_config_dict: dict[str, Any], pihole: dict[str, str]
 ) -> None:
-    # The checks happen while the inventory is built, before the playbook is
-    # invoked — so a refusal cannot half-run anything.
+    """The checks happen while the inventory is built, before the playbook is
+    invoked — so a refusal cannot half-run anything."""
     with pytest.raises(ValueError):
-        upgrade_pihole(_config(dns_config_dict, "nas"))
-    assert captured["called"] is False
-
-
-def test_nothing_runs_for_a_docker_stack(
-    captured: dict[str, Any], dns_config_dict: dict[str, Any]
-) -> None:
-    with pytest.raises(ValueError):
-        upgrade_pihole(_config(dns_config_dict, "app"))
+        upgrade_dns(_config(dns_config_dict, **pihole))
     assert captured["called"] is False
