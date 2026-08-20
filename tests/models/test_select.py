@@ -1,6 +1,6 @@
-"""Tests for models/select.py — the target-selection engine.
+"""Tests for the Select half of models/nodes.py — the target-selection engine.
 
-Selection is a filter over ``models/tree.py``'s traversal, so these assert on
+Selection is a filter over that module's traversal, so these assert on
 node *paths* (the tree address) rather than object identity. The local
 ``_tagged`` helper adds tags and target sets to the shared ``valid_config_dict``
 rather than changing the fixture, so no existing assertion shifts.
