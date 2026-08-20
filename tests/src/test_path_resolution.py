@@ -30,7 +30,8 @@ def test_template_resolves_against_base_dir(tmp_path: Path) -> None:
     proxy_data: dict[str, Any] = {
         "proxy_suffix": ".test",
         "template": "custom.j2",
-        "access_lists": {"all": {"default": True, "accept": ["0.0.0.0/0"]}},
+        "default_access": "all",
+        "access_lists": {"all": {"accept": ["0.0.0.0/0"]}},
     }
     proxy = Proxy.model_validate(proxy_data, context={"base_dir": tmp_path})
     assert proxy.template is not None

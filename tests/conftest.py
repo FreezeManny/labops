@@ -49,11 +49,12 @@ def valid_config_dict(tmp_ssh_key: Path, tmp_docker_dir: Path) -> dict[str, Any]
                 "ssh_key_path": str(tmp_ssh_key),
             },
             # web_services below require a proxy; services with no explicit
-            # `access` use the access list marked default.
+            # `access` fall back to the list named by `default_access`.
             "proxy": {
                 "proxy_suffix": ".example.test",
                 "tls": {"provider": "cloudflare"},
-                "access_lists": {"local": {"default": True, "accept": ["10.0.0.0/24"]}},
+                "default_access": "local",
+                "access_lists": {"local": {"accept": ["10.0.0.0/24"]}},
             },
         },
         "hosts": {
