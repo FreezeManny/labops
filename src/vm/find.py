@@ -1,8 +1,8 @@
 """VMs, for the ``labops vm`` listings and updates.
 
-Matching is ``models.nodes.node_matches``, so a VM is findable by its vmid here as
-well as from ``labops wake`` — it used to be name-or-IP only, which made
-``target: 201`` resolve for a container but not for a virtual machine.
+Matching is ``models.nodes.node_matches`` — the same rule every other lookup uses.
+What a VM answers to is unchanged (name or IP); what is gone is the local copy of
+the rule, which is how the four matchers drifted apart in the first place.
 """
 
 from models.input_conf.vm import VM

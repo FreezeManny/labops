@@ -48,7 +48,7 @@ class Dns(StrictModel):
     pihole_location: Optional[str] = Field(
         None,
         description=(
-            "Where Pi-hole is: a node in this config (by name, IP or vmid), a "
+            "Where Pi-hole is: a node in this config (by name or IP), a "
             "docker stack name, or a bare IP. Optional — omit it and records are "
             "still derived, so `dns list` works, while `diff`, `sync` and "
             "`upgrade` fail naming this field. Only a config node supports "

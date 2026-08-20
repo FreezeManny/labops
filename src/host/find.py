@@ -28,8 +28,7 @@ def find(config: YamlRoot, targets: list[str]) -> list[Host]:
             raise KeyError(
                 f"Host '{target}' was not found in the configuration by name or IP."
             )
-        # Hosts sit at depth 0 and YamlRoot.validate_unique_names claims their
-        # names, so two cannot collide — unlike the guests, which nest.
+        # At most one: names and IPs are both unique across the whole tree.
         found_hosts.append(matches[0])
 
     return found_hosts

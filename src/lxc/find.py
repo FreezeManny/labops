@@ -37,7 +37,9 @@ def find(config: YamlRoot, targets: list[str]) -> list[LXCPair]:
     for target in targets:
         matches: list[LXCPair] = [p for p in candidates if node_matches(p[1], target)]
         if not matches:
-            raise KeyError(f"LXC '{target}' was not found in the configuration.")
+            raise KeyError(
+                f"LXC '{target}' was not found in the configuration by name or IP."
+            )
         # At most one: names and IPs are both unique across the whole tree.
         results.append(matches[0])
     return results

@@ -273,6 +273,30 @@ class YamlRoot(StrictModel):
         return self
 
     @model_validator(mode="after")
+    def validate_proxy_deploy_target(self) -> "YamlRoot":
+        """`settings.proxy.deploy.target` must name a node in this config.
+
+        Same reasoning as validate_target_names above: it is written once and read
+        months later, and nothing between load and `proxy sync` / `deploy` /
+        `reload` ever looks at it — so a typo used to surface as a failed deploy
+        instead of a failed load.
+
+        Checkable here because there is nothing else the field can be: deploy
+        resolves it through `connection_for`, which is `find_node` and no fallback.
+        `settings.dns.pihole_location` gets no equivalent for exactly that reason —
+        a docker stack or a bare address is also a valid answer there.
+
+        Runs the real lookup rather than a copy of it, so the message is word for
+        word the one `proxy deploy` used to print, suggestion included, and cannot
+        drift from it. NodeNotFound is a ValueError, which is what pydantic wants.
+        """
+        deploy = self.settings.proxy.deploy if self.settings.proxy else None
+        if deploy is not None:
+            find_node(self.hosts, deploy.target, "settings.proxy.deploy.target")
+
+        return self
+
+    @model_validator(mode="after")
     def validate_access_references(self) -> "YamlRoot":
         """
         Ensure every web_service is routable and its access lists are usable:
