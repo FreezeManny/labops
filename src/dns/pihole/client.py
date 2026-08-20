@@ -1,10 +1,8 @@
 """Talking to a Pi-hole v6 instance over its REST API.
 
-Pi-hole v6 keeps local DNS records in its config tree as ``dns.hosts``: an array of
-``"<ip> <name>"`` strings — exactly what the Local DNS Records page edits. labops
-reads that array, diffs it against the config, and writes the whole array back. So
-publishing needs no SSH, no dnsmasq drop-in and no service restart: FTL applies a
-config change itself.
+labops reads Pi-hole's ``dns.hosts`` array (see wire.py), diffs it against the
+config, and writes the whole array back. Publishing therefore needs no SSH, no
+dnsmasq drop-in and no service restart: FTL applies a config change itself.
 
 Only the standard library is used, deliberately — labops carries no HTTP client
 dependency and this is three requests.
@@ -23,11 +21,13 @@ from types import TracebackType
 from typing import Optional, Type
 
 from models.dns.record import LiveRecord
+from src.dns.errors import DnsBackendError
+from src.dns.pihole.wire import format_host_line, parse_hosts
 
 _TIMEOUT_SECONDS = 10
 
 
-class PiholeError(Exception):
+class PiholeError(DnsBackendError):
     """A Pi-hole API call failed. The message is written to be shown to the user.
 
     ``status`` carries the HTTP code when there was one, so a caller can branch on
@@ -38,43 +38,6 @@ class PiholeError(Exception):
     def __init__(self, message: str, status: Optional[int] = None) -> None:
         super().__init__(message)
         self.status = status
-
-
-# ─── The dns.hosts wire format ────────────────────────────────────────────────
-
-
-def format_host_line(ip: IPv4Address, hostname: str) -> str:
-    """One ``dns.hosts`` entry. labops writes one name per line, as the UI does."""
-    return f"{ip} {hostname}"
-
-
-def parse_hosts(lines: list[str]) -> tuple[list[LiveRecord], list[str]]:
-    """Split a ``dns.hosts`` array into records and lines that made no sense.
-
-    A single line may carry several names (``"10.0.0.1 nas nas.lab"``), which
-    becomes one record per name. Unparseable lines are returned rather than
-    dropped: a sync rewrites the whole array, so anything not understood here is
-    about to be destroyed, and the plan has to be able to say so instead of
-    quietly losing it.
-    """
-    records: list[LiveRecord] = []
-    unparsed: list[str] = []
-
-    for line in lines:
-        fields: list[str] = line.split()
-        if len(fields) < 2:
-            unparsed.append(line)
-            continue
-        try:
-            ip = IPv4Address(fields[0])
-        except ValueError:
-            # An IPv6 record or a typo — either way not something labops derives,
-            # so it is reported rather than reinterpreted.
-            unparsed.append(line)
-            continue
-        records.extend(LiveRecord(hostname=name, ip=ip) for name in fields[1:])
-
-    return records, unparsed
 
 
 # ─── Client ───────────────────────────────────────────────────────────────────
@@ -134,7 +97,8 @@ class PiholeClient:
         if not session.get("valid") or not sid:
             raise PiholeError(
                 f"{self.address} rejected the API password. Check "
-                "PIHOLE_PASSWORD in your .env (or settings.dns.password) — Pi-hole "
+                "PIHOLE_PASSWORD in your .env (or settings.dns.pihole.password) — "
+                "Pi-hole "
                 "v6 wants the web-interface password or an application password."
             )
         self._sid = sid
@@ -221,7 +185,7 @@ class PiholeClient:
         except urllib.error.URLError as e:
             raise PiholeError(
                 f"could not reach the Pi-hole API at {url}: {e.reason}. Check "
-                "settings.dns.pihole_location, api_port and api_scheme."
+                "settings.dns.pihole — its node/stack/address, port and scheme."
             ) from e
         except TimeoutError as e:
             raise PiholeError(f"the Pi-hole API at {url} timed out.") from e

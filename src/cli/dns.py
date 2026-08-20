@@ -1,23 +1,21 @@
-"""`labops dns` — local DNS records, published to Pi-hole v6.
+"""`labops dns` — local DNS records, published to the configured DNS server.
 
 There is no record list in the config. Every host, VM and LXC becomes
-`<name><local_dns_suffix> -> ip`, so a device that exists only to have a DNS
-entry is written as an ordinary node with `os: unmanaged`. Per node, `dns_name`
-renames or aliases it and `dns: false` leaves it out. The consequence is that DNS
-cannot drift from the inventory: they are the same declaration.
+`<name>.<suffix> -> ip`, so a device that exists only to have a DNS entry is
+written as an ordinary node with `os: unmanaged`. Per node, `dns_name` renames or
+aliases it and `dns: false` leaves it out. The consequence is that DNS cannot
+drift from the inventory: they are the same declaration.
 
-Records are derived before any network access, so `dns list` works with no
-Pi-hole configured and no connection — useful for checking what *would* be
-published. `diff` and `sync` need `settings.dns.pihole_location` and the API
-password from the `.env` store.
+Which server receives them is settled in src/dns/backend.py; nothing in this
+module knows. Records are derived before any network access, so `dns list` works
+with no server configured and no connection — useful for checking what *would* be
+published. `diff` and `sync` need a server block under `settings.dns`.
 
-`upgrade` is the odd one out and does not use the API at all: upgrading Pi-hole
-itself has no endpoint behind it, so it runs Pi-hole's own updater over SSH (or
-`pct` for a container). It exists as a separate command because `host update` /
-`lxc update` run the package manager, and Pi-hole installs from its own
-installer — apt never sees it. A containerised Pi-hole is upgraded by pulling a
-new image instead (`docker stack update`), and `upgrade` refuses that case
-rather than pretending.
+`upgrade` is the odd one out. Upgrading the server software is not something every
+backend can do, and where it can the mechanism is its own, so it is a dispatch
+rather than part of the interface. It exists as a separate command because `host
+update` / `lxc update` run the package manager, and a DNS server installed from
+its own installer never appears there.
 """
 
 from contextlib import contextmanager
@@ -29,22 +27,20 @@ from rich.markup import escape
 from rich.table import Table
 
 from models.dns.record import DnsPlan, DnsRecord
-from models.input_conf.dns import Dns
 from models.input_conf.yaml_root import YamlRoot
 from src.cli.core import console, report_run, state
 from src.dns import (
-    PiholeError,
-    apply_sync,
+    DnsBackend,
+    DnsBackendError,
     dns_warnings,
     find_records,
     plan_sync,
-    require_dns,
-    resolve_password,
-    upgrade_pihole,
+    resolve_backend,
+    upgrade_dns,
 )
 from src.utils.ansible_runner import summarize_run
 
-app = typer.Typer(help="Manage local DNS records on Pi-hole", no_args_is_help=True)
+app = typer.Typer(help="Manage local DNS records", no_args_is_help=True)
 
 
 # ─── Shared plumbing ──────────────────────────────────────────────────────────
@@ -55,13 +51,13 @@ def _clean_errors() -> Iterator[None]:
     """Turn the expected failures into a one-line message instead of a traceback.
 
     ``ValueError`` is a config problem (no settings.dns, no API password, an
-    unresolvable upgrade target) and ``PiholeError`` is a run-time one (unreachable,
-    wrong password, not v6). Both are the user's to fix, so neither deserves a stack
-    trace.
+    unresolvable upgrade target) and ``DnsBackendError`` is a run-time one — the
+    server was unreachable, refused the password, or answered with something labops
+    cannot use. Both are the user's to fix, so neither deserves a stack trace.
     """
     try:
         yield
-    except (ValueError, PiholeError) as e:
+    except (ValueError, DnsBackendError) as e:
         console.print(f"[red]Error:[/red] {escape(str(e))}")
         raise typer.Exit(1)
 
@@ -73,24 +69,24 @@ def _emit_warnings(model: YamlRoot) -> None:
         console.print(f"[yellow]⚠ {escape(warning)}[/yellow]")
 
 
-def _prepare(model: YamlRoot) -> tuple[Dns, str, list[DnsRecord]]:
-    """Everything the API commands need: settings, password, desired records.
+def _prepare(model: YamlRoot) -> tuple[DnsBackend, list[DnsRecord]]:
+    """The server to talk to, and the records the config wants published.
 
-    Resolved in one place so ``sync`` does not read the secret store twice, and so
-    every "you have not configured this" failure happens before the first request.
+    Built in one place so a "you have not configured this" failure — no server
+    block, an unresolvable location, no password — happens before the first
+    request rather than halfway through a sync.
     """
     if state.config_path is None:  # unreachable via the CLI; the callback sets it
         raise ValueError("no config file is loaded.")
-    dns: Dns = require_dns(model)
-    password: str = resolve_password(model, state.config_path)
-    return dns, password, find_records(model)
+    backend: DnsBackend = resolve_backend(model, state.config_path)
+    return backend, find_records(model)
 
 
 # ─── Plan rendering ───────────────────────────────────────────────────────────
 
 
-def _print_plan(dns: Dns, plan: DnsPlan) -> None:
-    console.print(f"\n[bold blue]Pi-hole[/bold blue] {dns.pihole_location}")
+def _print_plan(backend: DnsBackend, plan: DnsPlan) -> None:
+    console.print(f"\n[bold blue]{backend.name}[/bold blue] {backend.where}")
 
     for record in plan.add:
         console.print(f"  [green]+[/green] {record.hostname:<32} {record.ip}")
@@ -129,9 +125,9 @@ def _summarize(plan: DnsPlan) -> str:
 def dns_list() -> None:
     """[bold]List[/bold] the local DNS records derived from the config [dim](no network)[/dim].
 
-    [dim]Works before you have a Pi-hole to point at: records come from the
+    [dim]Works before you have a server to point at: records come from the
     config tree, not from the server, so this shows what `dns sync` would
-    publish. Needs only settings.dns.local_dns_suffix.[/dim]
+    publish. Needs only settings.dns.suffix.[/dim]
     """
     model: YamlRoot = state.model
     with _clean_errors():
@@ -152,21 +148,21 @@ def dns_list() -> None:
 
 @app.command(name="diff")
 def dns_diff() -> None:
-    """[bold]Compare[/bold] the config against the Pi-hole [dim](changes nothing)[/dim].
+    """[bold]Compare[/bold] the config against the server [dim](changes nothing)[/dim].
 
-    [dim]Shows what `dns sync` would add, change and delete. Reads the Pi-hole
-    over its API, so it needs settings.dns.pihole_location and the API password
-    (PIHOLE_PASSWORD in the .env store).[/dim]
+    [dim]Shows what `dns sync` would add, change and delete. Reads the server, so
+    it needs a server block under settings.dns and whatever that server
+    authenticates with (for Pi-hole, PIHOLE_PASSWORD in the .env store).[/dim]
     """
     model: YamlRoot = state.model
     _emit_warnings(model)
     with _clean_errors():
-        dns, password, desired = _prepare(model)
-        plan: DnsPlan = plan_sync(model, password, desired)
+        backend, desired = _prepare(model)
+        plan: DnsPlan = plan_sync(backend, desired)
 
-    _print_plan(dns, plan)
+    _print_plan(backend, plan)
     if not plan.has_changes:
-        console.print("\n[green]✔ Pi-hole already matches the config.[/green]")
+        console.print(f"\n[green]✔ {backend.name} already matches the config.[/green]")
 
 
 @app.command(name="sync")
@@ -180,7 +176,7 @@ def dns_sync(
         ),
     ] = False,
 ) -> None:
-    """[bold]Sync[/bold] the config's records to the Pi-hole [dim](deletes what the config no longer has)[/dim].
+    """[bold]Sync[/bold] the config's records to the server [dim](deletes what the config no longer has)[/dim].
 
     [dim]The plan is always printed first; deletions ask for confirmation unless
     --yes is given. --dry-run prints the plan and stops.[/dim]
@@ -188,13 +184,13 @@ def dns_sync(
     model: YamlRoot = state.model
     _emit_warnings(model)
     with _clean_errors():
-        dns, password, desired = _prepare(model)
-        plan: DnsPlan = plan_sync(model, password, desired)
+        backend, desired = _prepare(model)
+        plan: DnsPlan = plan_sync(backend, desired)
 
-    _print_plan(dns, plan)
+    _print_plan(backend, plan)
 
     if not plan.has_changes:
-        console.print("\n[green]✔ Pi-hole already matches the config.[/green]")
+        console.print(f"\n[green]✔ {backend.name} already matches the config.[/green]")
         return
 
     if state.dry_run:
@@ -213,23 +209,24 @@ def dns_sync(
             raise typer.Exit(1)
 
     with _clean_errors():
-        apply_sync(model, password, desired)
-    console.print(f"[green]✔ {dns.pihole_location}: {_summarize(plan)}.[/green]")
+        backend.apply(desired)
+    console.print(f"[green]✔ {backend.where}: {_summarize(plan)}.[/green]")
 
 
 @app.command(name="upgrade")
 def dns_upgrade() -> None:
-    """[bold]Upgrade[/bold] the Pi-hole software itself.
+    """[bold]Upgrade[/bold] the DNS server software itself.
 
-    [dim]Runs Pi-hole's own updater on settings.dns.pihole_location over SSH — there
-    is no API for it, and `host update` / `lxc update` only run the package manager,
-    which never sees Pi-hole. Bare installs only — a containerised Pi-hole upgrades
-    via `docker stack update`. --dry-run skips the command instead of running it.[/dim]
+    [dim]For Pi-hole: runs its own updater on settings.dns.pihole.target over SSH —
+    there is no API for it, and `host update` / `lxc update` only run the package
+    manager, which never sees it. Bare installs only — a containerised Pi-hole
+    upgrades via `docker stack update`. Not every backend can upgrade itself; one
+    that cannot says so. --dry-run skips the command instead of running it.[/dim]
     """
     model: YamlRoot = state.model
     _run_playbook_action(
-        lambda: upgrade_pihole(model, dry_run=state.dry_run, verbose=state.verbose),
-        action="Pi-hole upgrade",
+        lambda: upgrade_dns(model, dry_run=state.dry_run, verbose=state.verbose),
+        action="DNS server upgrade",
     )
 
 
@@ -237,8 +234,9 @@ def _run_playbook_action(run: Callable[[], Runner], action: str) -> None:
     """Run a DNS playbook and report the outcome.
 
     Config problems only detectable at run time — an unresolvable or ambiguous
-    upgrade target, a missing upgrade block — arrive as ValueError from deep in the
-    call stack, and get the same one-line treatment as everything else.
+    upgrade target, a backend that cannot upgrade itself — arrive as ValueError
+    from deep in the call stack, and get the same one-line treatment as everything
+    else.
     """
     try:
         runner: Runner = run()

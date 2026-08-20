@@ -1,122 +1,163 @@
-"""Working out where Pi-hole is, from ``settings.dns.pihole_location``.
+"""Working out where a service is, from a ``target`` / ``docker_stack`` block.
 
-That one field carries three shapes, because the two DNS commands need different
-things from it:
+Nothing here is specific to one DNS server: it is the lookup behind
+``settings.dns.pihole``, and any other backend's block declares its location the
+same two ways. Two keys, one of which is set, because the commands need different
+things from the answer:
 
-* a **config node** (name or IP) — the full answer. Records go to the node's
-  address, and ``dns upgrade`` has a node to SSH into.
-* a **docker stack** — Pi-hole in a container. Records go to the hosting node's
-  address, exactly as a proxied stack's services do (see src/proxy/find.py), but
-  ``dns upgrade`` must refuse: `pihole -up` upgrades an installation, and a
-  container is upgraded by pulling a new image.
-* a **bare IP** matching nothing in the config — a Pi-hole labops does not
-  otherwise manage. Records work; there is nothing to SSH into.
+* ``target`` — the machine the service is installed on, always a node in this
+  config (by name or IP). Records go to that node's address, and an upgrade has
+  something to run a command on. A machine labops does not otherwise manage is
+  declared like any other node with ``os: unmanaged``, rather than named by a bare
+  address: records work either way, and stating it keeps the node inside the
+  uniqueness and DNS-label checks instead of outside them.
+* ``docker_stack`` — the service in a container. Records go to the hosting node's
+  address, exactly as a proxied stack's services do (see src/proxy/find.py), but an
+  upgrade must refuse: a container is upgraded by pulling a new image.
 
-Resolving all three in one place means ``dns sync`` and ``dns upgrade`` cannot
-disagree about what the field meant, and it is what makes the Docker refusal
-reliable: the user says Pi-hole is a stack rather than labops guessing from stack
-names.
-
-Takes ``dns`` as an argument rather than reaching for ``require_dns``: that lives in
-sync.py, which imports this module.
+Which key is set is the user's statement of *what kind of thing* it is, and that is
+the one thing an address cannot tell you — a container and an installation are
+reached at the same IP. So nothing here infers it: a name that is both a node and a
+stack is not a problem, and the container refusal is reliable rather than a guess.
+Resolving both in one place is what keeps the record commands and the upgrade
+command from disagreeing about what the block meant.
 """
 
 from dataclasses import dataclass
-from ipaddress import IPv4Address
-from typing import Optional
+from typing import ClassVar, Optional, Union
 
+from models.docker.lookup import ambiguous_stack_message, no_stack_message
 from models.docker.stack_result import StackResult
-from models.input_conf.dns import Dns
 from models.input_conf.yaml_root import YamlRoot
-from src.docker.find import find as find_stacks
 from models.nodes import NodeNotFound
+from src.docker.find import findAll as find_all_stacks
 from src.utils.inventory import NodeConnection, connection_for
-
-SETTING = "settings.dns.pihole_location"
 
 
 @dataclass(frozen=True)
-class PiholeLocation:
-    """Where Pi-hole is. Exactly one of ``node`` / ``stack`` is set, or neither."""
+class _Location:
+    """What every location knows, whichever key the user set."""
 
-    # The address to call the API on — always known, whichever shape matched.
+    # The address to talk to.
     address: str
     # What the location named, as written by the user.
     target: str
-    node: Optional[NodeConnection] = None
-    stack: Optional[StackResult] = None
+    # The config key it came from, for messages about the location — the caller's
+    # block prefix plus the key that was set, e.g. "settings.dns.pihole.target".
+    setting: str
 
-    @property
-    def is_stack(self) -> bool:
-        return self.stack is not None
+
+@dataclass(frozen=True)
+class NodeLocation(_Location):
+    """``target:`` — the service is installed on a node in this config."""
+
+    node: NodeConnection
+
+    is_stack: ClassVar[bool] = False
 
     @property
     def where(self) -> str:
-        """Human-readable location, for messages."""
-        if self.stack is not None:
-            return " → ".join(self.stack.path)
         return self.target
 
 
-def _as_stack(config: YamlRoot, target: str) -> Optional[StackResult]:
-    """The docker stack named ``target``, if there is one.
+@dataclass(frozen=True)
+class StackLocation(_Location):
+    """``docker_stack:`` — the service runs in a container on a node."""
 
-    A stack name that exists on several nodes raises out of the finder rather than
-    being picked arbitrarily — same treatment as an ambiguous node.
+    stack: StackResult
+
+    is_stack: ClassVar[bool] = True
+
+    @property
+    def where(self) -> str:
+        return " → ".join(self.stack.path)
+
+
+# Two cases, not one shape with two optional halves: which key was set decides
+# both the address and what an upgrade is allowed to do, so it is the type rather
+# than a flag to test. A caller that has ruled out a stack then *has* a node,
+# without an assertion standing in for what the type should say.
+ServiceLocation = Union[NodeLocation, StackLocation]
+
+
+def _resolve_stack(config: YamlRoot, name: str, setting: str) -> StackResult:
+    """The one docker stack called ``name``, or a ValueError saying why there isn't.
+
+    Not-found and found-on-several-nodes are separate messages: one means the name
+    is wrong, the other that it is not specific enough, and the fixes differ. The
+    finder collapses both into a ``KeyError``, so the filtering happens here.
+
+    The messages are the ones the config validator raises at load
+    (models/docker/lookup.py), so reaching either of them here means the block was
+    built after validation rather than read from a loaded config.
+    """
+    matches: list[StackResult] = [
+        found for found in find_all_stacks(config) if found.stack.name == name
+    ]
+    if not matches:
+        raise ValueError(no_stack_message(setting, name))
+    if len(matches) > 1:
+        raise ValueError(
+            ambiguous_stack_message(setting, name, [found.path for found in matches])
+        )
+    return matches[0]
+
+
+def _resolve_machine(config: YamlRoot, target: str, setting: str) -> NodeLocation:
+    """The node in this config that ``target`` names.
+
+    One outcome, so a miss is always a miss: an off-config address used to resolve
+    here as long as it parsed as an IPv4, which meant a fat-fingered address was
+    indistinguishable from a deliberate one. The route for a machine labops does not
+    manage is ``os: unmanaged``, so the miss is re-raised carrying it — this is the
+    error someone upgrading from a bare address lands on.
     """
     try:
-        matches: list[StackResult] = find_stacks(config, stack_name=target)
-    except KeyError:
-        return None
-    return matches[0] if matches else None
+        resolved: NodeConnection = connection_for(config, target, setting)
+    except NodeNotFound as miss:
+        raise NodeNotFound(
+            f"{miss} Declare the machine under `hosts:` — with `os: unmanaged` if "
+            "labops does not otherwise manage it — and name it here."
+        ) from None
+
+    return NodeLocation(
+        address=str(resolved.node.ip), target=target, setting=setting, node=resolved
+    )
 
 
-def resolve_location(config: YamlRoot, dns: Dns) -> PiholeLocation:
-    """Resolve ``settings.dns.pihole_location`` to a node, a stack, or a bare IP.
+def resolve_service_location(
+    config: YamlRoot,
+    *,
+    setting: str,
+    target: Optional[str] = None,
+    docker_stack: Optional[str] = None,
+) -> ServiceLocation:
+    """Resolve whichever of ``target`` / ``docker_stack`` the user set.
 
-    Nodes are tried first: they are the common case, and a node is the only shape
-    that supports every command. A name that is *both* a node and a stack is an
-    error rather than a silent preference — the two would send `dns upgrade`
-    somewhere different.
+    ``setting`` is the block's config path (e.g. ``settings.dns.pihole``); the
+    resolved location's own ``setting`` names the key within it, so a message quotes
+    what the user actually wrote.
 
-    ``pihole_location`` is optional, so this is also where "you have not said where
-    Pi-hole is" is reported. It is deliberately not a config-validation error:
-    deriving records is useful on its own, and ``dns list`` never comes through
-    here.
+    Dispatches on which key is set, so a miss is a hard error rather than a
+    fallthrough to the other shape — naming a stack that does not exist is a typo,
+    not an invitation to try the nodes. The caller's model is what guarantees
+    exactly one is set; a block with neither is a bug there, not a user error.
     """
-    if dns.pihole_location is None:
-        raise ValueError(
-            f"{SETTING} is not set, so labops does not know which Pi-hole to talk "
-            "to. Set it to the node running Pi-hole (by name or IP), the "
-            "docker stack running it, or its address. `dns list` works without it."
-        )
-    target: str = dns.pihole_location
+    if target is not None:
+        return _resolve_machine(config, target, f"{setting}.target")
 
-    node: Optional[NodeConnection]
-    try:
-        node = connection_for(config, target, SETTING)
-    except NodeNotFound:
-        node = None  # may still be a stack, or a bare address
-
-    stack: Optional[StackResult] = _as_stack(config, target)
-
-    if node is not None and stack is not None:
-        raise ValueError(
-            f"{SETTING} '{target}' is ambiguous: it names both a host/VM/LXC and a "
-            f"docker stack on {' → '.join(stack.path)}. Rename one of them."
-        )
-    if node is not None:
-        return PiholeLocation(address=str(node.node.ip), target=target, node=node)
-    if stack is not None:
+    if docker_stack is not None:
+        key: str = f"{setting}.docker_stack"
+        found: StackResult = _resolve_stack(config, docker_stack, key)
         # A stack's services are published on its host node's address, which is why
         # the stack name is not part of the address.
-        return PiholeLocation(address=str(stack.target_ip), target=target, stack=stack)
+        return StackLocation(
+            address=str(found.target_ip),
+            target=docker_stack,
+            setting=key,
+            stack=found,
+        )
 
-    try:
-        return PiholeLocation(address=str(IPv4Address(target)), target=target)
-    except ValueError:
-        raise ValueError(
-            f"{SETTING} '{target}' matches no host, VM, LXC or docker stack in the "
-            "config, and is not an IP address. Name the node running Pi-hole (by "
-            "name or IP), the docker stack running it, or its address."
-        ) from None
+    raise ValueError(  # the block's own validator is what normally prevents this
+        f"{setting} names no location; set exactly one of target: or docker_stack:."
+    )

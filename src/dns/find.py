@@ -2,6 +2,7 @@ from models.dns.record import DnsRecord
 from models.input_conf.dns import Dns
 from models.nodes import node_dns_labels
 from models.input_conf.yaml_root import YamlRoot
+from src.dns.backend import require_dns
 
 
 def find_records(config: YamlRoot) -> list[DnsRecord]:
@@ -13,14 +14,10 @@ def find_records(config: YamlRoot) -> list[DnsRecord]:
     machine *is*, not what it serves, so a node with no services still gets one.
 
     Raises ValueError when ``settings.dns`` is absent, since there is no suffix to
-    build hostnames from.
+    build hostnames from — the same check and the same wording every other command
+    gets, via ``require_dns``.
     """
-    dns: Dns | None = config.settings.dns
-    if dns is None:
-        raise ValueError(
-            "settings.dns is not configured; set local_dns_suffix and "
-            "pihole_location to publish local DNS records."
-        )
+    dns: Dns = require_dns(config)
 
     return [
         DnsRecord(
