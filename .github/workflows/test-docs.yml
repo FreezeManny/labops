@@ -1,0 +1,50 @@
+name: Test Docs
+
+# docs.yml only builds the site at release time, which is too late to gate a
+# PR — a dead link, a nav entry missing from mkdocs.yml, or a gen_docs.py
+# failure would only surface while cutting a release. This workflow runs the
+# same build against every PR instead.
+#
+# Deliberately unfiltered by path: gen_docs.py generates the config reference
+# and CLI reference by introspecting models/input_conf/** and src/cli/**, so a
+# change to either can break the docs build without touching anything under
+# docs/. A path filter would miss exactly the changes this check exists for.
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: test-docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Not currently a required check in the Main-Protection ruleset — add it
+  # there if a broken build should actually block merging.
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install the project
+        run: uv sync --locked --group docs
+
+      - name: Generate the reference
+        run: uv run python docs/gen_docs.py
+
+      - name: Build docs
+        run: uv run --group docs mkdocs build --strict
