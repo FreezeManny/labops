@@ -4,7 +4,7 @@ from ansible_runner.runner import Runner
 from models.input_conf.host import OSType
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import UNMANAGED_OS
-from models.tree import Node
+from models.nodes import Node
 from src.utils.ansible_runner import RunSummary, run_playbook, summarize_run
 from src.utils.inventory import ssh_host_vars
 from src.cli.core import report_run

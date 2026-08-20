@@ -29,7 +29,8 @@ from models.docker.stack_result import StackResult
 from models.input_conf.dns import Dns
 from models.input_conf.yaml_root import YamlRoot
 from src.docker.find import find as find_stacks
-from src.utils.target import ResolvedTarget, TargetNotFound, resolve_target
+from models.nodes import NodeNotFound
+from src.utils.inventory import NodeConnection, connection_for
 
 SETTING = "settings.dns.pihole_location"
 
@@ -42,7 +43,7 @@ class PiholeLocation:
     address: str
     # What the location named, as written by the user.
     target: str
-    node: Optional[ResolvedTarget] = None
+    node: Optional[NodeConnection] = None
     stack: Optional[StackResult] = None
 
     @property
@@ -91,10 +92,10 @@ def resolve_location(config: YamlRoot, dns: Dns) -> PiholeLocation:
         )
     target: str = dns.pihole_location
 
-    node: Optional[ResolvedTarget]
+    node: Optional[NodeConnection]
     try:
-        node = resolve_target(config, target, SETTING)
-    except TargetNotFound:
+        node = connection_for(config, target, SETTING)
+    except NodeNotFound:
         node = None  # may still be a stack, or a bare address
 
     stack: Optional[StackResult] = _as_stack(config, target)

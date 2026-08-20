@@ -22,13 +22,13 @@ from models.input_conf.yaml_root import YamlRoot
 from src.dns.location import SETTING, PiholeLocation, resolve_location
 from src.dns.sync import require_dns
 from src.utils.ansible_runner import run_playbook
-from src.utils.target import ResolvedTarget
+from src.utils.inventory import NodeConnection
 
 # Inventory alias only (single-host run against the Pi-hole).
 _ALIAS = "pihole"
 
 
-def resolve_upgrade_target(config: YamlRoot) -> ResolvedTarget:
+def resolve_upgrade_target(config: YamlRoot) -> NodeConnection:
     """The node to upgrade, or a ValueError explaining why there isn't one.
 
     Three things have to hold that do not matter for records:
@@ -75,7 +75,7 @@ def upgrade_pihole(
 ) -> Runner:
     """Run Pi-hole's updater on the configured Pi-hole host."""
     dns: Dns = require_dns(config)
-    resolved: ResolvedTarget = resolve_upgrade_target(config)
+    resolved: NodeConnection = resolve_upgrade_target(config)
     inventory: dict = {
         "all": {"hosts": {f"{_ALIAS}_{resolved.node.name}": resolved.host_vars}}
     }

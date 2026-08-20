@@ -8,7 +8,7 @@ from models.input_conf.custom_types import StrictModel
 from models.input_conf.dns import Dns
 from models.input_conf.paths import ConfigRelativeFile
 from models.input_conf.proxy import Proxy
-from models.select import Selector
+from models.nodes import Selector
 
 
 class Settings(StrictModel):

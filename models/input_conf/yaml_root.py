@@ -2,13 +2,16 @@ from pydantic import Field, model_validator
 from typing import Iterator, Optional, Dict
 from ipaddress import IPv4Address
 
-from models.select import Selector, select_nodes, unknown_under_names
-from models.tree import (
+from models.nodes import (
     NodeRef,
+    Selector,
     WebServiceRef,
+    find_node,
     iter_nodes,
     iter_web_services,
     node_dns_labels,
+    select_nodes,
+    unknown_under_names,
 )
 
 from .host import Host
@@ -37,10 +40,10 @@ class YamlRoot(StrictModel):
         ),
     )
 
-    # ─── Traversal ────────────────────────────────────────────────────────────
+    # ─── Asking the tree ──────────────────────────────────────────────────────
     #
-    # The config is a tree; these are how everything else walks it. See
-    # models/tree.py for the ordering and the record types they yield.
+    # The three shapes of that question — walk it, find one node, select a subset.
+    # See models/nodes.py for the ordering, the record types and the matching rule.
 
     def iter_nodes(self) -> Iterator[NodeRef]:
         """Every host, VM and LXC in the config, at any depth."""
@@ -50,8 +53,12 @@ class YamlRoot(StrictModel):
         """Every web_service in the config — each node's own and its stacks'."""
         return iter_web_services(self.hosts)
 
+    def find_node(self, node_id: str, setting: Optional[str] = None) -> NodeRef:
+        """The one node named by ``node_id`` — a name or IP."""
+        return find_node(self.hosts, node_id, setting)
+
     def select(self, sel: Selector) -> list[NodeRef]:
-        """The nodes a selector matches, in tree order. See models/select.py."""
+        """The nodes a selector matches, in tree order. See models/nodes.py."""
         return select_nodes(self.hosts, sel)
 
     # ─── Validators ───────────────────────────────────────────────────────────
@@ -113,31 +120,36 @@ class YamlRoot(StrictModel):
 
     @model_validator(mode="after")
     def validate_unique_names(self) -> "YamlRoot":
-        # Depth 1 only: hosts and their direct lxc/vm children. Names nested
-        # deeper may collide; the finders report that as an ambiguous target.
-        #
-        # Checked on the *effective* name — the node's `name` where it set one,
-        # otherwise its key. Keys alone cannot collide, but an override can
-        # collide with another node's key or override, and a duplicate name is
-        # exactly what makes a target unresolvable. Runs after
-        # propagate_host_names and Host.propagate_lxc_vm_names, which are what
-        # populate `name`.
-        all_names: set[str] = set()
+        """A node's name is how every command addresses it, so it must name one node.
+
+        Tree-wide, not per level. This used to check hosts and their *direct*
+        lxc/vm children only, and guests nested deeper were left to collide — which
+        made a name an id that sometimes matched two machines, and every lookup
+        carry a branch for it. Depth is not something a user states when they type
+        a name, so it cannot be what makes one unambiguous.
+
+        Checked on the *effective* name — the node's `name` where it set one,
+        otherwise its key. Keys alone cannot collide, but an override can collide
+        with another node's key or override. Runs after propagate_host_names and
+        Host.propagate_lxc_vm_names, which are what populate `name`.
+
+        Looks like validate_unique_dns_names below and is not redundant with it:
+        that one sees published labels, and `dns_name` / `dns: false` take a node
+        out of its view while leaving it perfectly addressable here.
+        """
+        owners: dict[str, str] = {}
         errors: list[str] = []
 
-        def claim(name: str) -> None:
-            if name in all_names:
-                errors.append(f"Duplicate name found across configuration: '{name}'")
+        for ref in self.iter_nodes():
+            where: str = " → ".join(ref.path)
+            name: str = ref.node.name
+            if name in owners:
+                errors.append(
+                    f"Duplicate name found across configuration: '{name}' is "
+                    f"claimed by both '{owners[name]}' and '{where}'."
+                )
             else:
-                all_names.add(name)
-
-        if self.hosts:
-            for host in self.hosts.values():
-                claim(host.name)
-                for lxc_obj in (host.lxc or {}).values():
-                    claim(lxc_obj.name)
-                for vm_obj in (host.vm or {}).values():
-                    claim(vm_obj.name)
+                owners[name] = where
 
         if errors:
             raise ValueError("\n".join(errors))

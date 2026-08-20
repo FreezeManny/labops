@@ -1,6 +1,6 @@
 from models.dns.record import DnsRecord
 from models.input_conf.dns import Dns
-from models.tree import node_dns_labels
+from models.nodes import node_dns_labels
 from models.input_conf.yaml_root import YamlRoot
 
 

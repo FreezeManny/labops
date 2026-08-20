@@ -6,7 +6,7 @@ from src.cli.core import report_run
 from models.input_conf.lxc import LXC
 from models.input_conf.creds import Creds
 from models.input_conf.custom_types import UNMANAGED_OS
-from models.tree import Parent
+from models.nodes import Parent
 
 
 def update(
