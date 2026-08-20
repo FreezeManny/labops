@@ -22,7 +22,8 @@ def _proxy(**overrides: object) -> dict[str, Any]:
     data: dict[str, Any] = {
         "proxy_suffix": "home.arpa",
         "tls": _TLS,
-        "access_lists": {"local": {"default": True, "accept": ["10.0.0.0/24"]}},
+        "default_access": "local",
+        "access_lists": {"local": {"accept": ["10.0.0.0/24"]}},
     }
     data.update(overrides)
     return data
@@ -31,7 +32,7 @@ def _proxy(**overrides: object) -> dict[str, Any]:
 def test_proxy_valid() -> None:
     proxy = Proxy.model_validate(_proxy())
     assert proxy.proxy_suffix == "home.arpa"
-    assert proxy.default_access_list == "local"
+    assert proxy.default_access == "local"
 
 
 def test_proxy_requires_proxy_suffix() -> None:
@@ -46,30 +47,33 @@ def test_proxy_requires_access_lists() -> None:
         Proxy.model_validate({"proxy_suffix": "home.arpa"})
 
 
-def test_proxy_requires_a_default_list() -> None:
-    with pytest.raises(ValidationError, match="exactly one list as 'default: true'"):
-        Proxy.model_validate(
-            _proxy(access_lists={"vpn": {"accept": ["100.64.0.0/10"]}})
-        )
+def test_proxy_requires_default_access() -> None:
+    data = _proxy()
+    del data["default_access"]
+    with pytest.raises(ValidationError, match="default_access"):
+        Proxy.model_validate(data)
 
 
-def test_proxy_rejects_multiple_defaults() -> None:
-    with pytest.raises(ValidationError, match="only one access list may be 'default"):
+def test_proxy_rejects_unknown_default_access() -> None:
+    # The error names the bad value and the lists that would have been valid.
+    with pytest.raises(
+        ValidationError, match="default_access names unknown access list 'lan'"
+    ) as exc:
         Proxy.model_validate(
             _proxy(
+                default_access="lan",
                 access_lists={
-                    "a": {"default": True, "accept": ["10.0.0.0/24"]},
-                    "b": {"default": True, "accept": ["10.0.1.0/24"]},
-                }
+                    "local": {"accept": ["10.0.0.0/24"]},
+                    "vpn": {"accept": ["100.64.0.0/10"]},
+                },
             )
         )
+    assert "Valid lists: local, vpn" in str(exc.value)
 
 
 def test_proxy_rejects_bad_cidr() -> None:
     with pytest.raises(ValidationError):
-        Proxy.model_validate(
-            _proxy(access_lists={"local": {"default": True, "accept": ["not-a-cidr"]}})
-        )
+        Proxy.model_validate(_proxy(access_lists={"local": {"accept": ["not-a-cidr"]}}))
 
 
 # ── ProxyTls ──────────────────────────────────────────────────────────────
@@ -232,7 +236,7 @@ def test_proxy_accepts_nested_deploy() -> None:
 
 def test_access_list_accept_only() -> None:
     al = AccessList.model_validate({"accept": ["10.0.0.0/24"]})
-    assert al.default is False and al.deny is None
+    assert al.deny is None
 
 
 def test_access_list_accept_with_deny_carveout() -> None:

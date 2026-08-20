@@ -53,7 +53,8 @@ def test_settings_with_dns_and_proxy(tmp_ssh_key: Path) -> None:
         "proxy": {
             "proxy_suffix": "home.arpa",
             "tls": {"provider": "cloudflare"},
-            "access_lists": {"local": {"default": True, "accept": ["10.0.0.0/24"]}},
+            "default_access": "local",
+            "access_lists": {"local": {"accept": ["10.0.0.0/24"]}},
         },
     }
     s = Settings.model_validate(data)

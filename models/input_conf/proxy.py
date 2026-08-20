@@ -16,13 +16,6 @@ class AccessList(StrictModel):
     service that names it follows.
     """
 
-    default: bool = Field(
-        False,
-        description=(
-            "Marks this as the list used by services with no explicit `access`. "
-            "Exactly one list must set it."
-        ),
-    )
     accept: List[IPvAnyNetwork] = Field(
         ...,
         description=(
@@ -216,7 +209,6 @@ class Proxy(StrictModel):
             "must exist, so a typo fails at `labops validate` rather than "
             "part-way through a deploy. A template can replace the built-in one "
             "outright, or extend it and override only the blocks it cares about. "
-            "See ansible/files/proxy/README.md."
         ),
     )
     trusted_proxies: Optional[List[IPvAnyNetwork]] = Field(
@@ -230,12 +222,19 @@ class Proxy(StrictModel):
             "that address forge their apparent IP and bypass every access list."
         ),
     )
+    default_access: str = Field(
+        ...,
+        description=(
+            "The access list used by services with no explicit `access`. Must "
+            "name a key of `access_lists`: a service that names no list still "
+            "has to resolve to one, so there is no unrestricted fallback."
+        ),
+    )
     access_lists: Dict[str, AccessList] = Field(
         ...,
         description=(
-            "Named CIDR sets that web services reference by name. Exactly one "
-            "must be marked `default: true`, since a service with no explicit "
-            "`access` has to resolve to something."
+            "Named CIDR sets that web services reference by name. `default_access` "
+            "picks the one used by a service with no explicit `access`."
         ),
     )
 
@@ -252,22 +251,12 @@ class Proxy(StrictModel):
         return v
 
     @model_validator(mode="after")
-    def validate_access_lists(self) -> "Proxy":
-        defaults: list[str] = [
-            name for name, al in self.access_lists.items() if al.default
-        ]
-        if len(defaults) == 0:
+    def validate_default_access(self) -> "Proxy":
+        if self.default_access not in self.access_lists:
             raise ValueError(
-                "settings.proxy.access_lists must mark exactly one list as 'default: true' "
-                "(used for web_services with no explicit 'access')."
-            )
-        if len(defaults) > 1:
-            raise ValueError(
-                "only one access list may be 'default: true'; found: "
-                + ", ".join(defaults)
+                f"settings.proxy.default_access names unknown access list "
+                f"'{self.default_access}'. Valid lists: "
+                + ", ".join(sorted(self.access_lists))
+                + "."
             )
         return self
-
-    @property
-    def default_access_list(self) -> str:
-        return next(name for name, al in self.access_lists.items() if al.default)

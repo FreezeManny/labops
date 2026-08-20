@@ -18,7 +18,7 @@ the container's own environment, where the token may perfectly well live.
 The verbs split along how far they go: `render` produces the file locally,
 `sync` puts it on the target, `reload` restarts Caddy against whatever is
 already there, and `deploy` is sync-then-reload-if-changed. Writing your own
-Caddyfile template is documented in ansible/files/proxy/README.md.
+Caddyfile template is documented in docs/guides/proxy-templates.md.
 """
 
 from pathlib import Path
@@ -110,7 +110,7 @@ def proxy_list() -> None:
 
     proxy = model.settings.proxy
     suffix: str = proxy.proxy_suffix if proxy else ""
-    default_list: str = proxy.default_access_list if proxy else ""
+    default_list: str = proxy.default_access if proxy else ""
     table = Table(title="Proxy Routes", show_header=True, header_style="bold blue")
     table.add_column("Hostname", style="green")
     table.add_column("Upstream", style="yellow")
@@ -147,7 +147,7 @@ def proxy_access() -> None:
         console.print("[dim]No web_services / proxy routes defined.[/dim]")
         raise typer.Exit(0)
 
-    default_list: str = proxy.default_access_list
+    default_list: str = proxy.default_access
     table = Table(title="Proxy Access", show_header=True, header_style="bold blue")
     table.add_column("Service", style="green")
     table.add_column("Host", style="green")

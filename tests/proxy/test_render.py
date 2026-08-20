@@ -155,7 +155,6 @@ def test_render_deny_wins_and_precedes_accept(
     valid_config_dict: dict[str, Any],
 ) -> None:
     valid_config_dict["settings"]["proxy"]["access_lists"]["local"] = {
-        "default": True,
         "accept": ["10.0.0.0/24"],
         "deny": ["10.0.0.66/32"],
     }

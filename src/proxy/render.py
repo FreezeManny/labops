@@ -50,7 +50,7 @@ def resolve_acl(
     Resolve a route's access to (accept_cidrs, deny_cidrs), unioning the referenced
     lists. Unset access falls back to the default list. Empty -> None (no rule).
     """
-    names: list[str] = route.access if route.access else [proxy.default_access_list]
+    names: list[str] = route.access if route.access else [proxy.default_access]
     accept: list = []
     deny: list = []
     for name in names:

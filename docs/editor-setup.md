@@ -103,8 +103,8 @@ speaking LSP. No editor-specific configuration is needed.
 ## What it does not replace
 
 The schema checks shape. It cannot check the rules that involve more than one
-field — that credentials set exactly one auth method, that exactly one access
-list is the default, that vmids do not collide, that a node's name is a legal DNS
+field — that credentials set exactly one auth method, that `default_access` names
+a list that exists, that vmids do not collide, that a node's name is a legal DNS
 label once `settings.dns` is configured, that a referenced template file exists.
 
 `labops validate` checks all of those. Keep running it.

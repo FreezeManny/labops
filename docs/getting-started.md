@@ -159,9 +159,9 @@ these is optional and independent:
     settings:
       proxy:
         proxy_suffix: .example.com
+        default_access: local
         access_lists:
           local:
-            default: true
             accept: [10.0.10.0/24]
 
     hosts:
