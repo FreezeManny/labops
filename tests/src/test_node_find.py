@@ -2,13 +2,17 @@
 
 Both finders walk the config tree to any depth, mirroring src.proxy.find, so a
 container or VM nested under a VM is addressable by every command that takes a
-target. Depth also means a name or vmid can legitimately match more than one
-node; the finders must say so rather than silently picking the first.
+target. Depth used to mean a name or vmid could match more than one node, which
+the finders had to refuse to guess at. Neither can happen now: YamlRoot makes
+names unique across the whole tree, and vmid is no longer an identifier at all
+(it is unique only per Proxmox node). So the cases asserted here are that a
+duplicate name is rejected at *load* time, and that a vmid resolves nothing.
 """
 
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from models.input_conf.yaml_root import YamlRoot
 import src.lxc as lxc
@@ -74,23 +78,17 @@ def test_top_level_lxc_still_resolves_via_its_host(
     assert container.vmid == 101
 
 
-def test_duplicate_vmid_across_nodes_is_ambiguous(
+def test_a_duplicate_vmid_is_legal_and_matches_nothing(
     valid_config_dict: dict[str, Any],
 ) -> None:
-    cfg = _two_nodes_same_vmid(valid_config_dict)
-    with pytest.raises(ValueError, match="ambiguous"):
-        lxc.find(cfg, ["101"])
+    """The config loads — and the vmid names neither container, rather than one.
 
-
-def test_ambiguous_vmid_error_names_both_candidates(
-    valid_config_dict: dict[str, Any],
-) -> None:
+    This is why vmid was dropped as an identifier: it is unique only within one
+    Proxmox node, so it could never name a guest on its own.
+    """
     cfg = _two_nodes_same_vmid(valid_config_dict)
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(KeyError, match="was not found"):
         lxc.find(cfg, ["101"])
-    msg = str(excinfo.value)
-    assert "ct1" in msg and "ct2" in msg
-    assert "prox" in msg and "prox2" in msg
 
 
 def test_duplicate_vmid_still_addressable_by_name(
@@ -126,17 +124,20 @@ def test_nested_vm_is_addressable_by_ip(valid_config_dict: dict[str, Any]) -> No
     assert found.name == "deep-vm"
 
 
-def test_duplicate_vm_name_across_depths_is_ambiguous(
+def test_duplicate_vm_name_across_depths_is_rejected_at_load(
     valid_config_dict: dict[str, Any],
 ) -> None:
-    # Names are unique per parent, not globally, once VMs nest — validate_unique_names
-    # only covers depth 1, so this config validates but the target does not resolve.
+    """validate_unique_names spans the whole tree, so a finder never sees two.
+
+    The reused name is caught where the user can act on it — loading the config —
+    rather than later, as an unresolvable target on whichever command happened to
+    ask for it first.
+    """
     valid_config_dict["hosts"]["prox"]["vm"]["vm1"]["vm"] = {
         "vm1": {"os": "debian", "ip": "10.0.0.12", "vmid": 303},
     }
-    cfg = YamlRoot.model_validate(valid_config_dict)
-    with pytest.raises(ValueError, match="ambiguous"):
-        vm.find(cfg, ["vm1"])
+    with pytest.raises(ValidationError, match="Duplicate name"):
+        YamlRoot.model_validate(valid_config_dict)
 
 
 def test_unknown_vm_still_raises_keyerror(valid_config_dict: dict[str, Any]) -> None:

@@ -1,4 +1,4 @@
-"""Tests for models.tree — the single config-tree traversal.
+"""Tests for the Walk half of models.nodes — the single config-tree traversal.
 
 Everything that walks the config (uniqueness validators, every finder) goes
 through YamlRoot.iter_nodes / iter_web_services, so the guarantees asserted here

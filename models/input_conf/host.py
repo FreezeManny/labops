@@ -135,20 +135,32 @@ class Host(StrictModel):
 
     @model_validator(mode="after")
     def check_duplicate_vmid(self) -> "Host":
-        all_ids: set[int] = set()
+        """A vmid addresses a guest on this Proxmox node, so it must address one.
+
+        Per node rather than tree-wide, because that is Proxmox's own scope: a
+        guest under a *nested* Proxmox lives in a different id space and may reuse
+        the number freely.
+
+        Names both claimants, like every other uniqueness check here. `lxc:` and
+        `vm:` share one id space, so the pair is often one of each — and the bare
+        "Duplicate vmid found: 100" left you to work out which two those were.
+        """
+        owners: dict[int, str] = {}
         errors: list[str] = []
-        if self.lxc:
-            for lxc_obj in self.lxc.values():
-                if lxc_obj.vmid in all_ids:
-                    errors.append(f"Duplicate vmid found: {lxc_obj.vmid}")
+
+        # The key is the guest's name unless it overrode it; `propagate_lxc_vm_names`
+        # runs after this validator, so the fallback is not decoration.
+        for kind, guests in (("lxc", self.lxc), ("vm", self.vm)):
+            for key, guest in (guests or {}).items():
+                where: str = f"{kind} '{guest.name or key}'"
+                if guest.vmid in owners:
+                    errors.append(
+                        f"Duplicate vmid found: {guest.vmid} is claimed by both "
+                        f"{owners[guest.vmid]} and {where}."
+                    )
                 else:
-                    all_ids.add(lxc_obj.vmid)
-        if self.vm:
-            for vm_obj in self.vm.values():
-                if vm_obj.vmid in all_ids:
-                    errors.append(f"Duplicate vmid found: {vm_obj.vmid}")
-                else:
-                    all_ids.add(vm_obj.vmid)
+                    owners[guest.vmid] = where
+
         if errors:
             raise ValueError("\n".join(errors))
         return self

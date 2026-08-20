@@ -242,9 +242,9 @@ render-only use.
             caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
     ```
 
-The `target` is any host, VM or LXC in your config, by name, IP or vmid. Hosts
-and VMs are reached over SSH; an LXC is reached through its Proxmox parent with
-`pct`, so the container needs no sshd.
+The `target` is any host, VM or LXC in your config, by name or IP. Hosts and VMs
+are reached over SSH; an LXC is reached through its Proxmox parent with `pct`, so
+the container needs no sshd.
 
 `caddyfile_dest` must be absolute — it is resolved on the target, where a
 relative path would land in the remote login directory.

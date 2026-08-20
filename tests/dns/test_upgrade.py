@@ -3,7 +3,7 @@
 Ansible is never invoked: ``run_playbook`` is monkeypatched to capture the inventory
 and extravars it would have received. Mirrors tests/src/test_proxy_deploy.py, since
 both resolve a named config node to a connection the same way
-(src/utils/target.py).
+(src/utils/inventory.py).
 
 The target is ``settings.dns.pihole_location`` — the same field the API uses. It may
 be a bare IP of something outside the config, which is fine for records but has

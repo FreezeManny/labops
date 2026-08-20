@@ -2,7 +2,7 @@ from typing import Iterable, Optional
 
 from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.creds import Creds
-from models.tree import NodeRef
+from models.nodes import NodeRef
 
 from models.docker.stack_result import StackResult
 

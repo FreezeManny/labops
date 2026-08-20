@@ -4,7 +4,7 @@ from models.input_conf.yaml_root import YamlRoot
 from models.input_conf.proxy import ProxyDeploy
 from src.proxy.render import render_caddyfile
 from src.utils.ansible_runner import run_playbook
-from src.utils.target import resolve_node_host_vars
+from src.utils.inventory import host_vars_for
 
 # Inventory alias only (single-host run against the Caddy target).
 _ALIAS = "caddy"
@@ -23,9 +23,7 @@ def _require_deploy(config: YamlRoot) -> ProxyDeploy:
 
 
 def _build_inventory(config: YamlRoot, deploy: ProxyDeploy) -> dict:
-    host_vars = resolve_node_host_vars(
-        config, deploy.target, "settings.proxy.deploy.target"
-    )
+    host_vars = host_vars_for(config, deploy.target, "settings.proxy.deploy.target")
     host_vars["caddyfile_dest"] = deploy.caddyfile_dest
     return {"all": {"hosts": {f"{_ALIAS}_{deploy.target}": host_vars}}}
 

@@ -3,7 +3,7 @@
 That one field carries three shapes, because the two DNS commands need different
 things from it:
 
-* a **config node** (name, IP or vmid) — the full answer. Records go to the node's
+* a **config node** (name or IP) — the full answer. Records go to the node's
   address, and ``dns upgrade`` has a node to SSH into.
 * a **docker stack** — Pi-hole in a container. Records go to the hosting node's
   address, exactly as a proxied stack's services do (see src/proxy/find.py), but
@@ -29,7 +29,8 @@ from models.docker.stack_result import StackResult
 from models.input_conf.dns import Dns
 from models.input_conf.yaml_root import YamlRoot
 from src.docker.find import find as find_stacks
-from src.utils.target import ResolvedTarget, TargetNotFound, resolve_target
+from models.nodes import NodeNotFound
+from src.utils.inventory import NodeConnection, connection_for
 
 SETTING = "settings.dns.pihole_location"
 
@@ -42,7 +43,7 @@ class PiholeLocation:
     address: str
     # What the location named, as written by the user.
     target: str
-    node: Optional[ResolvedTarget] = None
+    node: Optional[NodeConnection] = None
     stack: Optional[StackResult] = None
 
     @property
@@ -86,15 +87,15 @@ def resolve_location(config: YamlRoot, dns: Dns) -> PiholeLocation:
     if dns.pihole_location is None:
         raise ValueError(
             f"{SETTING} is not set, so labops does not know which Pi-hole to talk "
-            "to. Set it to the node running Pi-hole (by name, IP or vmid), the "
+            "to. Set it to the node running Pi-hole (by name or IP), the "
             "docker stack running it, or its address. `dns list` works without it."
         )
     target: str = dns.pihole_location
 
-    node: Optional[ResolvedTarget]
+    node: Optional[NodeConnection]
     try:
-        node = resolve_target(config, target, SETTING)
-    except TargetNotFound:
+        node = connection_for(config, target, SETTING)
+    except NodeNotFound:
         node = None  # may still be a stack, or a bare address
 
     stack: Optional[StackResult] = _as_stack(config, target)
@@ -117,5 +118,5 @@ def resolve_location(config: YamlRoot, dns: Dns) -> PiholeLocation:
         raise ValueError(
             f"{SETTING} '{target}' matches no host, VM, LXC or docker stack in the "
             "config, and is not an IP address. Name the node running Pi-hole (by "
-            "name, IP or vmid), the docker stack running it, or its address."
+            "name or IP), the docker stack running it, or its address."
         ) from None

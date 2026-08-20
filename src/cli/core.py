@@ -182,9 +182,10 @@ def resolve_targets(
     label: str = "target",
 ) -> list:
     if target:
-        # Finders raise KeyError for "no match" and ValueError for "matches more
-        # than one node" — both are config/typo problems, so they get a one-line
-        # message rather than a traceback.
+        # Finders raise KeyError for "no match"; ValueError is caught alongside
+        # it because the shared matcher's own miss, models.nodes.NodeNotFound, is
+        # one. Both are config/typo problems, so they get a one-line message
+        # rather than a traceback.
         try:
             results = finder(model, [target])
         except (KeyError, ValueError) as e:

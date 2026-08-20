@@ -82,7 +82,7 @@ what `labops dns upgrade` is allowed to do:
 
 | You write | Records | `dns upgrade` |
 | --- | --- | --- |
-| A node in your config (name, IP or vmid) | ✅ | ✅ |
+| A node in your config (name or IP) | ✅ | ✅ |
 | A Docker stack name | ✅ — sent to the node running it | ❌ refuses |
 | A bare IP matching nothing in the config | ✅ | ❌ nothing to reach |
 

@@ -1,5 +1,13 @@
-from models.input_conf.yaml_root import YamlRoot
+"""VMs, for the ``labops vm`` listings and updates.
+
+Matching is ``models.nodes.node_matches`` — the same rule every other lookup uses.
+What a VM answers to is unchanged (name or IP); what is gone is the local copy of
+the rule, which is how the four matchers drifted apart in the first place.
+"""
+
 from models.input_conf.vm import VM
+from models.input_conf.yaml_root import YamlRoot
+from models.nodes import node_matches
 
 
 def findAll(config: YamlRoot) -> list[VM]:
@@ -10,29 +18,18 @@ def findAll(config: YamlRoot) -> list[VM]:
     return [ref.node for ref in config.iter_nodes() if isinstance(ref.node, VM)]
 
 
-def _matches(vm: VM, target: str) -> bool:
-    return target in (vm.name, str(vm.ip))
-
-
 def find(config: YamlRoot, targets: list[str]) -> list[VM]:
-    """Find specific VMs defined in the Yaml config by Name or IP."""
+    """Find specific VMs defined in the Yaml config by name or IP."""
     candidates: list[VM] = findAll(config)
     found_vms: list[VM] = []
 
     for target in targets:
-        matches: list[VM] = [vm for vm in candidates if _matches(vm, target)]
+        matches: list[VM] = [vm for vm in candidates if node_matches(vm, target)]
         if not matches:
             raise KeyError(
                 f"VM '{target}' was not found in the configuration by name or IP."
             )
-        if len(matches) > 1:
-            # Names are only unique per parent once VMs nest, so a name can match
-            # more than one VM. Taking the first would act on the wrong machine.
-            where: str = ", ".join(f"'{vm.name}' ({vm.ip})" for vm in matches)
-            raise ValueError(
-                f"VM '{target}' is ambiguous — it matches {len(matches)} VMs: "
-                f"{where}. Target it by IP instead."
-            )
+        # At most one: names and IPs are both unique across the whole tree.
         found_vms.append(matches[0])
 
     return found_vms

@@ -1,36 +1,38 @@
 """Tests for src/wake/find.py — resolving the node to wake, and ``--list``.
 
 Unlike the per-kind finders this one matches across hosts, VMs and LXCs at once,
-so the cases that matter are the ones where the kinds meet: a vmid that only
-guests have, and a name that two nodes can legally share.
+so the cases that matter are the ones where the kinds meet: which identifiers name
+a node regardless of its kind, and at what depth.
 
-Ambiguity is built by nesting an LXC *under vm1*. ``YamlRoot.validate_unique_names``
-and ``Host.check_duplicate_vmid`` only reach depth 1, so a name or vmid reused one
-level deeper is valid config — and exactly the case the finder must refuse to guess
-at rather than the one pydantic already rejects.
+A node id is a name or an IP, and nothing else. vmid is deliberately not one — it
+is unique only per Proxmox node, so it identifies a guest only together with its
+parent. Ambiguity, which this module used to have to refuse to guess at, cannot
+arise any more: ``YamlRoot.validate_unique_names`` and ``validate_unique_ips``
+span the whole tree, at every depth, so at most one node can ever match.
 
-Error convention (from src/lxc/find.py, which src/cli/wake.py renders as one
-line): KeyError for no match, ValueError for more than one.
+Error convention: ``NodeNotFound`` — a ValueError — for no match, which
+src/cli/wake.py renders as one line.
 """
 
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
 from models.input_conf.vm import VM
 from models.input_conf.yaml_root import YamlRoot
-from models.tree import NodeRef
+from models.nodes import NodeNotFound, NodeRef
 from src.wake import resolve_wake_target, wakeable
 
 
-def _nest_under_vm1(cfg: dict[str, Any], name: str, vmid: int) -> YamlRoot:
-    """Add an LXC at depth 2, below every uniqueness check labops runs."""
+def _nest_under_vm1(cfg: dict[str, Any], name: str, vmid: int) -> dict[str, Any]:
+    """Add an LXC at depth 2 — deeper than any per-parent check reaches."""
     cfg["hosts"]["prox"]["vm"]["vm1"]["lxc"] = {
         name: {"os": "alpine", "ip": "10.0.0.9", "vmid": vmid},
     }
-    return YamlRoot.model_validate(cfg)
+    return cfg
 
 
 # ── Resolving ─────────────────────────────────────────────────────────────────
@@ -55,59 +57,64 @@ def test_a_node_resolves_by_ip(wake_config: YamlRoot) -> None:
     assert resolve_wake_target(wake_config, "10.0.0.3").node.name == "vm1"
 
 
-def test_a_guest_resolves_by_vmid(wake_config: YamlRoot) -> None:
-    assert resolve_wake_target(wake_config, "101").node.name == "ct1"
-    assert resolve_wake_target(wake_config, "201").node.name == "vm1"
+def test_a_guest_does_not_resolve_by_vmid(wake_config: YamlRoot) -> None:
+    """vmid is not a node id: unique per Proxmox node, so it names a guest only
+    together with its parent. ct1 and vm1 are reachable by name and IP instead."""
+    for vmid in ("101", "201"):
+        with pytest.raises(NodeNotFound):
+            resolve_wake_target(wake_config, vmid)
 
 
-def test_a_hosts_ip_is_not_read_as_a_vmid(wake_config: YamlRoot) -> None:
-    """A Host has no vmid, so the vmid branch must not be reached for one."""
+def test_a_host_resolves_by_its_own_ip(wake_config: YamlRoot) -> None:
     ref: NodeRef = resolve_wake_target(wake_config, "10.0.0.1")
     assert isinstance(ref.node, Host) and ref.node.name == "prox"
 
 
-def test_an_unknown_target_raises_keyerror(wake_config: YamlRoot) -> None:
-    with pytest.raises(KeyError) as excinfo:
+def test_an_unknown_target_raises(wake_config: YamlRoot) -> None:
+    with pytest.raises(NodeNotFound) as excinfo:
         resolve_wake_target(wake_config, "nope")
-    assert "nope" in excinfo.value.args[0]
+    assert "nope" in str(excinfo.value)
 
 
-def test_a_vmid_that_matches_nothing_raises_keyerror(wake_config: YamlRoot) -> None:
-    with pytest.raises(KeyError):
-        resolve_wake_target(wake_config, "999")
+# ── Depth and uniqueness ──────────────────────────────────────────────────────
 
 
-# ── Ambiguity ─────────────────────────────────────────────────────────────────
-
-
-def test_a_name_reused_deeper_in_the_tree_is_ambiguous(
+def test_a_name_reused_deeper_in_the_tree_is_rejected_at_load(
     wake_config_dict: dict[str, Any],
 ) -> None:
-    config: YamlRoot = _nest_under_vm1(wake_config_dict, "ct1", 301)
+    """The finder never has to choose, because this config does not load.
 
-    with pytest.raises(ValueError) as excinfo:
-        resolve_wake_target(config, "ct1")
+    The check spans the whole tree, so nesting the duplicate two levels down does
+    not slip past it — and the error names both claimants by their full path.
+    """
+    cfg = _nest_under_vm1(wake_config_dict, "ct1", 301)
+
+    with pytest.raises(ValidationError) as excinfo:
+        YamlRoot.model_validate(cfg)
 
     message = str(excinfo.value)
-    assert "ambiguous" in message
+    assert "Duplicate name" in message
     assert "prox → ct1" in message and "prox → vm1 → ct1" in message
-    assert "by IP" in message  # the way out
 
 
-def test_a_vmid_reused_deeper_in_the_tree_is_ambiguous(
+def test_a_vmid_reused_deeper_in_the_tree_still_loads(
     wake_config_dict: dict[str, Any],
 ) -> None:
-    config: YamlRoot = _nest_under_vm1(wake_config_dict, "other", 101)
+    """A duplicate vmid is legal — which is exactly why it is not an identifier."""
+    cfg = _nest_under_vm1(wake_config_dict, "other", 101)
+    config: YamlRoot = YamlRoot.model_validate(cfg)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(NodeNotFound):
         resolve_wake_target(config, "101")
 
 
-def test_an_ambiguous_name_still_resolves_by_ip(
+def test_a_deeply_nested_node_resolves_by_ip(
     wake_config_dict: dict[str, Any],
 ) -> None:
-    config: YamlRoot = _nest_under_vm1(wake_config_dict, "ct1", 301)
-    assert resolve_wake_target(config, "10.0.0.9").path == ["prox", "vm1", "ct1"]
+    """Depth is not a limit on resolution — only on nothing at all."""
+    cfg = _nest_under_vm1(wake_config_dict, "deep-ct", 301)
+    config: YamlRoot = YamlRoot.model_validate(cfg)
+    assert resolve_wake_target(config, "10.0.0.9").path == ["prox", "vm1", "deep-ct"]
 
 
 # ── wake --list ───────────────────────────────────────────────────────────────

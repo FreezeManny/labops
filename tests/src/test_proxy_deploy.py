@@ -11,6 +11,7 @@ from types import ModuleType, SimpleNamespace
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from models.input_conf.yaml_root import YamlRoot
 from src.proxy.deploy import deploy_proxy, sync_proxy, reload_proxy
@@ -110,21 +111,20 @@ def test_lxc_target_uses_pct_via_node(
     assert "ansible_become_password" not in hv
 
 
-def test_lxc_target_matches_by_vmid(
+def test_a_vmid_is_not_an_accepted_target(
     captured: dict[str, Any], valid_config_dict: dict[str, Any]
 ) -> None:
-    cfg = _config(
-        {
-            "target": "101",  # ct1's vmid
-            "caddyfile_dest": "/srv/caddy/Caddyfile",
-            "docker": {"container": "caddy"},
-        },
-        valid_config_dict,
-    )
-    deploy_proxy(cfg)
-    hv = _host_vars(captured)
-    assert hv["proxmox_vmid"] == 101
-    assert hv["ansible_connection"] == "community.proxmox.proxmox_pct_remote"
+    """The target is a name or an IP. A vmid names a guest only per Proxmox node."""
+    with pytest.raises(ValidationError, match="was not found in the configuration"):
+        _config(
+            {
+                "target": "101",  # ct1's vmid
+                "caddyfile_dest": "/srv/caddy/Caddyfile",
+                "docker": {"container": "caddy"},
+            },
+            valid_config_dict,
+        )
+    assert captured["called"] is False
 
 
 def test_nested_lxc_target_uses_its_vm_as_the_pct_node(
@@ -240,15 +240,20 @@ def test_reload_uses_reload_playbook_without_caddyfile(
     assert ev["caddy_reload_command"].startswith("docker exec caddy caddy reload")
 
 
-def test_unknown_target_raises(
+def test_unknown_target_is_rejected_at_load(
     captured: dict[str, Any], valid_config_dict: dict[str, Any]
 ) -> None:
-    cfg = _config(
-        {"target": "nope", "caddyfile_dest": "/etc/caddy/Caddyfile"},
-        valid_config_dict,
-    )
-    with pytest.raises(ValueError, match="matches no host, VM or LXC"):
-        deploy_proxy(cfg)
+    """A typo'd target fails the load, not the deploy.
+
+    YamlRoot.validate_proxy_deploy_target runs the same lookup deploy would, so
+    the config never reaches a state where the Caddyfile is built and then has
+    nowhere to go.
+    """
+    with pytest.raises(ValidationError, match="settings.proxy.deploy.target 'nope'"):
+        _config(
+            {"target": "nope", "caddyfile_dest": "/etc/caddy/Caddyfile"},
+            valid_config_dict,
+        )
     assert captured["called"] is False
 
 

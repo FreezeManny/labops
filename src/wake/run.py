@@ -22,10 +22,10 @@ from ansible_runner import Runner
 from models.input_conf.creds import Creds
 from models.input_conf.host import Host
 from models.input_conf.lxc import LXC
-from models.tree import Node, NodeRef, Parent
+from models.nodes import Node, NodeRef, Parent
 from src.utils.ansible_runner import run_playbook
 from src.utils.inventory import ssh_host_vars
-from src.utils.target import ResolvedTarget, resolve_target
+from src.utils.inventory import NodeConnection, connection_for
 from src.wake.packet import DEFAULT_BROADCAST, DEFAULT_PORT
 
 if TYPE_CHECKING:  # a runtime import of the root model would close a cycle
@@ -53,7 +53,7 @@ def send_via(
     verbose: bool = False,
 ) -> Runner:
     """Broadcast the magic packet from the config node named by ``via``."""
-    relay: ResolvedTarget = resolve_target(config, via, VIA_SETTING)
+    relay: NodeConnection = connection_for(config, via, VIA_SETTING)
     inventory: dict = {
         "all": {"hosts": {f"{_RELAY_ALIAS}_{relay.node.name}": relay.host_vars}}
     }

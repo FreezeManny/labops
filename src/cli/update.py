@@ -27,8 +27,8 @@ from models.input_conf.creds import Creds
 from models.input_conf.custom_types import OSType
 from models.input_conf.lxc import LXC
 from models.input_conf.yaml_root import YamlRoot
-from models.select import NodeKind, Selector, node_kind
-from models.tree import NodeRef
+from models.nodes import NodeKind, Selector, node_kind
+from models.nodes import NodeRef
 from src.cli.core import console, report_run, state
 from src.utils.ansible_runner import RunSummary, summarize_run
 import src.docker as docker
