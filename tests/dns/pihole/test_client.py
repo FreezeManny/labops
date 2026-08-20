@@ -16,8 +16,8 @@ from src.dns.errors import DnsBackendError
 from src.dns.pihole.client import PiholeClient, PiholeError
 
 
-def _client(**kwargs: object) -> PiholeClient:
-    return PiholeClient("10.0.0.53", "hunter2", **kwargs)
+def _client(scheme: str = "http", port: int = 80) -> PiholeClient:
+    return PiholeClient("10.0.0.53", "hunter2", scheme=scheme, port=port)
 
 
 # ── the address it talks to ───────────────────────────────────────────────────
@@ -62,13 +62,17 @@ def test_closing_without_a_session_does_nothing() -> None:
     assert client._sid is None
 
 
-def test_closing_releases_the_slot_and_forgets_the_session() -> None:
+def test_closing_releases_the_slot_and_forgets_the_session(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     client = _client()
     client._sid, client._csrf = "sid-1", "csrf-1"
     calls: list[tuple[str, str]] = []
-    client._request = lambda method, path, payload=None: (  # type: ignore[method-assign]
-        calls.append((method, path)) or None
-    )
+
+    def _record(method: str, path: str, payload: Optional[dict] = None) -> None:
+        calls.append((method, path))
+
+    monkeypatch.setattr(client, "_request", _record)
 
     client.close()
 
@@ -82,7 +86,9 @@ def test_closing_releases_the_slot_and_forgets_the_session() -> None:
     [PiholeError("the server went away"), OSError("connection reset"), RuntimeError()],
     ids=["pihole-error", "os-error", "unexpected"],
 )
-def test_closing_never_raises_whatever_the_logout_does(failure: Exception) -> None:
+def test_closing_never_raises_whatever_the_logout_does(
+    failure: Exception, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """It runs on the way out, often while another exception is propagating.
 
     Letting this one through would replace the error that actually matters with
@@ -94,7 +100,7 @@ def test_closing_never_raises_whatever_the_logout_does(failure: Exception) -> No
     def boom(method: str, path: str, payload: Optional[dict] = None) -> None:
         raise failure
 
-    client._request = boom  # type: ignore[method-assign]
+    monkeypatch.setattr(client, "_request", boom)
 
     client.close()  # the assertion is that this returns at all
 
