@@ -15,9 +15,9 @@
 # node named by settings.dns.pihole.target — so report_run attributes an
 # unreachable or failed run to it by name.
 #
-# Required extra vars (set by src/dns/pihole/upgrade.py):
-#   pihole_upgrade_command – the updater invocation
-#                            (settings.dns.pihole.upgrade_command)
+# No extra vars. The command is written here rather than passed in: the probe above
+# it already assumes Pi-hole's own installer put `pihole` on PATH, so `pihole -up`
+# is the only invocation this playbook can be asked to run.
 
 - name: Upgrade Pi-hole
   hosts: all
@@ -45,6 +45,6 @@
 
     - name: Run the Pi-hole updater
       ansible.builtin.command:
-        cmd: "{{ pihole_upgrade_command }}"
+        cmd: pihole -up
       become: true
       changed_when: true
