@@ -18,7 +18,7 @@ the container's own environment, where the token may perfectly well live.
 The verbs split along how far they go: `render` produces the file locally,
 `sync` puts it on the target, `reload` restarts Caddy against whatever is
 already there, and `deploy` is sync-then-reload-if-changed. Writing your own
-Caddyfile template is documented in ansible/files/proxy/README.md.
+Caddyfile template is documented in docs/guides/proxy-templates.md.
 """
 
 from pathlib import Path

@@ -209,7 +209,6 @@ class Proxy(StrictModel):
             "must exist, so a typo fails at `labops validate` rather than "
             "part-way through a deploy. A template can replace the built-in one "
             "outright, or extend it and override only the blocks it cares about. "
-            "See ansible/files/proxy/README.md."
         ),
     )
     trusted_proxies: Optional[List[IPvAnyNetwork]] = Field(

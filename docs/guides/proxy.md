@@ -18,9 +18,9 @@ A `web_services` entry on the node that runs the service:
 settings:
   proxy:
     proxy_suffix: .example.com
+    default_access: local
     access_lists:
       local:
-        default: true
         accept:
           - 10.0.10.0/24
 
@@ -62,14 +62,18 @@ Named CIDR sets, referenced by name, so "who may reach this" is declared once:
 ```yaml
 settings:
   proxy:
+    default_access: local      # used by services with no explicit access
     access_lists:
       local:
-        default: true          # used by services with no explicit access
         accept:
           - 10.0.10.0/24
           - 10.0.20.0/24
         deny:
           - 10.0.10.66/32      # deny wins over accept
+      lan:
+        accept:
+          - 10.0.10.0/24       # no deny, so it may be unioned
+          - 10.0.20.0/24
       vpn:
         accept:
           - 100.64.0.0/10      # tailscale
@@ -87,15 +91,23 @@ Then per service:
         access: [open]          # accept-all -> public
       - proxy_name: sync
         port: 20910
-        access: [local, vpn]    # the union of both lists
+        access: [lan, vpn]      # the union of both lists
       - proxy_name: pve
         port: 8006
         access: vpn             # a single list may be written bare
         https: true             # upstream speaks HTTPS with a self-signed cert
 ```
 
-Exactly one list must be marked `default: true` — a service with no explicit
-`access` has to resolve to something.
+`default_access` names the list a service with no explicit `access` resolves to.
+It must name one of the lists above — there is no unrestricted fallback.
+
+!!! warning "A service naming several lists may not name one with a `deny`"
+    `access: [local, vpn]` unions both lists' `accept` **and** their `deny`, so
+    `local`'s LAN-scoped deny would apply to clients arriving over the VPN too —
+    a statement about one network silently turned into a global ban. labops
+    rejects that config rather than guess which you meant; give the service its
+    own list instead. A single list, `default_access` included, is not a union,
+    so its `deny` still means what it says.
 
 !!! danger "An IPv4-only accept list denies IPv6 clients"
     `0.0.0.0/0` does not match an IPv6 client, so a service you meant to be
