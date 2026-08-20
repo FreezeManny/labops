@@ -11,6 +11,7 @@ from .vm import VMs
 from .custom_types import HostType, OSType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 from .common_validators.managed import forbid_management_fields_when_unmanaged
+from .common_validators.proxmox import forbid_guests_without_proxmox
 from .common_validators.dns import DnsNames
 
 
@@ -123,12 +124,7 @@ class Host(StrictModel):
 
     @model_validator(mode="after")
     def check_proxmox_support(self) -> "Host":
-        if self.type != "proxmox":
-            if self.lxc is not None or self.vm is not None:
-                raise ValueError(
-                    "Fields 'lxc' and 'vm' are only allowed when type is 'proxmox'"
-                )
-        return self
+        return forbid_guests_without_proxmox(self)
 
     @model_validator(mode="after")
     def check_unmanaged_constraints(self) -> "Host":

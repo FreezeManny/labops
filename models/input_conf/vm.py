@@ -10,6 +10,7 @@ from .lxc import LXC
 from .custom_types import OSType, HostType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 from .common_validators.managed import forbid_management_fields_when_unmanaged
+from .common_validators.proxmox import forbid_guests_without_proxmox
 from .common_validators.dns import DnsNames
 
 
@@ -119,6 +120,10 @@ class VM(StrictModel):
             "that really does wake, then ask for it with `wake --packet`."
         ),
     )
+
+    @model_validator(mode="after")
+    def check_proxmox_support(self) -> "VM":
+        return forbid_guests_without_proxmox(self)
 
     @model_validator(mode="after")
     def check_unmanaged_constraints(self) -> "VM":
