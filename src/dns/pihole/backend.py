@@ -1,7 +1,7 @@
 """Pi-hole as a DnsBackend: the four things the DNS commands ask of a server.
 
 Everything peculiar to Pi-hole is reached from here and nowhere else — the session
-(client.py), the ``dns.hosts`` text format (wire.py), the API password
+and the ``dns.hosts`` text format it speaks (client.py), the API password
 (secret.py) and which config block said where it is (location.py).
 
 Each of ``read`` and ``apply`` opens and closes its own session rather than the

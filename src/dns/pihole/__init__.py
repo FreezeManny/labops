@@ -6,11 +6,10 @@ updater. The generic layer above (src/dns/backend.py) knows only the four member
 of ``DnsBackend``.
 """
 
-from .client import PiholeClient, PiholeError
+from .client import PiholeClient, PiholeError, format_host_line, parse_hosts
 from .location import SETTING, resolve_pihole_location
 from .secret import pihole_warnings, resolve_password
 from .upgrade import resolve_upgrade_target, upgrade_pihole
-from .wire import format_host_line, parse_hosts
 from .backend import PiholeBackend, build_pihole_backend
 
 __all__ = [
