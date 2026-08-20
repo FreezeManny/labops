@@ -110,7 +110,7 @@ class PiholeClient:
             return
         try:
             self._request("DELETE", "/auth")
-        except PiholeError:
+        except Exception:
             pass
         finally:
             self._sid = None
