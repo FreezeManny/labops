@@ -287,8 +287,8 @@ class YamlRoot(StrictModel):
         a docker stack or a bare address is also a valid answer there.
 
         Runs the real lookup rather than a copy of it, so the message is word for
-        word the one `proxy deploy` used to print, suggestion included, and cannot
-        drift from it. NodeNotFound is a ValueError, which is what pydantic wants.
+        word the one `proxy deploy` used to print, and cannot drift from it.
+        NodeNotFound is a ValueError, which is what pydantic wants.
         """
         deploy = self.settings.proxy.deploy if self.settings.proxy else None
         if deploy is not None:

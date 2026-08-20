@@ -156,9 +156,10 @@ class NodeNotFound(ValueError):
     """No node in the config matches the given name or IP.
 
     A ValueError like any other config error, so callers that only want a clean
-    message need no extra handling. Its own type so a caller can tell "no such
-    node" apart from "ambiguous" — the two must never be treated alike, since one
-    means the id is wrong and the other that it is not specific enough.
+    message need no extra handling. Its own type because one caller has to tell it
+    apart: src/dns/location.py catches it to fall through to "then maybe a docker
+    stack, then maybe a bare address", and must not swallow an unrelated ValueError
+    on the way.
     """
 
 
