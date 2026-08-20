@@ -24,12 +24,18 @@ def parse_hosts(lines: list[str]) -> tuple[list[LiveRecord], list[str]]:
     dropped: a sync rewrites the whole array, so anything not understood here is
     about to be destroyed, and the plan has to be able to say so instead of
     quietly losing it.
+
+    ``#`` starts a comment, as in any hosts file. Stripping it is what keeps that
+    promise: splitting on whitespace alone turns ``"10.0.0.1 nas # my nas"`` into
+    records named ``#`` and ``my``, which the plan then offers to delete — the one
+    outcome this function exists to avoid. A line with nothing but a comment
+    survives as unparsed, because a rewrite destroys it just the same.
     """
     records: list[LiveRecord] = []
     unparsed: list[str] = []
 
     for line in lines:
-        fields: list[str] = line.split()
+        fields: list[str] = line.split("#", 1)[0].split()
         if len(fields) < 2:
             unparsed.append(line)
             continue

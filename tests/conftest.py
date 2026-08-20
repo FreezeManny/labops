@@ -113,10 +113,12 @@ def dns_config_dict(valid_config_dict: dict[str, Any]) -> dict[str, Any]:
     it no records are derived, so node names need not be legal DNS labels.
     """
     valid_config_dict["settings"]["dns"] = {
-        "local_dns_suffix": ".lab",
-        # An off-config IP: valid, and the case that exercises records working
-        # for a Pi-hole labops has no shell into. Tests that need the node
-        # reference (dns upgrade) override this with a node name.
-        "pihole_location": "10.0.0.53",
+        "suffix": ".lab",
+        # `target` must name a node in this config — an off-config address no
+        # longer resolves, so a Pi-hole labops only publishes to is declared like
+        # any other node (`os: unmanaged`) rather than named by its IP. `edge` is
+        # an ordinary managed host, so `dns upgrade` works against this fixture;
+        # tests that need the refusals override it with `nas` or a docker_stack.
+        "pihole": {"target": "edge"},
     }
     return valid_config_dict
