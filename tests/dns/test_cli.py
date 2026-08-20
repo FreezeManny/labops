@@ -390,18 +390,32 @@ def test_upgrade_of_an_unmanaged_node_exits_cleanly(
 def test_upgrade_ambiguous_location_exits_cleanly(
     dns_config_dict: dict[str, Any],
 ) -> None:
-    # Two LXCs sharing a vmid: legal config, unresolvable location.
-    dns_config_dict["hosts"]["prox2"] = {
-        "type": "proxmox",
+    # A name that is both a node and a docker stack: legal config, and the one
+    # ambiguity still reachable now that names and IPs are unique tree-wide.
+    dns_config_dict["hosts"]["app"] = {
+        "type": "bare-metal",
         "os": "debian",
-        "ip": "10.0.0.20",
-        "lxc": {"ct2": {"os": "alpine", "ip": "10.0.0.21", "vmid": 101}},
+        "ip": "10.0.0.7",
     }
-    dns_config_dict["settings"]["dns"]["pihole_location"] = "101"
+    dns_config_dict["settings"]["dns"]["pihole_location"] = "app"
     _load(dns_config_dict)
     result = runner.invoke(app, ["upgrade"])
     assert result.exit_code == 1
     assert "ambiguous" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_upgrade_of_a_vmid_location_exits_cleanly(
+    dns_config_dict: dict[str, Any],
+) -> None:
+    """A vmid is not a node id, and saying so must not read as a traceback."""
+    dns_config_dict["settings"]["dns"]["pihole_location"] = "101"  # ct1's vmid
+    _load(dns_config_dict)
+    result = runner.invoke(app, ["upgrade"])
+    assert result.exit_code == 1
+    # Fragments only: typer hard-wraps the rendered error mid-sentence.
+    assert "matches no host, VM, LXC or docker" in result.output
+    assert "is not an IP address" in result.output
     assert "Traceback" not in result.output
 
 
