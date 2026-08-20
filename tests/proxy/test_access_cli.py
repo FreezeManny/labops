@@ -91,7 +91,7 @@ def test_access_proxy_not_configured(tmp_ssh_key: Path) -> None:
             },
             "hosts": {
                 "h": {
-                    "type": "bare-metal",
+                    "hypervisor": "none",
                     "os": "debian",
                     "ip": "10.0.0.1",
                 },

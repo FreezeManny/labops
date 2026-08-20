@@ -29,7 +29,7 @@ def _tagged(cfg: dict[str, Any]) -> dict[str, Any]:
 def _nested(cfg: dict[str, Any]) -> dict[str, Any]:
     """Add a second level under vm1, so depth is actually exercised."""
     vm1 = cfg["hosts"]["prox"]["vm"]["vm1"]
-    vm1["type"] = "proxmox"  # what nesting guests under a VM requires
+    vm1["hypervisor"] = "proxmox"  # what nesting guests under a VM requires
     vm1["lxc"] = {"deep-ct": {"os": "alpine", "ip": "10.0.0.30", "vmid": 301}}
     return cfg
 

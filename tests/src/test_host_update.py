@@ -27,7 +27,7 @@ def _default_creds() -> Creds:
 
 def _managed_host(name: str = "edge", ip: str = "10.0.0.4") -> Host:
     return Host.model_validate(
-        {"name": name, "type": "bare-metal", "os": "debian", "ip": ip}
+        {"name": name, "hypervisor": "none", "os": "debian", "ip": ip}
     )
 
 

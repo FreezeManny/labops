@@ -25,7 +25,7 @@ def nested(valid_config_dict: dict[str, Any], tmp_docker_dir: Path) -> YamlRoot:
     hosts edge and nas, each with one web_service.
     """
     vm1 = valid_config_dict["hosts"]["prox"]["vm"]["vm1"]
-    vm1["type"] = "proxmox"  # what nesting guests under a VM requires
+    vm1["hypervisor"] = "proxmox"  # what nesting guests under a VM requires
     vm1["lxc"] = {
         "deep-ct": {
             "os": "alpine",

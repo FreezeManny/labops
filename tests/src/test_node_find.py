@@ -22,8 +22,8 @@ import src.vm as vm
 def _nested(cfg: dict[str, Any]) -> YamlRoot:
     """valid_config_dict, with an LXC and a VM hung off the existing vm1."""
     # Nesting guests makes vm1 a Proxmox node in its own right, which it has to
-    # say — VM gates `lxc:`/`vm:` on `type` just as Host does.
-    cfg["hosts"]["prox"]["vm"]["vm1"]["type"] = "proxmox"
+    # say — VM gates `lxc:`/`vm:` on `hypervisor` just as Host does.
+    cfg["hosts"]["prox"]["vm"]["vm1"]["hypervisor"] = "proxmox"
     cfg["hosts"]["prox"]["vm"]["vm1"]["lxc"] = {
         "deep-ct": {"os": "alpine", "ip": "10.0.0.10", "vmid": 301},
     }
@@ -39,7 +39,7 @@ def _two_nodes_same_vmid(cfg: dict[str, Any]) -> YamlRoot:
     Legal: Host.check_duplicate_vmid only enforces uniqueness within one node.
     """
     cfg["hosts"]["prox2"] = {
-        "type": "proxmox",
+        "hypervisor": "proxmox",
         "os": "debian",
         "ip": "10.0.0.20",
         "lxc": {"ct2": {"os": "alpine", "ip": "10.0.0.21", "vmid": 101}},
@@ -136,7 +136,7 @@ def test_duplicate_vm_name_across_depths_is_rejected_at_load(
     rather than later, as an unresolvable target on whichever command happened to
     ask for it first.
     """
-    valid_config_dict["hosts"]["prox"]["vm"]["vm1"]["type"] = "proxmox"
+    valid_config_dict["hosts"]["prox"]["vm"]["vm1"]["hypervisor"] = "proxmox"
     valid_config_dict["hosts"]["prox"]["vm"]["vm1"]["vm"] = {
         "vm1": {"os": "debian", "ip": "10.0.0.12", "vmid": 303},
     }

@@ -41,24 +41,32 @@ def test_vm_requires_os() -> None:
 
 def test_lxc_on_a_non_proxmox_vm_rejected() -> None:
     data = _base_vm(lxc={"ct1": {"os": "alpine", "ip": "10.0.0.10", "vmid": 301}})
-    with pytest.raises(ValidationError, match="only allowed when type is 'proxmox'"):
+    with pytest.raises(
+        ValidationError, match="only allowed when hypervisor is 'proxmox'"
+    ):
         VM.model_validate(data)
 
 
 def test_nested_vm_on_a_non_proxmox_vm_rejected() -> None:
     data = _base_vm(vm={"vm2": {"os": "debian", "ip": "10.0.0.11", "vmid": 302}})
-    with pytest.raises(ValidationError, match="only allowed when type is 'proxmox'"):
+    with pytest.raises(
+        ValidationError, match="only allowed when hypervisor is 'proxmox'"
+    ):
         VM.model_validate(data)
 
 
 def test_nested_guests_allowed_on_a_proxmox_vm() -> None:
     data = _base_vm(
-        type="proxmox",
+        hypervisor="proxmox",
         lxc={"ct1": {"os": "alpine", "ip": "10.0.0.10", "vmid": 301}},
         vm={"vm2": {"os": "debian", "ip": "10.0.0.11", "vmid": 302}},
     )
     vm = VM.model_validate(data)
     assert vm.lxc is not None and vm.vm is not None
+
+
+def test_hypervisor_defaults_to_none() -> None:
+    assert VM.model_validate(_base_vm()).hypervisor == "none"
 
 
 # ── Unmanaged OS ──────────────────────────────────────────────────────────────

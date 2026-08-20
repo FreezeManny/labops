@@ -59,7 +59,7 @@ def valid_config_dict(tmp_ssh_key: Path, tmp_docker_dir: Path) -> dict[str, Any]
         },
         "hosts": {
             "prox": {
-                "type": "proxmox",
+                "hypervisor": "proxmox",
                 "os": "debian",
                 "ip": "10.0.0.1",
                 "lxc": {
@@ -90,13 +90,13 @@ def valid_config_dict(tmp_ssh_key: Path, tmp_docker_dir: Path) -> dict[str, Any]
                 },
             },
             "edge": {
-                "type": "bare-metal",
+                "hypervisor": "none",
                 "os": "debian",
                 "ip": "10.0.0.4",
                 "web_services": [{"port": 80, "proxy_name": "edge"}],
             },
             "nas": {
-                "type": "bare-metal",
+                "hypervisor": "none",
                 "os": "unmanaged",
                 "ip": "10.0.0.5",
                 "web_services": [{"port": 443, "proxy_name": "nas"}],

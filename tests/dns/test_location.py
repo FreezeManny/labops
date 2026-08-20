@@ -126,7 +126,7 @@ def test_a_name_that_is_both_a_node_and_a_stack_is_not_a_problem(
     never has to guess, so the same name can legitimately be both.
     """
     valid_config_dict["hosts"]["app"] = {
-        "type": "bare-metal",
+        "hypervisor": "none",
         "os": "debian",
         "ip": "10.0.0.7",
     }
