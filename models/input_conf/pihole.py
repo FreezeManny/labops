@@ -58,18 +58,22 @@ class Pihole(StrictModel):
         ),
     )
     port: int = Field(
-        80,
+        443,
         description=(
-            "The port Pi-hole's admin interface and API listen on. Defaults to the "
-            "one the scheme implies — 80 for http, 443 for https — so setting "
-            "`scheme: https` alone is enough."
+            "The port Pi-hole's admin interface and API listen on. Follows the "
+            "scheme unless you set it — 443 for https, 80 for http — so neither "
+            "has to be repeated after changing the other."
         ),
     )
     scheme: Literal["http", "https"] = Field(
-        "http",
+        "https",
         description=(
-            "How to reach the API. `https` skips certificate verification, since "
-            "Pi-hole's own certificate is self-signed."
+            "How to reach the API. Defaults to `https` because the API password is "
+            "sent in the request body, and `http` puts it on the network in clear "
+            "text. Pi-hole v6 serves both out of the box. Certificate verification "
+            "is skipped either way — Pi-hole's own certificate is self-signed — so "
+            "`https` protects against eavesdropping rather than against a "
+            "machine-in-the-middle."
         ),
     )
     password: Optional[str] = Field(
@@ -121,14 +125,14 @@ class Pihole(StrictModel):
 
     @model_validator(mode="after")
     def default_port_to_scheme(self) -> "Pihole":
-        """An https Pi-hole listens on 443, so `scheme:` alone should be enough.
+        """The port follows the scheme, so changing one does not strand the other.
 
-        A single default cannot be right for both schemes, and the wrong one fails
-        as a refused connection — which reads like a network fault rather than the
+        A single default cannot be right for both, and the wrong one fails as a
+        refused connection — which reads like a network fault rather than the
         complete-looking config it is. Keyed on whether the user wrote `port:` at
         all rather than on its value, so an explicit `port: 80` with `https` is
         still honoured: an unusual setup, but a stated one.
         """
-        if "port" not in self.model_fields_set and self.scheme == "https":
-            self.port = 443
+        if "port" not in self.model_fields_set:
+            self.port = 443 if self.scheme == "https" else 80
         return self
