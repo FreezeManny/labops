@@ -98,7 +98,10 @@ def host_list() -> None:
     table.add_column("OS", style="green")
     table.add_column("IP Address", style="yellow")
 
-    for name, h in model.hosts.items():
-        table.add_row(name, str(h.type), str(h.os), str(h.ip))
+    # The effective name, not the dict key: a node that sets `name:` is no longer
+    # reachable by its key (models/nodes.py, node_matches), and this listing is
+    # where you read off what to type.
+    for h in model.hosts.values():
+        table.add_row(h.name, str(h.type), str(h.os), str(h.ip))
 
     console.print(table)

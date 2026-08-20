@@ -87,11 +87,12 @@ def vm_list() -> None:
         console.print("[dim]No hosts defined, so no VMs.[/dim]")
         raise typer.Exit(0)
 
+    # Effective names throughout — see the note in `host list`.
     vms_with_host = []
-    for host_name, h in model.hosts.items():
+    for h in model.hosts.values():
         if h.vm:
-            for vm_name, v in h.vm.items():
-                vms_with_host.append((host_name, vm_name, v))
+            for v in h.vm.values():
+                vms_with_host.append((h.name, v.name, v))
 
     if not vms_with_host:
         console.print("[dim]No VMs defined.[/dim]")

@@ -26,8 +26,10 @@ class Host(StrictModel):
     name: str = Field(
         "",
         description=(
-            "Filled in from the key this node is written under; do not set it. "
-            "Present so code that receives a node still knows what it is called."
+            "Overrides the key this node is written under. Leave it unset — the "
+            "usual case — and the key is the name. Set it when the key is not the "
+            "name you want to target and publish, e.g. a key that is not a legal "
+            "DNS label. Must be unique across the config either way."
         ),
     )
     type: HostType = Field(
