@@ -8,7 +8,7 @@ other.
 Every host, VM and LXC in your config becomes a record:
 
 ```
-<name><local_dns_suffix>  ->  <ip>
+<name>.<suffix>  ->  <ip>
 ```
 
 That is the whole model. You never write a record, which means DNS cannot drift
@@ -18,9 +18,10 @@ machine and its name follows.
 ```yaml
 settings:
   dns:
-    local_dns_suffix: .lab      # a leading dot is optional
-    pihole_location: pihole
-    api_port: 8080
+    suffix: .lab                # a leading dot is optional
+    pihole:
+      target: pihole            # the machine running Pi-hole
+      port: 8080
 
 hosts:
   cprox:
@@ -68,7 +69,7 @@ labops dns diff      # config vs. what Pi-hole has  (changes nothing)
 labops dns sync      # make Pi-hole match           (asks before deleting)
 ```
 
-`dns list` needs only `local_dns_suffix`. Records are derived before any network
+`dns list` needs only `suffix`. Records are derived before any network
 access, so you can see exactly what would be published before you have a Pi-hole
 to point at.
 
@@ -77,18 +78,61 @@ be deleted. `--yes` skips the prompt; `--dry-run` prints the plan and stops.
 
 ## Pointing at your Pi-hole
 
-`pihole_location` accepts three different things, and which you write decides
+Pi-hole is one *backend*. Deriving records from the inventory, diffing them and
+rendering the plan know nothing about it — a `pihole:` block is what says "publish
+them there", and `settings.dns` carries one server block at a time. If labops
+learns to speak to another DNS server, everything above this section stays as it
+is and only the block changes.
+
+### Naming the machine
+
+The `pihole:` block takes exactly one of two keys, and which one you write decides
 what `labops dns upgrade` is allowed to do:
 
-| You write | Records | `dns upgrade` |
-| --- | --- | --- |
-| A node in your config (name or IP) | ✅ | ✅ |
-| A Docker stack name | ✅ — sent to the node running it | ❌ refuses |
-| A bare IP matching nothing in the config | ✅ | ❌ nothing to reach |
+| You write | Means | Records | `dns upgrade` |
+| --- | --- | --- | --- |
+| `target: pihole` | the machine it is installed on — a host, VM or LXC, by name or IP | ✅ | ✅ |
+| `target: pihole` where that node is `os: unmanaged` | a Pi-hole labops publishes to but does not manage | ✅ | ❌ labops runs no commands on it |
+| `docker_stack: pihole` | the docker stack running it | ✅ — sent to the node hosting it | ❌ pull a new image instead |
 
-It is one field rather than two because `sync` needs an address and `upgrade`
-needs the thing behind that address — and they must not be able to disagree
-about which Pi-hole is meant.
+`target:` must name a node in this config. A Pi-hole labops does not otherwise
+manage is declared like any other node with `os: unmanaged` (see
+[A device that only needs a name](#a-device-that-only-needs-a-name) above) rather
+than named by a bare address — records work either way, and declaring it keeps the
+machine inside the duplicate-IP and DNS-label checks instead of outside them.
+
+`target:` is the same lookup as `settings.proxy.deploy.target`, so an LXC needs no
+sshd — it is reached with `pct` through its Proxmox parent, and a Pi-hole in an LXC
+is named directly.
+
+Both keys are checked when the config loads, not when you first run `dns sync`: a
+`target:` that names no node, or a `docker_stack:` that names no stack — or names
+one that exists on two nodes — fails the load with the same message the command
+would have printed. A field you write once and read months later is exactly the one
+a typo hides in.
+
+Where Pi-hole is stays a single answer rather than an address plus a machine,
+because `sync` needs an address while `upgrade` needs the thing behind that
+address — and the two must not be able to disagree about which Pi-hole is meant.
+What the two keys split out is whether Pi-hole is *installed on* a machine or
+*running in a container on* one, which is the one thing an address cannot tell you:
+a container and an installation answer at the same IP. So labops never infers it. A
+node and a stack may share a name, a typo in `target:` is an error rather than a
+silent fallthrough to the stacks, and the Docker refusal is something you declared
+rather than something labops guessed.
+
+### Scheme and port
+
+```yaml
+    pihole:
+      target: pihole
+      scheme: https        # port becomes 443
+```
+
+`port:` defaults to whatever the scheme implies — 80 for `http`, 443 for `https` —
+so switching to `https` needs no second field. Set it explicitly for a Pi-hole on
+an unusual port; an explicit value always wins. `https` skips certificate
+verification, since Pi-hole's own certificate is self-signed.
 
 ### The API password
 
@@ -100,8 +144,8 @@ PIHOLE_PASSWORD=…
 ```
 
 Use either the web-interface password or an app password from **Settings → Web
-interface / API**. You *can* inline it as `settings.dns.password`, but that is
-clear text in a file you probably commit, and `dns sync` warns about it.
+interface / API**. You *can* inline it as `settings.dns.pihole.password`, but that
+is clear text in a file you probably commit, and `dns sync` warns about it.
 
 ### One instance only
 
@@ -127,14 +171,6 @@ old version through every routine patch run.
 Bare installs only. A containerised Pi-hole is upgraded by pulling a new image
 (`labops docker stack update`), and `dns upgrade` refuses that case rather than
 pretending to have done something.
-
-To check without upgrading:
-
-```yaml
-settings:
-  dns:
-    upgrade_command: pihole -up --check-only
-```
 
 ## See also
 

@@ -90,13 +90,13 @@ the matching commands have nothing to act on and say so.
 Local DNS records, published to Pi-hole v6.
 
 There is no record list. Every host, VM and LXC in the config becomes
-`<name><local_dns_suffix> -> ip`, so a device that exists only to have a DNS
+`<name>.<suffix> -> ip`, so a device that exists only to have a DNS
 entry is written as an ordinary node with `os: unmanaged`. DNS therefore cannot
 drift from the inventory — they are the same declaration.
 
 See the [Pi-hole DNS guide](../guides/dns.md) for how the commands fit together.
 """,
-        ["Dns"],
+        ["Dns", "Pihole"],
     ),
     (
         "proxy.md",

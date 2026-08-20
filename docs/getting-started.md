@@ -139,8 +139,9 @@ these is optional and independent:
     ```yaml
     settings:
       dns:
-        local_dns_suffix: .lab
-        pihole_location: pihole
+        suffix: .lab
+        pihole:
+          target: pihole
     ```
 
     ```bash
