@@ -28,8 +28,8 @@ from rich.table import Table
 
 from models.input_conf.host import Host
 from models.input_conf.yaml_root import YamlRoot
-from models.select import node_kind
-from models.tree import NodeRef
+from models.nodes import node_kind
+from models.nodes import NodeRef
 from src.cli.core import console, report_run, state
 from src.utils.ansible_runner import RunSummary, summarize_run
 from src.wake import (
@@ -50,7 +50,7 @@ def wake(
     target: Optional[str] = typer.Argument(
         None,
         metavar="[TARGET]",
-        help="Host / VM / LXC name, IP or vmid.",
+        help="Host / VM / LXC name or IP.",
         show_default=False,
     ),
     via: Optional[str] = typer.Option(
@@ -102,7 +102,7 @@ def wake(
 
     if not target:
         typer.secho(
-            "✘ Give a node to wake (name, IP or vmid), or pass --list.",
+            "✘ Give a node to wake (name or IP), or pass --list.",
             fg=typer.colors.RED,
         )
         raise typer.Exit(1)

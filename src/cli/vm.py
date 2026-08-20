@@ -26,7 +26,7 @@ app = typer.Typer(help="Manage virtual machines.", no_args_is_help=True)
 @app.command("setup")
 def vm_setup(
     target: str = typer.Argument(
-        ..., help="VM name, IP address or vmid as defined in the homelab config."
+        ..., help="VM name or IP address as defined in the homelab config."
     ),
 ) -> None:
     """[bold]Set up[/bold] a VM (initial provisioning).
@@ -51,7 +51,7 @@ def vm_setup(
 
 @app.command("update")
 def vm_update(
-    target: Optional[str] = typer.Argument(None, help="VM name, IP address or vmid."),
+    target: Optional[str] = typer.Argument(None, help="VM name or IP address."),
     all: bool = typer.Option(False, "--all", help="Update all VMs."),
 ) -> None:
     """

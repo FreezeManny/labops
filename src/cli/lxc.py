@@ -61,7 +61,7 @@ def list_lxcs() -> None:
 
 @app.command("update")
 def execute_update(
-    target: Optional[str] = typer.Argument(None, help="LXC name, IP address or vmid."),
+    target: Optional[str] = typer.Argument(None, help="LXC name or IP address."),
     all: bool = typer.Option(False, "--all", help="Update all LXCs."),
 ) -> None:
     """
@@ -75,7 +75,7 @@ def execute_update(
     \b
     Examples:
       labops lxc update pihole      # by name
-      labops lxc update 105         # by vmid
+      labops lxc update 10.0.0.5    # by IP
       labops lxc update --all
     """
     model: YamlRoot = state.model

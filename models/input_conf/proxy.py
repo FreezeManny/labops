@@ -112,9 +112,9 @@ class ProxyDeploy(StrictModel):
     target: str = Field(
         ...,
         description=(
-            "The node running Caddy — a host, VM or LXC in this config, by name, "
-            "IP or vmid. Hosts and VMs are reached over SSH; an LXC is reached "
-            "through its Proxmox parent with `pct`, so it needs no sshd."
+            "The node running Caddy — a host, VM or LXC in this config, by name or "
+            "IP. Hosts and VMs are reached over SSH; an LXC is reached through its "
+            "Proxmox parent with `pct`, so it needs no sshd."
         ),
     )
     caddyfile_dest: str = Field(
