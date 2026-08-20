@@ -39,6 +39,7 @@ def stacks_for(
 
     return results
 
+
 def findAll(config: YamlRoot) -> list[StackResult]:
     """Return every stack at any nesting depth across all hosts."""
     return stacks_for(config.iter_nodes(), config.settings.default_creds)
