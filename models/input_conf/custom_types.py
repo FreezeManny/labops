@@ -11,7 +11,10 @@ class StrictModel(BaseModel):
 # own. Such nodes keep ip/web_services but are skipped by update/setup. The
 # managed set (with update playbooks) is debian/alpine/redhat.
 OSType = Literal["debian", "alpine", "redhat", "unmanaged"]
-HostType = Literal["bare-metal", "proxmox"]
+# Whether a node virtualizes, and with what. Not "what kind of hardware this is":
+# a VM carries the same field, and would have to call itself bare metal to say it
+# hosts no guests of its own. `proxmox` is what unlocks the `lxc:`/`vm:` blocks.
+Hypervisor = Literal["none", "proxmox"]
 
 # The single source of truth for the "unmanaged" sentinel — import this instead
 # of hard-coding the string when checking whether a node is managed.

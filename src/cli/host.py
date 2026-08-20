@@ -1,8 +1,8 @@
 """`labops host` — the top-level nodes of the config, the `hosts:` block.
 
 A host is anything labops reaches directly over SSH: a bare-metal box, a NAS, or
-a Proxmox node (`type: proxmox`), whose guests then hang off it as `vm:` and
-`lxc:`. The per-OS work — apt / apk / dnf — lives in the playbooks under
+a Proxmox node (`hypervisor: proxmox`), whose guests then hang off it as `vm:`
+and `lxc:`. The per-OS work — apt / apk / dnf — lives in the playbooks under
 ansible/playbooks/host/, picked by the node's `os`, so the CLI stays OS-agnostic.
 
 `os: unmanaged` marks a node labops tracks (for DNS and proxy routes) but does
@@ -94,7 +94,7 @@ def host_list() -> None:
 
     table = Table(title="Homelab Hosts", show_header=True, header_style="bold blue")
     table.add_column("Host", style="magenta")
-    table.add_column("Type", style="cyan")
+    table.add_column("Hypervisor", style="cyan")
     table.add_column("OS", style="green")
     table.add_column("IP Address", style="yellow")
 
@@ -102,6 +102,6 @@ def host_list() -> None:
     # reachable by its key (models/nodes.py, node_matches), and this listing is
     # where you read off what to type.
     for h in model.hosts.values():
-        table.add_row(h.name, str(h.type), str(h.os), str(h.ip))
+        table.add_row(h.name, str(h.hypervisor), str(h.os), str(h.ip))
 
     console.print(table)

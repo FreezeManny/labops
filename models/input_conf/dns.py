@@ -22,9 +22,9 @@ class Dns(StrictModel):
 
     Records are derived from the config tree — every host/VM/LXC becomes
     ``<name>.<suffix> -> ip`` — so there is no record list here. A device that
-    needs a record is a node like any other (``type: bare-metal``,
-    ``os: unmanaged``, an ``ip``); ``dns_name`` renames it and ``dns: false``
-    excludes it. See src/dns/find.py.
+    needs a record is a node like any other (``os: unmanaged`` and an ``ip`` is
+    the whole of it); ``dns_name`` renames it and ``dns: false`` excludes it. See
+    src/dns/find.py.
 
     Only ``suffix`` is required. Without a server block records are still derived,
     so ``dns list`` works; ``diff``, ``sync`` and ``upgrade`` fail with a message

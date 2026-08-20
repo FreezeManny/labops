@@ -8,7 +8,7 @@ from .web_services import WebServices
 from .docker import Docker
 from .lxc import LXCs
 from .vm import VMs
-from .custom_types import HostType, OSType, StrictModel
+from .custom_types import Hypervisor, OSType, StrictModel
 from .common_validators.web_services import check_duplicate_ws_ports
 from .common_validators.managed import forbid_management_fields_when_unmanaged
 from .common_validators.proxmox import forbid_guests_without_proxmox
@@ -33,12 +33,12 @@ class Host(StrictModel):
             "DNS label. Must be unique across the config either way."
         ),
     )
-    type: HostType = Field(
-        "bare-metal",
+    hypervisor: Hypervisor = Field(
+        "none",
         description=(
             "`proxmox` unlocks the `vm:` and `lxc:` blocks and makes this node "
-            "the parent that guest commands run through. `bare-metal` is "
-            "anything else."
+            "the parent that guest commands run through. `none`, the default, is "
+            "a node that hosts no guests labops manages."
         ),
     )
     os: OSType = Field(
@@ -75,14 +75,15 @@ class Host(StrictModel):
     lxc: Optional[LXCs] = Field(
         None,
         description=(
-            "Proxmox containers on this node, keyed by name. Requires `type: proxmox`."
+            "Proxmox containers on this node, keyed by name. Requires "
+            "`hypervisor: proxmox`."
         ),
     )
     vm: Optional[VMs] = Field(
         None,
         description=(
             "Proxmox virtual machines on this node, keyed by name. Requires "
-            "`type: proxmox`."
+            "`hypervisor: proxmox`."
         ),
     )
     docker: Optional[Docker] = Field(

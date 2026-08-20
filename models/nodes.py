@@ -223,10 +223,7 @@ def find_node(
 
 # ─── Select ───────────────────────────────────────────────────────────────────
 
-# The node's class in the tree. Deliberately *not* named "type": Host.type /
-# VM.type already exists in the config and means the hardware kind
-# (bare-metal | proxmox). Two different meanings for one word in one YAML file
-# is a support question waiting to happen.
+# The node's class in the tree: where it sits under `hosts:`, not what it runs.
 NodeKind = Literal["host", "vm", "lxc"]
 
 
@@ -247,10 +244,9 @@ class Selector(StrictModel):
     kind: list[NodeKind] = Field(
         [],
         description=(
-            "Node classes to include: `host`, `vm`, `lxc`. Note this is the "
-            "node's place in the tree, not a node's `type` field, which means "
-            "bare-metal vs proxmox. A single value may be written unquoted "
-            "instead of as a list."
+            "Node classes to include: `host`, `vm`, `lxc` — the node's place in "
+            "the tree. A single value may be written unquoted instead of as a "
+            "list."
         ),
     )
     os: list[OSType] = Field(
