@@ -241,7 +241,8 @@ class Proxy(StrictModel):
     @field_validator("trusted_proxies", mode="after")
     @classmethod
     def validate_trusted_proxies_non_empty(
-        cls, v: Optional[List[IPvAnyNetwork]],
+        cls,
+        v: Optional[List[IPvAnyNetwork]],
     ) -> Optional[List[IPvAnyNetwork]]:
         if v is not None and len(v) == 0:
             raise ValueError(

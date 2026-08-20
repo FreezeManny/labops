@@ -1,10 +1,8 @@
 """Talking to a Pi-hole v6 instance over its REST API.
 
-Pi-hole v6 keeps local DNS records in its config tree as ``dns.hosts``: an array of
-``"<ip> <name>"`` strings — exactly what the Local DNS Records page edits. labops
-reads that array, diffs it against the config, and writes the whole array back. So
-publishing needs no SSH, no dnsmasq drop-in and no service restart: FTL applies a
-config change itself.
+labops reads Pi-hole's ``dns.hosts`` array, diffs it against the
+config, and writes the whole array back. Publishing therefore needs no SSH, no
+dnsmasq drop-in and no service restart: FTL applies a config change itself.
 
 Only the standard library is used, deliberately — labops carries no HTTP client
 dependency and this is three requests.
@@ -23,11 +21,12 @@ from types import TracebackType
 from typing import Optional, Type
 
 from models.dns.record import LiveRecord
+from src.dns.errors import DnsBackendError
 
 _TIMEOUT_SECONDS = 10
 
 
-class PiholeError(Exception):
+class PiholeError(DnsBackendError):
     """A Pi-hole API call failed. The message is written to be shown to the user.
 
     ``status`` carries the HTTP code when there was one, so a caller can branch on
@@ -40,7 +39,12 @@ class PiholeError(Exception):
         self.status = status
 
 
-# ─── The dns.hosts wire format ────────────────────────────────────────────────
+# ─── The dns.hosts text format ─────────────────────────────────────────────────
+#
+# Pi-hole v6 keeps local DNS records in its config tree as ``dns.hosts``: an array
+# of ``"<ip> <name>"`` strings — exactly what the Local DNS Records page edits.
+# That text format is the whole reason a Pi-hole record can be *unreadable*: it is
+# a line of free text, not a structured entry, so anything may be in there.
 
 
 def format_host_line(ip: IPv4Address, hostname: str) -> str:
@@ -56,12 +60,18 @@ def parse_hosts(lines: list[str]) -> tuple[list[LiveRecord], list[str]]:
     dropped: a sync rewrites the whole array, so anything not understood here is
     about to be destroyed, and the plan has to be able to say so instead of
     quietly losing it.
+
+    ``#`` starts a comment, as in any hosts file. Stripping it is what keeps that
+    promise: splitting on whitespace alone turns ``"10.0.0.1 nas # my nas"`` into
+    records named ``#`` and ``my``, which the plan then offers to delete — the one
+    outcome this function exists to avoid. A line with nothing but a comment
+    survives as unparsed, because a rewrite destroys it just the same.
     """
     records: list[LiveRecord] = []
     unparsed: list[str] = []
 
     for line in lines:
-        fields: list[str] = line.split()
+        fields: list[str] = line.split("#", 1)[0].split()
         if len(fields) < 2:
             unparsed.append(line)
             continue
@@ -134,7 +144,8 @@ class PiholeClient:
         if not session.get("valid") or not sid:
             raise PiholeError(
                 f"{self.address} rejected the API password. Check "
-                "PIHOLE_PASSWORD in your .env (or settings.dns.password) — Pi-hole "
+                "PIHOLE_PASSWORD in your .env (or settings.dns.pihole.password) — "
+                "Pi-hole "
                 "v6 wants the web-interface password or an application password."
             )
         self._sid = sid
@@ -146,7 +157,7 @@ class PiholeClient:
             return
         try:
             self._request("DELETE", "/auth")
-        except PiholeError:
+        except Exception:
             pass
         finally:
             self._sid = None
@@ -221,7 +232,7 @@ class PiholeClient:
         except urllib.error.URLError as e:
             raise PiholeError(
                 f"could not reach the Pi-hole API at {url}: {e.reason}. Check "
-                "settings.dns.pihole_location, api_port and api_scheme."
+                "settings.dns.pihole — its node/stack/address, port and scheme."
             ) from e
         except TimeoutError as e:
             raise PiholeError(f"the Pi-hole API at {url} timed out.") from e

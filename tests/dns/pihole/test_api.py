@@ -1,8 +1,10 @@
-"""Tests for src/dns/pihole.py — the dns.hosts wire format and the v6 API client.
+"""Tests for src/dns/pihole/client.py — the Pi-hole v6 REST API.
 
 No network: ``urlopen`` is replaced by a stub that routes on (method, path) and
 records what was sent, so the auth handshake, the session headers and the exact
-PATCH body are all assertable.
+PATCH body are all assertable. The text format those requests carry is
+test_hosts_format.py; what the client does without a server at all is
+test_client.py.
 """
 
 import email.message
@@ -15,51 +17,7 @@ from typing import Optional
 
 import pytest
 
-from src.dns import PiholeClient, PiholeError, format_host_line, parse_hosts
-
-# ─── Wire format ──────────────────────────────────────────────────────────────
-
-
-def test_format_host_line() -> None:
-    assert format_host_line(IPv4Address("10.0.0.5"), "nas.lab") == "10.0.0.5 nas.lab"
-
-
-def test_parse_plain_lines() -> None:
-    records, unparsed = parse_hosts(["10.0.0.5 nas.lab", "10.0.0.6 docker.lab"])
-    assert [(r.hostname, str(r.ip)) for r in records] == [
-        ("nas.lab", "10.0.0.5"),
-        ("docker.lab", "10.0.0.6"),
-    ]
-    assert unparsed == []
-
-
-def test_parse_line_with_several_names() -> None:
-    # dnsmasq allows `<ip> <name> <name>`; each name is its own record.
-    records, unparsed = parse_hosts(["10.0.0.20 hass.lab ha.lab"])
-    assert [r.hostname for r in records] == ["hass.lab", "ha.lab"]
-    assert {str(r.ip) for r in records} == {"10.0.0.20"}
-    assert unparsed == []
-
-
-def test_parse_tolerates_extra_whitespace() -> None:
-    records, _ = parse_hosts(["  10.0.0.5\tnas.lab  "])
-    assert [(r.hostname, str(r.ip)) for r in records] == [("nas.lab", "10.0.0.5")]
-
-
-@pytest.mark.parametrize("line", ["", "   ", "10.0.0.5", "not-an-ip nas.lab", "::1 v6"])
-def test_unreadable_lines_are_reported_not_dropped(line: str) -> None:
-    # A sync rewrites the whole array, so anything unparsed is about to be lost and
-    # has to be surfaced rather than silently discarded.
-    records, unparsed = parse_hosts([line])
-    assert records == []
-    assert unparsed == [line]
-
-
-def test_mixed_good_and_bad_lines() -> None:
-    records, unparsed = parse_hosts(["10.0.0.5 nas.lab", "garbage"])
-    assert [r.hostname for r in records] == ["nas.lab"]
-    assert unparsed == ["garbage"]
-
+from src.dns.pihole import PiholeClient, PiholeError
 
 # ─── Client ───────────────────────────────────────────────────────────────────
 
@@ -259,7 +217,7 @@ def test_http_error_detail_is_surfaced(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_unreachable_host_names_the_setting(monkeypatch: pytest.MonkeyPatch) -> None:
     _raise(urllib.error.URLError("Connection refused"), monkeypatch)
-    with pytest.raises(PiholeError, match="pihole_location"):
+    with pytest.raises(PiholeError, match="settings.dns.pihole"):
         _client().login()
 
 

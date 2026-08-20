@@ -18,7 +18,9 @@ def test_resolve_override_is_used_verbatim() -> None:
 
 def test_resolve_absolute_override_is_used_verbatim() -> None:
     cfg = Path("/home/me/infra/homelab.yml")
-    assert resolve_env_file(cfg, Path("/etc/labops/prod.env")) == Path("/etc/labops/prod.env")
+    assert resolve_env_file(cfg, Path("/etc/labops/prod.env")) == Path(
+        "/etc/labops/prod.env"
+    )
 
 
 def test_read_missing_file_returns_empty(tmp_path: Path) -> None:

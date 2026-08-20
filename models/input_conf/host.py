@@ -72,8 +72,7 @@ class Host(StrictModel):
     lxc: Optional[LXCs] = Field(
         None,
         description=(
-            "Proxmox containers on this node, keyed by name. Requires "
-            "`type: proxmox`."
+            "Proxmox containers on this node, keyed by name. Requires `type: proxmox`."
         ),
     )
     vm: Optional[VMs] = Field(

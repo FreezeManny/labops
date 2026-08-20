@@ -181,11 +181,7 @@ def _render_context(
                 "deny": deny,
             }
         )
-    tp = (
-        [str(n) for n in proxy.trusted_proxies]
-        if proxy.trusted_proxies
-        else None
-    )
+    tp = [str(n) for n in proxy.trusted_proxies] if proxy.trusted_proxies else None
     return {
         "proxy_suffix": proxy.proxy_suffix,
         # Both None when TLS is off -> the template renders a plain-HTTP site.

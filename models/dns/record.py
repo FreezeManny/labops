@@ -1,9 +1,10 @@
-"""What labops publishes to Pi-hole, and what a sync would change.
+"""What labops publishes, and what a sync would change.
 
 ``DnsRecord`` is derived from the config (src/dns/find.py); ``LiveRecord`` is what
-Pi-hole currently holds (src/dns/pihole.py). ``DnsPlan`` is the diff between the
-two — computed and printed before anything is written, because a sync has full
-authority over the record list and may therefore delete.
+the DNS server currently holds, whichever server that is (src/dns/backend.py).
+``DnsPlan`` is the diff between the two — computed and printed before anything is
+written, because a sync has full authority over the record list and may therefore
+delete.
 """
 
 from dataclasses import dataclass
@@ -14,14 +15,14 @@ from ipaddress import IPv4Address
 class DnsRecord:
     """A single local A record derived from a config node."""
 
-    hostname: str  # fully qualified: label + settings.dns.local_dns_suffix
+    hostname: str  # fully qualified: label + settings.dns.suffix
     ip: IPv4Address  # the node's address
     path: list[str]  # node path for diagnostics, e.g. ["cprox", "docker"]
 
 
 @dataclass(frozen=True)
 class LiveRecord:
-    """A record as Pi-hole currently holds it, with no config counterpart."""
+    """A record as the server currently holds it, with no config counterpart."""
 
     hostname: str
     ip: IPv4Address
@@ -29,12 +30,12 @@ class LiveRecord:
 
 @dataclass(frozen=True)
 class RecordUpdate:
-    """A hostname Pi-hole already serves, but not at the address the config gives.
+    """A hostname the server already serves, but not at the address the config gives.
 
-    ``current_ips`` is a list because Pi-hole's record list is free to hold one
-    hostname twice (it is an array of "IP name" lines, not a map). Publishing the
-    config collapses those to the single desired address, and the plan has to be
-    able to say so.
+    ``current_ips`` is a list because a server's record list is free to hold one
+    hostname twice — Pi-hole's is an array of "IP name" lines rather than a map,
+    and a hosts file is no different. Publishing the config collapses those to the
+    single desired address, and the plan has to be able to say so.
     """
 
     record: DnsRecord
@@ -43,15 +44,15 @@ class RecordUpdate:
 
 @dataclass(frozen=True)
 class DnsPlan:
-    """Everything a sync would do to the Pi-hole's record list.
+    """Everything a sync would do to the server's record list.
 
     ``unchanged`` is carried so the CLI can report a total rather than only the
     delta — "19 unchanged" is what tells you the plan looked at everything.
 
-    ``unparsed`` holds lines already on the Pi-hole that labops could not read (an
+    ``unparsed`` holds entries already on the server that labops could not read (an
     IPv6 record, a hand-mangled line). They matter to the *plan*, not just to the
-    report: a sync replaces the whole array, so writing destroys them, which makes
-    them a deletion like any other.
+    report: a sync makes the server hold exactly the config's records, so writing
+    destroys them, which makes them a deletion like any other.
     """
 
     add: list[DnsRecord]

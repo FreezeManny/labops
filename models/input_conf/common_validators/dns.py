@@ -39,7 +39,7 @@ def _validate_labels(v: Optional[List[str]]) -> Optional[List[str]]:
         )
     seen: set[str] = set()
     for name in v:
-        validate_hostname_label(name, "dns_name", "settings.dns.local_dns_suffix")
+        validate_hostname_label(name, "dns_name", "settings.dns.suffix")
         if name in seen:
             raise ValueError(f"dns_name lists '{name}' more than once.")
         seen.add(name)

@@ -1,32 +1,37 @@
-from .diff import diff_records
-from .find import find_records
-from .pihole import PiholeClient, PiholeError, format_host_line, parse_hosts
-from .location import PiholeLocation, resolve_location
-from .sync import (
-    pihole_address,
-    apply_sync,
-    dns_warnings,
-    plan_sync,
-    require_dns,
-    resolve_password,
+"""Local DNS: derive records from the config, diff them, publish them.
+
+The package splits in two. Everything at this level is vendor-neutral — where
+records come from (find), what a sync would change (diff, sync), where a server is
+(location), and what labops needs from one (backend). Each DNS server labops can
+talk to is a package below it, and ``backend.resolve_backend`` is the only place
+that maps config to one of them.
+"""
+
+from .errors import DnsBackendError
+from .location import (
+    NodeLocation,
+    ServiceLocation,
+    StackLocation,
+    resolve_service_location,
 )
-from .upgrade import resolve_upgrade_target, upgrade_pihole
+from .diff import diff_records
+from .backend import DnsBackend, dns_warnings, require_dns, resolve_backend
+from .find import find_records
+from .sync import plan_sync
+from .upgrade import upgrade_dns
 
 __all__ = [
-    "PiholeClient",
-    "PiholeError",
-    "PiholeLocation",
-    "apply_sync",
+    "DnsBackend",
+    "DnsBackendError",
+    "NodeLocation",
+    "ServiceLocation",
+    "StackLocation",
     "diff_records",
     "dns_warnings",
     "find_records",
-    "format_host_line",
-    "parse_hosts",
-    "pihole_address",
     "plan_sync",
     "require_dns",
-    "resolve_upgrade_target",
-    "resolve_location",
-    "resolve_password",
-    "upgrade_pihole",
+    "resolve_backend",
+    "resolve_service_location",
+    "upgrade_dns",
 ]

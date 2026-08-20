@@ -49,7 +49,7 @@ def test_settings_accepts_env_file(tmp_ssh_key: Path, tmp_path: Path) -> None:
 def test_settings_with_dns_and_proxy(tmp_ssh_key: Path) -> None:
     data: dict[str, Any] = {
         "default_creds": _creds(tmp_ssh_key),
-        "dns": {"local_dns_suffix": "home.local", "pihole_location": "10.0.0.53"},
+        "dns": {"suffix": "home.local", "pihole": {"target": "pihole"}},
         "proxy": {
             "proxy_suffix": "home.arpa",
             "tls": {"provider": "cloudflare"},
@@ -58,7 +58,7 @@ def test_settings_with_dns_and_proxy(tmp_ssh_key: Path) -> None:
         },
     }
     s = Settings.model_validate(data)
-    assert s.dns is not None and s.dns.local_dns_suffix == "home.local"
+    assert s.dns is not None and s.dns.suffix == "home.local"
     assert s.proxy is not None and s.proxy.proxy_suffix == "home.arpa"
 
 

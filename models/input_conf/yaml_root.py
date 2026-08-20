@@ -3,6 +3,8 @@ from typing import Iterator, Optional, Dict
 from ipaddress import IPv4Address
 
 from models.nodes import (
+    UNDECLARED_MACHINE_HINT,
+    NodeNotFound,
     NodeRef,
     Selector,
     WebServiceRef,
@@ -12,6 +14,12 @@ from models.nodes import (
     node_dns_labels,
     select_nodes,
     unknown_under_names,
+)
+
+from models.docker.lookup import (
+    ambiguous_stack_message,
+    no_stack_message,
+    stack_paths,
 )
 
 from .host import Host
@@ -201,9 +209,7 @@ class YamlRoot(StrictModel):
             if not node.dns or node.dns_name:
                 continue
             try:
-                validate_hostname_label(
-                    node.name, "node name", "settings.dns.local_dns_suffix"
-                )
+                validate_hostname_label(node.name, "node name", "settings.dns.suffix")
             except ValueError as e:
                 errors.append(
                     f"{e} Rename the node, set 'dns_name' on it, or exclude it "
@@ -219,7 +225,7 @@ class YamlRoot(StrictModel):
     def validate_unique_dns_names(self) -> "YamlRoot":
         """Two nodes may not publish the same DNS label.
 
-        Every record shares the one ``local_dns_suffix``, so duplicate labels are
+        Every record shares the one ``suffix``, so duplicate labels are
         duplicate hostnames — a name resolving to two addresses, which is a typo
         far more often than it is intent.
         """
@@ -283,8 +289,8 @@ class YamlRoot(StrictModel):
 
         Checkable here because there is nothing else the field can be: deploy
         resolves it through `connection_for`, which is `find_node` and no fallback.
-        `settings.dns.pihole_location` gets no equivalent for exactly that reason —
-        a docker stack or a bare address is also a valid answer there.
+        `settings.dns.pihole` is checkable on the same grounds now that `target:`
+        must name a node — see validate_dns_pihole_location below.
 
         Runs the real lookup rather than a copy of it, so the message is word for
         word the one `proxy deploy` used to print, and cannot drift from it.
@@ -293,6 +299,52 @@ class YamlRoot(StrictModel):
         deploy = self.settings.proxy.deploy if self.settings.proxy else None
         if deploy is not None:
             find_node(self.hosts, deploy.target, "settings.proxy.deploy.target")
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_dns_pihole_location(self) -> "YamlRoot":
+        """`settings.dns.pihole` must name something that exists.
+
+        Same reasoning as validate_proxy_deploy_target above, and checkable for the
+        same reason: `target:` resolves through `connection_for` and nothing else,
+        so there is no second shape a miss could still turn out to be. That was not
+        true while the field could also hold a bare address — a typo and a
+        deliberate off-config IP were the same string, so the check had to wait for
+        `dns sync`. Requiring `os: unmanaged` instead is what makes it decidable
+        here.
+
+        `docker_stack:` is checked the same way, through the same messages the
+        resolver uses (models/docker/lookup.py), so a name that loads is a name that
+        resolves.
+
+        Not checked: whether the Pi-hole is reachable, or whether the node really
+        runs one. Those need the network, and a config that cannot be loaded
+        offline would make `dns list` depend on the server it exists to avoid.
+        """
+        dns = self.settings.dns
+        pihole = dns.pihole if dns is not None else None
+        if pihole is None:
+            return self
+
+        if pihole.target is not None:
+            try:
+                find_node(self.hosts, pihole.target, "settings.dns.pihole.target")
+            except NodeNotFound as miss:
+                # The sentence the resolver adds too: this is the error someone
+                # upgrading from a bare address lands on, and the only one that
+                # says where such a machine goes now.
+                raise NodeNotFound(f"{miss} {UNDECLARED_MACHINE_HINT}") from None
+
+        if pihole.docker_stack is not None:
+            setting: str = "settings.dns.pihole.docker_stack"
+            paths: list[list[str]] = stack_paths(self.hosts, pihole.docker_stack)
+            if not paths:
+                raise ValueError(no_stack_message(setting, pihole.docker_stack))
+            if len(paths) > 1:
+                raise ValueError(
+                    ambiguous_stack_message(setting, pihole.docker_stack, paths)
+                )
 
         return self
 

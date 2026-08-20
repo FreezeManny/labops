@@ -130,7 +130,7 @@ def node_dns_labels(node: Node) -> list[str]:
     """The DNS labels a node publishes: its ``dns_name`` entries, or its own name.
 
     Empty when the node opted out with ``dns: false``. These are bare labels, not
-    hostnames — ``settings.dns.local_dns_suffix`` is appended by ``src/dns/find.py``.
+    hostnames — ``settings.dns.suffix`` is appended by ``src/dns/find.py``.
     Uniqueness is checked on the labels alone (``YamlRoot``), which is equivalent
     since every record shares the one suffix.
     """
@@ -156,11 +156,22 @@ class NodeNotFound(ValueError):
     """No node in the config matches the given name or IP.
 
     A ValueError like any other config error, so callers that only want a clean
-    message need no extra handling. Its own type because one caller has to tell it
-    apart: src/dns/location.py catches it to fall through to "then maybe a docker
-    stack, then maybe a bare address", and must not swallow an unrelated ValueError
-    on the way.
+    message need no extra handling. Its own type because a miss is sometimes
+    re-raised with more to say — src/dns/location.py and the config validator both
+    append where an undeclared machine goes — and appending to an unrelated
+    ValueError would produce a sentence about the wrong problem.
     """
+
+
+# What to add to a miss where an off-config address used to be accepted — a service
+# location such as ``settings.dns.pihole.target``. Shared because two checkers
+# report it: the config validator, which is what a loaded config hits, and the
+# resolver, which is what a block built in code hits. A user following one of those
+# messages must not be told something different by the other.
+UNDECLARED_MACHINE_HINT = (
+    "Declare the machine under `hosts:` — with `os: unmanaged` if labops does not "
+    "otherwise manage it — and name it here."
+)
 
 
 def node_matches(node: Node, node_id: str) -> bool:

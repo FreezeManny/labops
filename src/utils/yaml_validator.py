@@ -14,9 +14,7 @@ def validate_yaml(raw: Dict[str, Any], rootPath: str) -> Optional[YamlRoot]:
 
     model = None
     try:
-        model: YamlRoot = YamlRoot.model_validate(
-            raw, context={"base_dir": base_dir}
-        )
+        model: YamlRoot = YamlRoot.model_validate(raw, context={"base_dir": base_dir})
 
     except ValidationError as e:
         error_messages = []

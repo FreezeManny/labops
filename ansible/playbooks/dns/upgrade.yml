@@ -7,21 +7,44 @@
 # installs from its own installer rather than a distro repo, so apt never sees it.
 #
 # Bare installs only. A containerised Pi-hole is upgraded by pulling a new image,
-# which is `docker stack update`.
+# which is `docker stack update` — and it is the one case the config cannot rule
+# out, since such a target names the node hosting the container and that node is
+# real. Hence the check below: it turns "pihole: not found" into a sentence.
 #
-# Runs against all hosts in the inventory at once: src/dns/upgrade.py puts every
-# settings.dns.upgrade.targets entry in it, so report_run attributes an unreachable
-# or failed instance individually.
+# Runs against the one host src/dns/pihole/upgrade.py puts in the inventory — the
+# node named by settings.dns.pihole.target — so report_run attributes an
+# unreachable or failed run to it by name.
 #
-# Required extra vars (set by src/dns/upgrade.py):
-#   pihole_upgrade_command – the updater invocation (settings.dns.upgrade.command)
+# No extra vars. The command is written here rather than passed in: the probe above
+# it already assumes Pi-hole's own installer put `pihole` on PATH, so `pihole -up`
+# is the only invocation this playbook can be asked to run.
 
 - name: Upgrade Pi-hole
   hosts: all
   gather_facts: false
   tasks:
+    - name: Look for Pi-hole's updater on this host
+      ansible.builtin.raw: command -v pihole
+      register: pihole_bin
+      changed_when: false
+      failed_when: false
+      # A read-only probe, so it runs under --dry-run too: a dry run should be
+      # able to report "not installed here" rather than skip the check and then
+      # claim the upgrade would have worked. `raw` has no check mode of its own,
+      # which without this leaves `pihole_bin` registered but without an `rc`.
+      check_mode: false
+
+    - name: Explain when Pi-hole is not installed here
+      ansible.builtin.fail:
+        msg: >-
+          Pi-hole's updater is not installed on this host.
+          settings.dns.pihole.target names this machine, so labops expected a bare
+          install. If Pi-hole runs in a container here, upgrade it by pulling a new
+          image instead (labops docker stack --stack <name> update).
+      when: pihole_bin.rc | default(0) != 0
+
     - name: Run the Pi-hole updater
       ansible.builtin.command:
-        cmd: "{{ pihole_upgrade_command }}"
+        cmd: pihole -up
       become: true
       changed_when: true

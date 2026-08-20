@@ -28,12 +28,12 @@ def test_derives_a_record_for_every_node(dns_config_dict: dict[str, Any]) -> Non
 
 
 def test_suffix_leading_dot_is_optional(dns_config_dict: dict[str, Any]) -> None:
-    dns_config_dict["settings"]["dns"]["local_dns_suffix"] = "lab"
+    dns_config_dict["settings"]["dns"]["suffix"] = "lab"
     assert "nas.lab" in _records(dns_config_dict)
 
 
 def test_multi_level_suffix(dns_config_dict: dict[str, Any]) -> None:
-    dns_config_dict["settings"]["dns"]["local_dns_suffix"] = "home.local"
+    dns_config_dict["settings"]["dns"]["suffix"] = "home.local"
     assert _records(dns_config_dict)["nas.home.local"] == "10.0.0.5"
 
 

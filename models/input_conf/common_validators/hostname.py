@@ -3,7 +3,7 @@ hostname.
 
 Two features do that: a web_service's ``proxy_name`` (prepended to
 ``settings.proxy.proxy_suffix``) and a node's name or ``dns_name`` (prepended to
-``settings.dns.local_dns_suffix``). In both cases an illegal label is a failure
+``settings.dns.suffix``). In both cases an illegal label is a failure
 that would otherwise surface far from the config that caused it — a Caddyfile
 Caddy refuses to load, or a record Pi-hole rejects — so both check it at validate
 time, and the rule lives here so the two cannot drift apart.

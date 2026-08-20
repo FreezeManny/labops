@@ -10,14 +10,14 @@ def diff_records(
     current: list[LiveRecord],
     unparsed: Optional[list[str]] = None,
 ) -> DnsPlan:
-    """Compare the config's records against what Pi-hole currently serves.
+    """Compare the config's records against what the server currently serves.
 
     Grouped by hostname rather than compared as (hostname, ip) pairs, because a
     hostname whose address changed has to read as one update rather than as a
     delete plus an add — the difference matters when deletions are what triggers
     the confirmation prompt.
 
-    Pi-hole may legitimately hold the same hostname more than once; such a
+    A server may legitimately hold the same hostname more than once; such a
     hostname is an update (to the single desired address) whenever its published
     addresses are anything other than exactly the one the config asks for.
     """
