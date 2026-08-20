@@ -14,6 +14,7 @@ from models.input_conf.yaml_root import YamlRoot
 from src.utils.env_file import read_env_file, resolve_env_file
 
 SETTING = "settings.dns.pihole.password"
+SCHEME_SETTING = "settings.dns.pihole.scheme"
 
 
 def resolve_password(config: YamlRoot, config_path: Path, pihole: Pihole) -> str:
@@ -34,16 +35,33 @@ def resolve_password(config: YamlRoot, config_path: Path, pihole: Pihole) -> str
 
 
 def pihole_warnings(config: YamlRoot, config_path: Path, pihole: Pihole) -> list[str]:
-    """Non-fatal notes about how the API password was configured.
+    """Non-fatal notes about how the API password is stored and sent.
 
-    Mirrors ``tls_warnings`` in src/proxy/render.py: an inline secret is legal but
-    worth saying out loud, since it sits in a file that is usually committed.
+    Mirrors ``tls_warnings`` in src/proxy/render.py: both are legal, and both put a
+    secret somewhere it need not be, so they are said out loud rather than refused.
+
+    The two are the same exposure in different places — at rest in a file that is
+    usually committed, and in flight across the LAN — and the second is the one
+    that used to pass unmentioned, since ``http`` was the default nobody had to
+    choose.
     """
-    if not pihole.password:
-        return []
-    env_path: Path = resolve_env_file(config_path, config.settings.env_file)
-    return [
-        f"dns: {SETTING} is set inline, in clear text in your config file. Prefer "
-        f"removing it and setting {PIHOLE_PASSWORD_ENV} in {env_path}, which is "
-        "git-ignored."
-    ]
+    warnings: list[str] = []
+
+    if pihole.password:
+        env_path: Path = resolve_env_file(config_path, config.settings.env_file)
+        warnings.append(
+            f"dns: {SETTING} is set inline, in clear text in your config file. "
+            f"Prefer removing it and setting {PIHOLE_PASSWORD_ENV} in {env_path}, "
+            "which is git-ignored."
+        )
+
+    if pihole.scheme == "http":
+        warnings.append(
+            f"dns: {SCHEME_SETTING} is http, so the API password is sent across "
+            "the network in clear text. Prefer https, which Pi-hole v6 serves on "
+            "443 out of the box. labops does not verify the certificate (Pi-hole's "
+            "is self-signed), so this protects against eavesdropping rather than "
+            "against a machine-in-the-middle."
+        )
+
+    return warnings
