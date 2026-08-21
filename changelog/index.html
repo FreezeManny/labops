@@ -1,0 +1,3062 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A declarative, YAML-based homelab manager.">
+      
+      
+      
+        <link rel="canonical" href="https://freezemanny.github.io/labops/changelog/">
+      
+      
+        <link rel="prev" href="../development/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/Cover.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Changelog - labops</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changelog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="labops" class="md-header__button md-logo" aria-label="labops" data-md-component="logo">
+      
+  <img src="../assets/Cover.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            labops
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/FreezeManny/labops" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    FreezeManny/labops
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="labops" class="md-nav__button md-logo" aria-label="labops" data-md-component="logo">
+      
+  <img src="../assets/Cover.png" alt="logo">
+
+    </a>
+    labops
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/FreezeManny/labops" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    FreezeManny/labops
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/targets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Selecting targets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/dns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pi-hole DNS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/proxy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Caddy reverse proxy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/proxy-templates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Caddyfile templates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker stacks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/wake/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waking nodes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../editor-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Editor setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/dns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    settings.dns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/proxy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    settings.proxy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hosts, vm, lxc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/web-services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    web_services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Commands
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    labops update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/wake/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    labops wake
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/validate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    labops validate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    labops host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/vm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    labops vm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/lxc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    labops lxc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    labops docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/proxy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    labops proxy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/dns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    labops dns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0110-2026-08-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.11.0 (2026-08-21)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.11.0 (2026-08-21)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0100-2026-08-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.10.0 (2026-08-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.10.0 (2026-08-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#091-2026-08-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.9.1 (2026-08-13)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.9.1 (2026-08-13)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#documentation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#090-2026-08-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.9.0 (2026-08-10)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.9.0 (2026-08-10)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#080-2026-08-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.8.0 (2026-08-07)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.8.0 (2026-08-07)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#070-2026-08-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.7.0 (2026-08-05)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.7.0 (2026-08-05)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#061-2026-07-14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.6.1 (2026-07-14)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.6.1 (2026-07-14)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#060-2026-06-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.6.0 (2026-06-27)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.6.0 (2026-06-27)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#051-2026-05-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.1 (2026-05-22)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.5.1 (2026-05-22)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#050-2026-04-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.0 (2026-04-24)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.5.0 (2026-04-24)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#041-2026-04-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.4.1 (2026-04-22)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.1 (2026-04-22)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#040-2026-04-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.4.0 (2026-04-22)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.0 (2026-04-22)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#032-2026-04-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.2 (2026-04-21)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.2 (2026-04-21)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#031-2026-04-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.1 (2026-04-21)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.1 (2026-04-21)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030-2026-04-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.0 (2026-04-21)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.0 (2026-04-21)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.2.1 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.2.1 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.2.0 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.2.0 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#016-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.6 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.6 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#015-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.5 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.5 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#documentation_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#014-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.4 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.4 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#013-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.3 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.3 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#012-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.2 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.2 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#011-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.1 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.1 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" hidden>
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0110-2026-08-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.11.0 (2026-08-21)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.11.0 (2026-08-21)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0100-2026-08-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.10.0 (2026-08-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.10.0 (2026-08-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#091-2026-08-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.9.1 (2026-08-13)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.9.1 (2026-08-13)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#documentation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#090-2026-08-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.9.0 (2026-08-10)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.9.0 (2026-08-10)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#080-2026-08-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.8.0 (2026-08-07)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.8.0 (2026-08-07)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#070-2026-08-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.7.0 (2026-08-05)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.7.0 (2026-08-05)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#061-2026-07-14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.6.1 (2026-07-14)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.6.1 (2026-07-14)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#060-2026-06-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.6.0 (2026-06-27)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.6.0 (2026-06-27)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#051-2026-05-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.1 (2026-05-22)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.5.1 (2026-05-22)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#050-2026-04-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.0 (2026-04-24)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.5.0 (2026-04-24)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#041-2026-04-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.4.1 (2026-04-22)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.1 (2026-04-22)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#040-2026-04-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.4.0 (2026-04-22)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.0 (2026-04-22)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#032-2026-04-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.2 (2026-04-21)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.2 (2026-04-21)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#031-2026-04-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.1 (2026-04-21)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.1 (2026-04-21)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030-2026-04-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.0 (2026-04-21)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.0 (2026-04-21)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.2.1 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.2.1 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.2.0 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.2.0 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#016-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.6 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.6 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#015-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.5 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.5 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#documentation_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#014-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.4 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.4 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#013-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.3 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.3 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#012-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.2 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.2 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#011-2026-04-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.1.1 (2026-04-19)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.1 (2026-04-19)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+
+
+
+  
+    <a href="https://github.com/FreezeManny/labops/edit/main/docs/changelog.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
+<h2 id="0110-2026-08-21"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.10.0...labops-v0.11.0">0.11.0</a> (2026-08-21)<a class="headerlink" href="#0110-2026-08-21" title="Permanent link">&para;</a></h2>
+<h3 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h3>
+<ul>
+<li>added proxy access function (<a href="https://github.com/FreezeManny/labops/issues/81">#81</a>) (<a href="https://github.com/FreezeManny/labops/commit/cd1edc7d62f40d34de034d53c66f0bad22b995a9">cd1edc7</a>)</li>
+<li>exclude target (<a href="https://github.com/FreezeManny/labops/issues/85">#85</a>) (<a href="https://github.com/FreezeManny/labops/commit/44f3b758be2e979e30cca96443b0e20ac3503f40">44f3b75</a>)</li>
+<li>trusted proxies (<a href="https://github.com/FreezeManny/labops/issues/83">#83</a>) (<a href="https://github.com/FreezeManny/labops/commit/3de5099798c173889e698a3617b38cde7a3b9b92">3de5099</a>)</li>
+</ul>
+<h3 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>deleted depreciated test samples (<a href="https://github.com/FreezeManny/labops/issues/77">#77</a>) (<a href="https://github.com/FreezeManny/labops/commit/703612a3b345685ed01f2ce595869d3174d70c18">703612a</a>)</li>
+</ul>
+<h2 id="0100-2026-08-19"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.9.1...labops-v0.10.0">0.10.0</a> (2026-08-19)<a class="headerlink" href="#0100-2026-08-19" title="Permanent link">&para;</a></h2>
+<h3 id="features_1">Features<a class="headerlink" href="#features_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>short web service (<a href="https://github.com/FreezeManny/labops/issues/69">#69</a>) (<a href="https://github.com/FreezeManny/labops/commit/a5263697d1d55ee9af9a8c66026950f3a2888565">a526369</a>)</li>
+</ul>
+<h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
+<ul>
+<li>build pipeline (<a href="https://github.com/FreezeManny/labops/issues/72">#72</a>) (<a href="https://github.com/FreezeManny/labops/commit/c8b9de62738af7f8cbde12636f26cb7c3d5a2991">c8b9de6</a>)</li>
+<li>derive the version from src/<strong>about</strong>.py (<a href="https://github.com/FreezeManny/labops/issues/74">#74</a>) (<a href="https://github.com/FreezeManny/labops/commit/d5b8511ebe605083dceae42563f2241fa4959b39">d5b8511</a>)</li>
+</ul>
+<h2 id="091-2026-08-13"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.9.0...labops-v0.9.1">0.9.1</a> (2026-08-13)<a class="headerlink" href="#091-2026-08-13" title="Permanent link">&para;</a></h2>
+<h3 id="documentation_1">Documentation<a class="headerlink" href="#documentation_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>50 add initial docs (<a href="https://github.com/FreezeManny/labops/issues/52">#52</a>) (<a href="https://github.com/FreezeManny/labops/commit/e47572c8c24ccaf2d0ea1218db7c96c4251f7d00">e47572c</a>)</li>
+</ul>
+<h2 id="090-2026-08-10"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.8.0...labops-v0.9.0">0.9.0</a> (2026-08-10)<a class="headerlink" href="#090-2026-08-10" title="Permanent link">&para;</a></h2>
+<h3 id="features_2">Features<a class="headerlink" href="#features_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>30 pihole support (<a href="https://github.com/FreezeManny/labops/issues/47">#47</a>) (<a href="https://github.com/FreezeManny/labops/commit/ed6e07cb687726d35030d19b7ed4c13067de3e25">ed6e07c</a>)</li>
+<li>wake support (<a href="https://github.com/FreezeManny/labops/issues/49">#49</a>) (<a href="https://github.com/FreezeManny/labops/commit/040fad820e79528a900cc62d272202e7a509b0c7">040fad8</a>)</li>
+</ul>
+<h2 id="080-2026-08-07"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.7.0...labops-v0.8.0">0.8.0</a> (2026-08-07)<a class="headerlink" href="#080-2026-08-07" title="Permanent link">&para;</a></h2>
+<h3 id="features_3">Features<a class="headerlink" href="#features_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>custom update command (<a href="https://github.com/FreezeManny/labops/issues/45">#45</a>) (<a href="https://github.com/FreezeManny/labops/commit/093e6f83640b15e9935a51ec8f8d5d2137b8f757">093e6f8</a>)</li>
+</ul>
+<h2 id="070-2026-08-05"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.6.1...labops-v0.7.0">0.7.0</a> (2026-08-05)<a class="headerlink" href="#070-2026-08-05" title="Permanent link">&para;</a></h2>
+<h3 id="features_4">Features<a class="headerlink" href="#features_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>caddy proxy support (<a href="https://github.com/FreezeManny/labops/issues/38">#38</a>) (<a href="https://github.com/FreezeManny/labops/commit/81036b99d6116376a02cbcf78d1470e6b4f7490a">81036b9</a>)</li>
+</ul>
+<h2 id="061-2026-07-14"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.6.0...labops-v0.6.1">0.6.1</a> (2026-07-14)<a class="headerlink" href="#061-2026-07-14" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_1">Bug Fixes<a class="headerlink" href="#bug-fixes_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fixed auth, and swallowed failure issues (<a href="https://github.com/FreezeManny/labops/commit/f6fd0a7501e6f27d1b0cda1c7baddbab720ab5fd">f6fd0a7</a>)</li>
+</ul>
+<h2 id="060-2026-06-27"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.5.1...labops-v0.6.0">0.6.0</a> (2026-06-27)<a class="headerlink" href="#060-2026-06-27" title="Permanent link">&para;</a></h2>
+<h3 id="features_5">Features<a class="headerlink" href="#features_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>add unmanaged model and model validators (<a href="https://github.com/FreezeManny/labops/commit/aa49240bdeb73871f9dcf29d4f50dd0613b95f6b">aa49240</a>)</li>
+<li>add unmanaged model and model validators (<a href="https://github.com/FreezeManny/labops/commit/a193df4e00c8009fd425199411b1cf17a8876275">a193df4</a>)</li>
+<li>skipp unmanage clients during setup run (<a href="https://github.com/FreezeManny/labops/commit/5148598480e0c620c741fb6ab66223c5ab792d82">5148598</a>)</li>
+</ul>
+<h3 id="bug-fixes_2">Bug Fixes<a class="headerlink" href="#bug-fixes_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added unmanaged tag (<a href="https://github.com/FreezeManny/labops/commit/6ba9a45947f45761c554b3e3be29f5dcbec764bd">6ba9a45</a>)</li>
+<li>added UNMANAGED_OS Export (<a href="https://github.com/FreezeManny/labops/commit/b3f86e8eab50cf2e6b8ed93b99dbcd658b001238">b3f86e8</a>)</li>
+</ul>
+<h2 id="051-2026-05-22"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.5.0...labops-v0.5.1">0.5.1</a> (2026-05-22)<a class="headerlink" href="#051-2026-05-22" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_3">Bug Fixes<a class="headerlink" href="#bug-fixes_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Typing issue (<a href="https://github.com/FreezeManny/labops/commit/136a43f3674024d5208f817a3aa8631344cdfac7">136a43f</a>)</li>
+</ul>
+<h2 id="050-2026-04-24"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.4.1...labops-v0.5.0">0.5.0</a> (2026-04-24)<a class="headerlink" href="#050-2026-04-24" title="Permanent link">&para;</a></h2>
+<h3 id="features_6">Features<a class="headerlink" href="#features_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>add docker-ansible (<a href="https://github.com/FreezeManny/labops/commit/4af415716f14fab0799cadf320b9e24ea6fb9a9b">4af4157</a>)</li>
+<li>added docker cli, stack finder, list function and prepared for further functions (<a href="https://github.com/FreezeManny/labops/commit/89b7638108b953bfbb2f6841410c23ec77c6e713">89b7638</a>)</li>
+<li>added docker stack duplicate name validator (<a href="https://github.com/FreezeManny/labops/commit/72ca51bb303aa0dfdafabe5ce74f90b430adbd37">72ca51b</a>)</li>
+<li>added hostname, proxyname and ip checking (<a href="https://github.com/FreezeManny/labops/commit/829ae15fffa69de5a3777977379f1e481a7e3c03">829ae15</a>)</li>
+<li>Added Unmanaged modle (<a href="https://github.com/FreezeManny/labops/commit/6c4717a576c79d0391a9ae7e8044c41cf51c9e75">6c4717a</a>)</li>
+<li>enhance docker usability (<a href="https://github.com/FreezeManny/labops/commit/71c438339404393e3a59fc8130e7fe7667f18a2b">71c4383</a>)</li>
+<li>implement Docker support for stack sync update and deploy (<a href="https://github.com/FreezeManny/labops/commit/7112c170b6f68d3fc40ceed5d1aab223e2d908bb">7112c17</a>)</li>
+<li>refactor to use state.model instead of get_model in CLI modules (<a href="https://github.com/FreezeManny/labops/commit/26111ede3a1e0b8ed5e2cd174a3586fa4aa45e16">26111ed</a>)</li>
+</ul>
+<h3 id="bug-fixes_4">Bug Fixes<a class="headerlink" href="#bug-fixes_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>docker source path (<a href="https://github.com/FreezeManny/labops/commit/0faf604998986d0529be9c33239b93c630b23cd5">0faf604</a>)</li>
+<li>setup host with ssh/password mixed (<a href="https://github.com/FreezeManny/labops/commit/1a720febe5e96848d234de988e071e670e219074">1a720fe</a>)</li>
+<li>Updated Stack_name Option (<a href="https://github.com/FreezeManny/labops/commit/2450a07bc677b2ddb6a092b4248d170b757c8169">2450a07</a>)</li>
+<li>yaml_root requireing unmanaged (<a href="https://github.com/FreezeManny/labops/commit/dcb3b9511c8711c48e33968a1f2071e447ba10a5">dcb3b95</a>)</li>
+</ul>
+<h2 id="041-2026-04-22"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.4.0...labops-v0.4.1">0.4.1</a> (2026-04-22)<a class="headerlink" href="#041-2026-04-22" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_5">Bug Fixes<a class="headerlink" href="#bug-fixes_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>do not allow user to have custom fields in yaml (<a href="https://github.com/FreezeManny/labops/commit/ef6c94a899bff646fadab087b21aa1cd63327c8a">ef6c94a</a>)</li>
+</ul>
+<h2 id="040-2026-04-22"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.3.2...labops-v0.4.0">0.4.0</a> (2026-04-22)<a class="headerlink" href="#040-2026-04-22" title="Permanent link">&para;</a></h2>
+<h3 id="features_7">Features<a class="headerlink" href="#features_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>add devcontainer commands and initialize docker attribute in Host model (<a href="https://github.com/FreezeManny/labops/commit/0838b099ecae1f0c51ac21b469234c561fae02a2">0838b09</a>)</li>
+<li>add validation for duplicate web service ports in host, lxc, and vm models (<a href="https://github.com/FreezeManny/labops/commit/683dd7537fb2028064316f19137b243bdf4c202a">683dd75</a>)</li>
+<li>added duplicate VMID Validation for proxmox host and lxc (<a href="https://github.com/FreezeManny/labops/commit/cb6d35ad07cafd7843c56c42cde98380600e0e41">cb6d35a</a>)</li>
+<li>added proxy name duplication check (<a href="https://github.com/FreezeManny/labops/commit/c68baf6d4bbc90ab4d217784fb324c16d3acb33e">c68baf6</a>)</li>
+<li>changed docker and webservice structure (<a href="https://github.com/FreezeManny/labops/commit/10a6da94e1d6ddf0a6ba432243ee17412ed4af76">10a6da9</a>)</li>
+<li>Changed LXC Structure (<a href="https://github.com/FreezeManny/labops/commit/95b9615dc99e9747ccff7b2be2c2b8c0833c74c9">95b9615</a>)</li>
+<li>enhance YAML validation by adding unique IP address check (<a href="https://github.com/FreezeManny/labops/commit/f9ecfdf390b501832ec73bed8c2e761c2ce21662">f9ecfdf</a>)</li>
+<li>Improve error handling for duplicate ports, VM IDs, and IP addresses in validators (<a href="https://github.com/FreezeManny/labops/commit/5fb8aa427e57aeb56afc1bc754a5e41fd43679ba">5fb8aa4</a>)</li>
+<li>Pretty output for one error (<a href="https://github.com/FreezeManny/labops/commit/6a570f02d58ce9f0d0736968e8b0f1b3ce1e3166">6a570f0</a>)</li>
+</ul>
+<h3 id="bug-fixes_6">Bug Fixes<a class="headerlink" href="#bug-fixes_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fixed validate (<a href="https://github.com/FreezeManny/labops/commit/e8d229fa831bf3611f4680ce8205658b68adbf27">e8d229f</a>)</li>
+</ul>
+<h2 id="032-2026-04-21"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.3.1...labops-v0.3.2">0.3.2</a> (2026-04-21)<a class="headerlink" href="#032-2026-04-21" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_7">Bug Fixes<a class="headerlink" href="#bug-fixes_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added LXC to Readme (<a href="https://github.com/FreezeManny/labops/commit/abb1910e8d427d93125ee81c062debe906f60d43">abb1910</a>)</li>
+</ul>
+<h2 id="031-2026-04-21"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.3.0...labops-v0.3.1">0.3.1</a> (2026-04-21)<a class="headerlink" href="#031-2026-04-21" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_8">Bug Fixes<a class="headerlink" href="#bug-fixes_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>ansible directory not in built package (<a href="https://github.com/FreezeManny/labops/commit/33bc32740934daed8827c9d1c30a7a1d7e38b4bc">33bc327</a>)</li>
+</ul>
+<h2 id="030-2026-04-21"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.2.1...labops-v0.3.0">0.3.0</a> (2026-04-21)<a class="headerlink" href="#030-2026-04-21" title="Permanent link">&para;</a></h2>
+<h3 id="features_8">Features<a class="headerlink" href="#features_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added better yaml validation (<a href="https://github.com/FreezeManny/labops/commit/5eb983b7cf76468b2b43447eceaeb5a482c222b5">5eb983b</a>)</li>
+<li>Added LXC-Updater via Remote pct host connection (<a href="https://github.com/FreezeManny/labops/commit/a7fbf83885f2deb1162ed1f1a9dac6e8059d3142">a7fbf83</a>)</li>
+</ul>
+<h3 id="bug-fixes_9">Bug Fixes<a class="headerlink" href="#bug-fixes_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li>host source setup (<a href="https://github.com/FreezeManny/labops/commit/d45f5f2f572b1244c5f0ac2d7c131747066ee8c5">d45f5f2</a>)</li>
+<li>Removed unused ty_extension Import (<a href="https://github.com/FreezeManny/labops/commit/425c044188d3e9597f594059c00637e117a682bc">425c044</a>)</li>
+<li>typing (<a href="https://github.com/FreezeManny/labops/commit/9d35418088ce61e605d3cface5dc1543d3223d39">9d35418</a>)</li>
+</ul>
+<h2 id="021-2026-04-19"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.2.0...labops-v0.2.1">0.2.1</a> (2026-04-19)<a class="headerlink" href="#021-2026-04-19" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_10">Bug Fixes<a class="headerlink" href="#bug-fixes_10" title="Permanent link">&para;</a></h3>
+<ul>
+<li>removed not needed import (<a href="https://github.com/FreezeManny/labops/commit/9d25a0975c4aad51e1c58752c6153e1a30e6bf6a">9d25a09</a>)</li>
+<li>removed not needed import (<a href="https://github.com/FreezeManny/labops/commit/198ecb8154c1d723adc3abfb663448199403b3a0">198ecb8</a>)</li>
+</ul>
+<h2 id="020-2026-04-19"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.1.6...labops-v0.2.0">0.2.0</a> (2026-04-19)<a class="headerlink" href="#020-2026-04-19" title="Permanent link">&para;</a></h2>
+<h3 id="features_9">Features<a class="headerlink" href="#features_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li>added vm setup (same as host) (<a href="https://github.com/FreezeManny/labops/commit/f58a908d3bd50437fcc1395276742ba67c21fa40">f58a908</a>)</li>
+<li>CLI Refactor to have single, shared model loader (<a href="https://github.com/FreezeManny/labops/commit/5890d001ffe1514fd63fe17bfef86d8932d92fa2">5890d00</a>)</li>
+</ul>
+<h3 id="bug-fixes_11">Bug Fixes<a class="headerlink" href="#bug-fixes_11" title="Permanent link">&para;</a></h3>
+<ul>
+<li>modified VM Table (<a href="https://github.com/FreezeManny/labops/commit/414749d62d8831b64dd60b6fdd2029eac5aa23da">414749d</a>)</li>
+</ul>
+<h2 id="016-2026-04-19"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.1.5...labops-v0.1.6">0.1.6</a> (2026-04-19)<a class="headerlink" href="#016-2026-04-19" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_12">Bug Fixes<a class="headerlink" href="#bug-fixes_12" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Renamed CLI from lops to labops (<a href="https://github.com/FreezeManny/labops/commit/128d98c35350b5a2e3dffe5dda5acbf69e7caf6e">128d98c</a>)</li>
+</ul>
+<h2 id="015-2026-04-19"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.1.4...labops-v0.1.5">0.1.5</a> (2026-04-19)<a class="headerlink" href="#015-2026-04-19" title="Permanent link">&para;</a></h2>
+<h3 id="documentation_2">Documentation<a class="headerlink" href="#documentation_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>added readme (<a href="https://github.com/FreezeManny/labops/commit/0de35013d0ca357201a8f93e3416d9cb772d412b">0de3501</a>)</li>
+</ul>
+<h2 id="014-2026-04-19"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.1.3...labops-v0.1.4">0.1.4</a> (2026-04-19)<a class="headerlink" href="#014-2026-04-19" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_13">Bug Fixes<a class="headerlink" href="#bug-fixes_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li>updated cli-text (<a href="https://github.com/FreezeManny/labops/commit/5dfeefcdf0b3e31bafde56408a090798a423db48">5dfeefc</a>)</li>
+</ul>
+<h2 id="013-2026-04-19"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.1.2...labops-v0.1.3">0.1.3</a> (2026-04-19)<a class="headerlink" href="#013-2026-04-19" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_14">Bug Fixes<a class="headerlink" href="#bug-fixes_14" title="Permanent link">&para;</a></h3>
+<ul>
+<li>added more typing (<a href="https://github.com/FreezeManny/labops/commit/560d5e96fcb98d0fc4d7ef6b40e7a99a46478efc">560d5e9</a>)</li>
+</ul>
+<h2 id="012-2026-04-19"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.1.1...labops-v0.1.2">0.1.2</a> (2026-04-19)<a class="headerlink" href="#012-2026-04-19" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_15">Bug Fixes<a class="headerlink" href="#bug-fixes_15" title="Permanent link">&para;</a></h3>
+<ul>
+<li>update uv.lock (<a href="https://github.com/FreezeManny/labops/commit/5140fab45bee0f1dfafcf39ec2b05a49c099efc3">5140fab</a>)</li>
+</ul>
+<h2 id="011-2026-04-19"><a href="https://github.com/FreezeManny/labops/compare/labops-v0.1.0...labops-v0.1.1">0.1.1</a> (2026-04-19)<a class="headerlink" href="#011-2026-04-19" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_16">Bug Fixes<a class="headerlink" href="#bug-fixes_16" title="Permanent link">&para;</a></h3>
+<ul>
+<li>changed name (<a href="https://github.com/FreezeManny/labops/commit/8e252eefdcfd9613dd88f0491f7eb3582aff0a0e">8e252ee</a>)</li>
+<li>changed name (<a href="https://github.com/FreezeManny/labops/commit/58a8bfcc7f7d2e556dd1335543fc8893aae3589a">58a8bfc</a>)</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+  
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+        
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../development/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Development">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Development
+              </div>
+            </div>
+          </a>
+        
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/FreezeManny/labops" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/labops/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.footer", "content.code.copy", "content.action.edit", "search.suggest", "search.highlight", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
