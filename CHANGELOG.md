@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.11.0](https://github.com/FreezeManny/labops/compare/labops-v0.10.0...labops-v0.11.0) (2026-08-21)
+
+
+### Features
+
+* added proxy access function ([#81](https://github.com/FreezeManny/labops/issues/81)) ([cd1edc7](https://github.com/FreezeManny/labops/commit/cd1edc7d62f40d34de034d53c66f0bad22b995a9))
+* exclude target ([#85](https://github.com/FreezeManny/labops/issues/85)) ([44f3b75](https://github.com/FreezeManny/labops/commit/44f3b758be2e979e30cca96443b0e20ac3503f40))
+* trusted proxies ([#83](https://github.com/FreezeManny/labops/issues/83)) ([3de5099](https://github.com/FreezeManny/labops/commit/3de5099798c173889e698a3617b38cde7a3b9b92))
+
+
+### Documentation
+
+* deleted depreciated test samples ([#77](https://github.com/FreezeManny/labops/issues/77)) ([703612a](https://github.com/FreezeManny/labops/commit/703612a3b345685ed01f2ce595869d3174d70c18))
+
 ## [0.10.0](https://github.com/FreezeManny/labops/compare/labops-v0.9.1...labops-v0.10.0) (2026-08-19)
 
 
