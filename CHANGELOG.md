@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.1](https://github.com/FreezeManny/labops/compare/labops-v0.11.0...labops-v0.11.1) (2026-09-13)
+
+
+### Bug Fixes
+
+* **deps:** bump ansible-core from 2.21.3 to 2.21.4 ([#104](https://github.com/FreezeManny/labops/issues/104)) ([b4b763e](https://github.com/FreezeManny/labops/commit/b4b763ef58a156b0dddd8264f39ed695d3b4c196))
+* **deps:** bump pydantic from 2.13.4 to 2.13.5 ([#101](https://github.com/FreezeManny/labops/issues/101)) ([b18f08d](https://github.com/FreezeManny/labops/commit/b18f08d09cafec2137a5e87d7003857be341228e))
+* **deps:** bump typer from 0.27.1 to 0.27.2 ([#100](https://github.com/FreezeManny/labops/issues/100)) ([55ff763](https://github.com/FreezeManny/labops/commit/55ff7634f35dc4a8f066855e36b31e78ed9e424f))
+
 ## [0.11.0](https://github.com/FreezeManny/labops/compare/labops-v0.10.0...labops-v0.11.0) (2026-08-21)
 
 
