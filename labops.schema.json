@@ -1,0 +1,1095 @@
+{
+  "$defs": {
+    "AccessList": {
+      "additionalProperties": false,
+      "description": "A named set of CIDRs, referenced by a web service's `access`.\n\nLists are named rather than written inline so that \"who may reach this\" is\ndeclared once and reused \u2014 change the VPN range in one place and every\nservice that names it follows.",
+      "properties": {
+        "accept": {
+          "description": "CIDRs allowed to reach services using this list. At least one is required. An IPv4-only list denies IPv6 clients, so a list meant to be public needs `::/0` alongside `0.0.0.0/0`.",
+          "items": {
+            "format": "ipvanynetwork",
+            "type": "string"
+          },
+          "title": "Accept",
+          "type": "array"
+        },
+        "deny": {
+          "anyOf": [
+            {
+              "items": {
+                "format": "ipvanynetwork",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CIDRs blocked even when `accept` would allow them \u2014 deny wins. Use it to carve a single host out of an allowed subnet.",
+          "title": "Deny"
+        }
+      },
+      "required": [
+        "accept"
+      ],
+      "title": "AccessList",
+      "type": "object"
+    },
+    "Creds": {
+      "additionalProperties": false,
+      "description": "SSH credentials, either as `settings.default_creds` or per node.\n\nExactly one auth method must be set \u2014 a password or a key, never both and\nnever neither. An ambiguous pair is a validation error rather than a silent\npreference, because which one labops picked would only become visible when a\nconnection failed.",
+      "properties": {
+        "username": {
+          "description": "The SSH user labops connects as.",
+          "title": "Username",
+          "type": "string"
+        },
+        "password": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Password authentication. Mutually exclusive with `ssh_key_path`. Note that some operations only work with a key, so labops warns when this is the only method available.",
+          "title": "Password"
+        },
+        "ssh_key_path": {
+          "anyOf": [
+            {
+              "format": "file-path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to a private key. `~` is expanded. Mutually exclusive with `password`. The file must exist, so a typo fails at `labops validate` rather than at connection time.",
+          "title": "Ssh Key Path"
+        }
+      },
+      "required": [
+        "username"
+      ],
+      "title": "Creds",
+      "type": "object"
+    },
+    "Dns": {
+      "additionalProperties": false,
+      "description": "Local DNS records, and the server they are published to.\n\nRecords are derived from the config tree \u2014 every host/VM/LXC becomes\n``<name>.<suffix> -> ip`` \u2014 so there is no record list here. A device that\nneeds a record is a node like any other (``os: unmanaged`` and an ``ip`` is\nthe whole of it); ``dns_name`` renames it and ``dns: false`` excludes it. See\nsrc/dns/find.py.\n\nOnly ``suffix`` is required. Without a server block records are still derived,\nso ``dns list`` works; ``diff``, ``sync`` and ``upgrade`` fail with a message\nnaming what is missing.\n\nOne server at a time: a second block here would be two sources of truth for the\nsame records, and nothing decides which one wins.",
+      "properties": {
+        "suffix": {
+          "description": "Appended to each node's name to form its hostname. A leading dot is optional \u2014 `.lab` and `lab` both yield `cprox.lab`.",
+          "title": "Suffix",
+          "type": "string"
+        },
+        "pihole": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Pihole"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Where Pi-hole is and how to reach it. Optional \u2014 omit it and records are still derived, so `dns list` works, while `diff`, `sync` and `upgrade` fail naming this block."
+        }
+      },
+      "required": [
+        "suffix"
+      ],
+      "title": "Dns",
+      "type": "object"
+    },
+    "Docker": {
+      "additionalProperties": false,
+      "description": "The Docker Compose stacks running on a node.",
+      "properties": {
+        "root_path": {
+          "description": "The directory on the node that stacks are copied into; each stack lands in a subdirectory named after it. Must be absolute \u2014 it is a path on the node, not on the machine running labops.",
+          "title": "Root Path",
+          "type": "string"
+        },
+        "stacks": {
+          "additionalProperties": {
+            "$ref": "#/$defs/StackEntry"
+          },
+          "description": "Stacks on this node, keyed by name. Names need not be unique across the whole config \u2014 a name matching several nodes makes the docker commands ask for `--node` rather than guess.",
+          "title": "Stacks",
+          "type": "object"
+        }
+      },
+      "required": [
+        "root_path",
+        "stacks"
+      ],
+      "title": "Docker",
+      "type": "object"
+    },
+    "DockerDeploy": {
+      "additionalProperties": false,
+      "description": "Docker-mode settings. Its mere presence on a ProxyDeploy selects docker\nmode; omit the whole block for a host-mode (bare `caddy`) target.",
+      "properties": {
+        "container": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The container to `docker exec` into for the reload. Required in docker mode unless `reload_command` replaces the reload outright.",
+          "title": "Container"
+        },
+        "container_caddyfile_path": {
+          "default": "/etc/caddy/Caddyfile",
+          "description": "Where the Caddyfile is mounted inside the container \u2014 the mount target that `caddyfile_dest` on the host maps to.",
+          "title": "Container Caddyfile Path",
+          "type": "string"
+        }
+      },
+      "title": "DockerDeploy",
+      "type": "object"
+    },
+    "Host": {
+      "additionalProperties": false,
+      "description": "A top-level node under `hosts:` \u2014 anything labops reaches directly.\n\nA bare-metal box, an appliance you only want tracked, or a Proxmox node whose\nguests hang off it as `vm:` and `lxc:`. The key you write in `hosts:` is the\nnode's name, and it becomes a DNS label when `settings.dns` is configured, so\nit must be a legal one (no underscores) unless `dns_name` overrides it.",
+      "properties": {
+        "name": {
+          "default": "",
+          "description": "Overrides the key this node is written under. Leave it unset \u2014 the usual case \u2014 and the key is the name. Set it when the key is not the name you want to target and publish, e.g. a key that is not a legal DNS label. Must be unique across the config either way.",
+          "title": "Name",
+          "type": "string"
+        },
+        "hypervisor": {
+          "default": "none",
+          "description": "`proxmox` unlocks the `vm:` and `lxc:` blocks and makes this node the parent that guest commands run through. `none`, the default, is a node that hosts no guests labops manages.",
+          "enum": [
+            "none",
+            "proxmox"
+          ],
+          "title": "Hypervisor",
+          "type": "string"
+        },
+        "os": {
+          "description": "Picks the package manager used to update this node: `debian` (apt), `alpine` (apk) or `redhat` (dnf). Use `unmanaged` for anything labops should not provision or patch \u2014 an appliance, an unsupported distro, or a box you do not own. Unmanaged nodes are still listed, resolved and proxied.",
+          "enum": [
+            "debian",
+            "alpine",
+            "redhat",
+            "unmanaged"
+          ],
+          "title": "Os",
+          "type": "string"
+        },
+        "ip": {
+          "description": "The address labops connects to, and the address published for this node's DNS records and proxy routes.",
+          "format": "ipv4",
+          "title": "Ip",
+          "type": "string"
+        },
+        "creds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Creds"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Credentials for this node only. Omit to use `settings.default_creds`."
+        },
+        "tags": {
+          "default": [],
+          "description": "Free-form labels, matched by `labops update --tag`. Tags are local to the node that carries them \u2014 a guest does not inherit its parent's tags, so use `--under` to sweep a whole subtree.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "lxc": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/LXC"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proxmox containers on this node, keyed by name. Requires `hypervisor: proxmox`.",
+          "title": "Lxc"
+        },
+        "vm": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/VM"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Proxmox virtual machines on this node, keyed by name. Requires `hypervisor: proxmox`.",
+          "title": "Vm"
+        },
+        "docker": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Docker"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Docker Compose stacks running on this node."
+        },
+        "web_services": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WebServices"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "HTTP services this node exposes. Each entry with a `proxy_name` becomes a route in the generated Caddyfile."
+        },
+        "dns": {
+          "default": true,
+          "description": "Set `false` to keep this node out of DNS entirely \u2014 tracked in the config, never published to Pi-hole.",
+          "title": "Dns",
+          "type": "boolean"
+        },
+        "dns_name": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Publish this node under a different label than its key, or under several: a list yields one record per name, all pointing at the same address. A node with `dns_name` is exempt from the rule that its key must be a legal DNS label.",
+          "title": "Dns Name"
+        },
+        "mac": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The NIC that listens for a Wake-on-LAN magic packet, needed by `labops wake`. Colon, dash and dotted notation are all accepted. A magic packet goes to the broadcast address, which routers do not forward, so run labops on the same segment or relay it with `wake --via`.",
+          "title": "Mac"
+        }
+      },
+      "required": [
+        "os",
+        "ip"
+      ],
+      "title": "Host",
+      "type": "object"
+    },
+    "LXC": {
+      "additionalProperties": false,
+      "description": "A Proxmox container, written under a `proxmox` node's `lxc:` block.\n\nContainers are never reached over SSH: labops runs commands on the Proxmox\nparent and enters the container with `pct exec`. So an LXC needs no sshd and\nno route from the machine running labops \u2014 only a `vmid` and a reachable\nparent. That is also why `creds` here is rarely needed.",
+      "properties": {
+        "name": {
+          "default": "",
+          "description": "Overrides the key this container is written under. Leave it unset \u2014 the usual case \u2014 and the key is the name. Set it when the key is not the name you want to target and publish, e.g. a key that is not a legal DNS label. Must be unique across the config either way.",
+          "title": "Name",
+          "type": "string"
+        },
+        "ip": {
+          "description": "The container's address, published for its DNS records and proxy routes. Not used to connect \u2014 that goes through the Proxmox parent.",
+          "format": "ipv4",
+          "title": "Ip",
+          "type": "string"
+        },
+        "os": {
+          "description": "Picks the package manager used to update this container: `debian` (apt), `alpine` (apk) or `redhat` (dnf). Use `unmanaged` to keep it listed and routable but never patched.",
+          "enum": [
+            "debian",
+            "alpine",
+            "redhat",
+            "unmanaged"
+          ],
+          "title": "Os",
+          "type": "string"
+        },
+        "vmid": {
+          "description": "The Proxmox container ID. This is how labops addresses it \u2014 `pct exec <vmid>` on the parent \u2014 so it must match Proxmox, and it must be unique across the guests of one host.",
+          "title": "Vmid",
+          "type": "integer"
+        },
+        "creds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Creds"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Credentials for this container only. Rarely needed: labops reaches it through the Proxmox parent, whose credentials are what matter."
+        },
+        "tags": {
+          "default": [],
+          "description": "Free-form labels, matched by `labops update --tag`. Not inherited from the parent host \u2014 a container is only `prod` if it says so.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "web_services": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WebServices"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "HTTP services this container exposes. Each entry with a `proxy_name` becomes a route in the generated Caddyfile."
+        },
+        "docker": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Docker"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Docker Compose stacks running in this container."
+        },
+        "dns": {
+          "default": true,
+          "description": "Set `false` to keep this container out of DNS entirely.",
+          "title": "Dns",
+          "type": "boolean"
+        },
+        "dns_name": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Publish this container under a different label than its key, or under several. Also exempts the key from having to be a legal DNS label.",
+          "title": "Dns Name"
+        },
+        "mac": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rarely useful here: a stopped container has nothing listening for a magic packet, so `labops wake` starts it with `pct start` on the parent instead. Set this only if the container really does own a NIC that wakes, and ask for it with `wake --packet`.",
+          "title": "Mac"
+        }
+      },
+      "required": [
+        "ip",
+        "os",
+        "vmid"
+      ],
+      "title": "LXC",
+      "type": "object"
+    },
+    "Pihole": {
+      "additionalProperties": false,
+      "description": "The Pi-hole instance labops publishes records to, and how to reach it.\n\nWhere Pi-hole is stays a single answer rather than an address plus a machine:\n``sync`` needs an address and ``upgrade`` needs the thing behind it, and two\nindependent fields could disagree about which Pi-hole is meant.\n\nWhat is split out is whether Pi-hole is *installed on* a machine or *running in\na container on* one, because that is the one thing the address cannot tell you.\nBoth resolve to an address the same way \u2014 a container's records go to its host\n\u2014 but only an installation can be upgraded by running a command, so the two\ncases are separate keys rather than one string labops has to interpret.\n\nOnly one instance is supported. The secret store holds a single\n``PIHOLE_PASSWORD``, so a list would quietly assume they all share it. With a\nreplicating setup (nebula-sync), point labops at the primary and let it\npropagate to the rest.",
+      "properties": {
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The machine Pi-hole is installed on \u2014 a host, VM or LXC in this config, by name or IP. It must be a node here: declare a Pi-hole labops does not otherwise manage with `os: unmanaged`, which publishes records but refuses `dns upgrade`. An LXC needs no sshd; it is reached with `pct` through its Proxmox parent. Use `docker_stack` instead for a containerised Pi-hole.",
+          "title": "Target"
+        },
+        "docker_stack": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The docker stack running Pi-hole, when it is containerised. Records go to the address of the node hosting the stack, so you do not repeat it here. `dns upgrade` refuses, because a container is upgraded by pulling a new image \u2014 `labops docker stack --stack <name> update`.",
+          "title": "Docker Stack"
+        },
+        "port": {
+          "default": 443,
+          "description": "The port Pi-hole's admin interface and API listen on. Follows the scheme unless you set it \u2014 443 for https, 80 for http \u2014 so neither has to be repeated after changing the other.",
+          "title": "Port",
+          "type": "integer"
+        },
+        "scheme": {
+          "default": "https",
+          "description": "How to reach the API. Defaults to `https` because the API password is sent in the request body, and `http` puts it on the network in clear text. Pi-hole v6 serves both out of the box. Certificate verification is skipped either way \u2014 Pi-hole's own certificate is self-signed \u2014 so `https` protects against eavesdropping rather than against a machine-in-the-middle.",
+          "enum": [
+            "http",
+            "https"
+          ],
+          "title": "Scheme",
+          "type": "string"
+        },
+        "password": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The API password, inline. Prefer leaving this unset and putting `PIHOLE_PASSWORD` in the secret store (see `settings.env_file`) \u2014 either the web-interface password or an app password from Settings \u2192 Web interface / API. Setting it here puts the secret in clear text in your config, and `dns sync` warns.",
+          "title": "Password"
+        }
+      },
+      "title": "Pihole",
+      "type": "object"
+    },
+    "Proxy": {
+      "additionalProperties": false,
+      "description": "The Caddy reverse proxy, rendered from the config.\n\nThere is no route list here: every `web_services` entry in the tree that\ncarries a `proxy_name` becomes a route, so a service is published next to\nthe node that runs it. labops owns the Caddyfile only \u2014 the image, the\ncaddy-dns plugin and the environment holding the ACME token are yours.",
+      "properties": {
+        "proxy_suffix": {
+          "description": "The domain every route hangs off: a service named `nas` becomes `nas<proxy_suffix>`. Caddy serves it as one wildcard site.",
+          "title": "Proxy Suffix",
+          "type": "string"
+        },
+        "tls": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProxyTls"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Wildcard TLS for the suffix. Omit to serve plain HTTP \u2014 appropriate for an internal suffix with no certificate."
+        },
+        "deploy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProxyDeploy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Where Caddy runs. Omit for render-only use; `proxy sync`, `deploy` and `reload` need it."
+        },
+        "template": {
+          "anyOf": [
+            {
+              "format": "file-path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Render the Caddyfile from your own Jinja template instead of the built-in one. Relative to the config file, or absolute; the file must exist, so a typo fails at `labops validate` rather than part-way through a deploy. A template can replace the built-in one outright, or extend it and override only the blocks it cares about. ",
+          "title": "Template"
+        },
+        "trusted_proxies": {
+          "anyOf": [
+            {
+              "items": {
+                "format": "ipvanynetwork",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CIDRs of reverse proxies (e.g. a CDN) directly in front of Caddy. When set, access-list matchers use Caddy's `client_ip` (which reads `X-Forwarded-For`) instead of `remote_ip` (the connecting socket). List only the proxy in front of Caddy \u2014 never `0.0.0.0/0`. Trusting an address that is not a proxy under your control lets anyone at that address forge their apparent IP and bypass every access list.",
+          "title": "Trusted Proxies"
+        },
+        "default_access": {
+          "description": "The access list used by services with no explicit `access`. Must name a key of `access_lists`: a service that names no list still has to resolve to one, so there is no unrestricted fallback.",
+          "title": "Default Access",
+          "type": "string"
+        },
+        "access_lists": {
+          "additionalProperties": {
+            "$ref": "#/$defs/AccessList"
+          },
+          "description": "Named CIDR sets that web services reference by name. `default_access` picks the one used by a service with no explicit `access`.",
+          "title": "Access Lists",
+          "type": "object"
+        }
+      },
+      "required": [
+        "proxy_suffix",
+        "default_access",
+        "access_lists"
+      ],
+      "title": "Proxy",
+      "type": "object"
+    },
+    "ProxyDeploy": {
+      "additionalProperties": false,
+      "description": "Where Caddy runs, so the rendered Caddyfile can be delivered and reloaded.\n\nOmit the whole block for render-only use: `proxy render` still works, and\n`sync` / `deploy` / `reload` say what is missing instead of guessing a target.",
+      "properties": {
+        "target": {
+          "description": "The node running Caddy \u2014 a host, VM or LXC in this config, by name or IP. Hosts and VMs are reached over SSH; an LXC is reached through its Proxmox parent with `pct`, so it needs no sshd.",
+          "title": "Target",
+          "type": "string"
+        },
+        "caddyfile_dest": {
+          "description": "Absolute path the Caddyfile is written to on the target. In docker mode this is the host path that is bind-mounted into the container. Must be absolute: it is resolved on the target, where a relative path would land in the remote login directory.",
+          "title": "Caddyfile Dest",
+          "type": "string"
+        },
+        "docker": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DockerDeploy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Present for docker mode, absent for host mode (a bare `caddy` on the target). The presence of this block is the mode switch."
+        },
+        "reload_command": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Replaces the whole reload command, run verbatim over SSH. Overrides the mode default; when set, `docker.container` is not required.",
+          "title": "Reload Command"
+        }
+      },
+      "required": [
+        "target",
+        "caddyfile_dest"
+      ],
+      "title": "ProxyDeploy",
+      "type": "object"
+    },
+    "ProxyTls": {
+      "additionalProperties": false,
+      "description": "Wildcard TLS for the proxy suffix, via the provider's ACME DNS-01\nchallenge.\n\nOmit the whole `tls:` block to serve the wildcard over plain HTTP \u2014 sensible\nfor an internal suffix with no certificate.",
+      "properties": {
+        "provider": {
+          "default": "cloudflare",
+          "description": "One provider at a time; `none` is the off switch. The name fixes both the credential env var and the caddy-dns plugin the Caddy image must be built with \u2014 labops renders the Caddyfile, not the image, so it cannot check that the plugin is present.",
+          "enum": [
+            "none",
+            "cloudflare"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "token": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The API token, inline and rendered literally into the Caddyfile \u2014 discouraged. By default labops renders a reference like `{env.CF_API_TOKEN}` that Caddy resolves from its own environment at runtime, so the secret never lands in the config or the rendered file. labops reads the same key from the secret store only to warn when it is missing.",
+          "title": "Token"
+        }
+      },
+      "title": "ProxyTls",
+      "type": "object"
+    },
+    "Selector": {
+      "additionalProperties": false,
+      "description": "Which nodes a command acts on. Every field empty means \"no constraint\".\n\nAND across fields, OR within a field::\n\n    kind: [lxc], os: [debian]  ->  debian containers\n    tags: [prod, edge]         ->  tagged prod OR edge\n\nA Pydantic model rather than a parsed string because it has two front doors\nthat must agree: the ``labops update`` CLI options, and the reusable named sets\nunder ``settings.targets``. One model means one matcher, one set of error\nmessages, and no grammar to keep in sync.",
+      "properties": {
+        "kind": {
+          "default": [],
+          "description": "Node classes to include: `host`, `vm`, `lxc` \u2014 the node's place in the tree. A single value may be written unquoted instead of as a list.",
+          "items": {
+            "enum": [
+              "host",
+              "vm",
+              "lxc"
+            ],
+            "type": "string"
+          },
+          "title": "Kind",
+          "type": "array"
+        },
+        "os": {
+          "default": [],
+          "description": "Operating systems to include: `debian`, `alpine`, `redhat`, `unmanaged`.",
+          "items": {
+            "enum": [
+              "debian",
+              "alpine",
+              "redhat",
+              "unmanaged"
+            ],
+            "type": "string"
+          },
+          "title": "Os",
+          "type": "array"
+        },
+        "tags": {
+          "default": [],
+          "description": "Match nodes carrying any of these tags. Tags are local to the node that declares them and are not inherited, so use `under` to sweep a subtree.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "under": {
+          "default": [],
+          "description": "Node names. Matches each named node and everything below it, so this is how you select a whole Proxmox host with its guests. An unknown name is an error rather than an empty selection, which would look like a successful no-op.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Under",
+          "type": "array"
+        },
+        "exclude": {
+          "default": [],
+          "description": "Node names to exclude. Each named node and everything below it is removed after the positive filters have run. An unknown name is an error, same as `under`.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude",
+          "type": "array"
+        }
+      },
+      "title": "Selector",
+      "type": "object"
+    },
+    "Settings": {
+      "additionalProperties": false,
+      "description": "Everything that is not a node: credentials, the secret store, and the\noptional DNS, proxy and target-set subsystems.\n\nNothing here is required. Leaving `dns` or `proxy` out does not disable a\nfeature you were using \u2014 it means the corresponding commands have nothing to\nact on and say so, rather than guessing.",
+      "properties": {
+        "default_creds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Creds"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Credentials used for every node that does not carry its own `creds`. Required only when some node labops manages (`os` other than `unmanaged`) has no `creds` of its own \u2014 a render-only or DNS-only config never connects to anything and so needs none. `YamlRoot` enforces that, because it is the only place that can see both."
+        },
+        "env_file": {
+          "anyOf": [
+            {
+              "format": "file-path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The secret store labops reads API tokens from. Defaults to a `.env` next to the config file; set this to point elsewhere, relative to the config file or absolute. labops only ever reads it, and it is git-ignored.",
+          "title": "Env File"
+        },
+        "dns": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Dns"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Local DNS, published to Pi-hole v6. Omit to leave the `dns` commands with nothing to do."
+        },
+        "proxy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Proxy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The Caddy reverse proxy. Omit to leave the `proxy` commands with nothing to do; `web_services` entries are then tracked but not routed."
+        },
+        "targets": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Selector"
+          },
+          "default": {},
+          "description": "Named, reusable selections for `labops update <name>` \u2014 the same four filters as the CLI options. Put the sweeps you run often here instead of retyping them.",
+          "title": "Targets",
+          "type": "object"
+        }
+      },
+      "title": "Settings",
+      "type": "object"
+    },
+    "StackEntry": {
+      "additionalProperties": false,
+      "description": "One Docker Compose stack: a local directory of compose files, plus the\nservices it publishes.\n\nlabops owns getting that directory onto the node and running compose there.\nWhat is inside the compose file is yours.",
+      "properties": {
+        "name": {
+          "default": "",
+          "description": "Overrides the key this stack is written under. Leave it unset \u2014 the usual case \u2014 and the key is the name. This is the name you pass to the `docker stack` commands and the directory the stack is copied into on the node.",
+          "title": "Name",
+          "type": "string"
+        },
+        "config_path": {
+          "description": "The local directory holding this stack's compose files, copied to the node by `docker stack sync` / `deploy`. Relative to the config file. The directory must exist, so a typo fails at `labops validate`.",
+          "format": "directory-path",
+          "title": "Config Path",
+          "type": "string"
+        },
+        "web_services": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WebServices"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "HTTP services this stack exposes. Each entry with a `proxy_name` becomes a route pointing at the node running the stack."
+        }
+      },
+      "required": [
+        "config_path"
+      ],
+      "title": "StackEntry",
+      "type": "object"
+    },
+    "VM": {
+      "additionalProperties": false,
+      "description": "A Proxmox virtual machine, written under a `proxmox` node's `vm:` block.\n\nUnlike a container, a VM is reached over SSH like an ordinary host, so it\nbehaves the same as a `hosts:` entry apart from carrying a `vmid` and\nbelonging to a parent. An appliance OS that labops cannot provision \u2014\nHomeAssistant OS is the standing example \u2014 is still a VM, written with\n`os: unmanaged`.",
+      "properties": {
+        "name": {
+          "default": "",
+          "description": "Overrides the key this VM is written under. Leave it unset \u2014 the usual case \u2014 and the key is the name. Set it when the key is not the name you want to target and publish, e.g. a key that is not a legal DNS label. Must be unique across the config either way.",
+          "title": "Name",
+          "type": "string"
+        },
+        "hypervisor": {
+          "default": "none",
+          "description": "`proxmox` if this guest is itself a Proxmox node with guests of its own (nested virtualisation), which is what unlocks the `lxc:` and `vm:` blocks below. Otherwise leave it.",
+          "enum": [
+            "none",
+            "proxmox"
+          ],
+          "title": "Hypervisor",
+          "type": "string"
+        },
+        "os": {
+          "description": "Picks the package manager used to update this VM: `debian` (apt), `alpine` (apk) or `redhat` (dnf). Use `unmanaged` for an appliance OS labops cannot patch or SSH-provision \u2014 it stays listed, resolved and proxied, but setup/update skip it.",
+          "enum": [
+            "debian",
+            "alpine",
+            "redhat",
+            "unmanaged"
+          ],
+          "title": "Os",
+          "type": "string"
+        },
+        "ip": {
+          "description": "The address labops connects to over SSH, and the address published for this VM's DNS records and proxy routes.",
+          "format": "ipv4",
+          "title": "Ip",
+          "type": "string"
+        },
+        "vmid": {
+          "description": "The Proxmox VM ID. Used to start the guest (`qm start <vmid>` on the parent) and to address it by number, so it must match Proxmox and be unique across the guests of one host.",
+          "title": "Vmid",
+          "type": "integer"
+        },
+        "creds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Creds"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Credentials for this VM only. Omit to use `settings.default_creds`."
+        },
+        "tags": {
+          "default": [],
+          "description": "Free-form labels, matched by `labops update --tag`. Not inherited from the parent host.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "lxc": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/LXC"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Containers on this VM, when it is itself a Proxmox node. Keyed by name. Requires `hypervisor: proxmox`.",
+          "title": "Lxc"
+        },
+        "vm": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/VM"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Virtual machines on this VM, when it is itself a Proxmox node. Keyed by name. Requires `hypervisor: proxmox`.",
+          "title": "Vm"
+        },
+        "web_services": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WebServices"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "HTTP services this VM exposes. Each entry with a `proxy_name` becomes a route in the generated Caddyfile."
+        },
+        "docker": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Docker"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Docker Compose stacks running on this VM."
+        },
+        "dns": {
+          "default": true,
+          "description": "Set `false` to keep this VM out of DNS entirely.",
+          "title": "Dns",
+          "type": "boolean"
+        },
+        "dns_name": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Publish this VM under a different label than its key, or under several. Also exempts the key from having to be a legal DNS label.",
+          "title": "Dns Name"
+        },
+        "mac": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Not needed to wake a guest: `labops wake` runs `qm start <vmid>` on the parent, because a magic packet cannot start a stopped VM \u2014 nothing inside it is listening, and Proxmox does not watch for WoL on a guest's behalf. Set this only if the VM has a NIC of its own that really does wake, then ask for it with `wake --packet`.",
+          "title": "Mac"
+        }
+      },
+      "required": [
+        "os",
+        "ip",
+        "vmid"
+      ],
+      "title": "VM",
+      "type": "object"
+    },
+    "WebService": {
+      "additionalProperties": false,
+      "description": "An HTTP service a node or stack exposes.\n\nThis is how routes get into the proxy: declaring a service next to the node\nthat runs it is the whole configuration. An entry without a `proxy_name` is\nstill tracked \u2014 useful for recording what a port is \u2014 but is not routed.",
+      "properties": {
+        "port": {
+          "description": "The port the service listens on, on its node's address.",
+          "title": "Port",
+          "type": "integer"
+        },
+        "proxy_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Publish this service at `<proxy_name><proxy_suffix>`. Omit to track the port without routing it. The value is both a DNS label and a Caddy matcher name, so it must be a legal label.",
+          "title": "Proxy Name"
+        },
+        "access": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Which `settings.proxy.access_lists` may reach this service. Several lists are combined as a union. A bare string is accepted for a single list. Omit to use `settings.proxy.default_access`.",
+          "title": "Access"
+        },
+        "https": {
+          "default": false,
+          "description": "Set when the upstream itself speaks HTTPS, such as Proxmox on :8006. Renders an `https://` upstream with certificate verification skipped, since these services usually present a self-signed cert.",
+          "title": "Https",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "title": "WebService",
+      "type": "object"
+    },
+    "WebServices": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/WebService"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        }
+      ],
+      "title": "WebServices"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The whole homelab config \u2014 the root of `homelab.yml`.\n\nTwo blocks: `settings` for everything global, and `hosts` for the inventory\ntree. Unknown keys are rejected everywhere rather than ignored, so a typo is\na validation error instead of a setting that silently never applied.",
+  "properties": {
+    "settings": {
+      "$ref": "#/$defs/Settings",
+      "description": "Credentials, the secret store, DNS, proxy and target sets."
+    },
+    "hosts": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/Host"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The inventory, keyed by node name. Proxmox hosts nest their guests underneath as `vm:` and `lxc:`, so this one block is the whole tree.",
+      "title": "Hosts"
+    }
+  },
+  "required": [
+    "settings"
+  ],
+  "title": "YamlRoot",
+  "type": "object"
+}
