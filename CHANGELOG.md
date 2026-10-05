@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.2](https://github.com/FreezeManny/labops/compare/labops-v0.11.1...labops-v0.11.2) (2026-10-05)
+
+
+### Bug Fixes
+
+* **deps:** bump urllib3 from 2.7.0 to 2.8.0 ([#108](https://github.com/FreezeManny/labops/issues/108)) ([15d801a](https://github.com/FreezeManny/labops/commit/15d801ab790eda526f3565ab81f7e84dff458e73))
+
 ## [0.11.1](https://github.com/FreezeManny/labops/compare/labops-v0.11.0...labops-v0.11.1) (2026-09-13)
 
 
