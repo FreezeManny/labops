@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.2](https://github.com/FreezeManny/labops/compare/labops-v0.11.1...labops-v0.11.2) (2026-10-13)
+
+
+### Bug Fixes
+
+* **deps:** bump ansible-core from 2.21.4 to 2.21.5 ([#113](https://github.com/FreezeManny/labops/issues/113)) ([f998029](https://github.com/FreezeManny/labops/commit/f998029b2723fd4fb450054bc5d6bbc790179ccd))
+* **deps:** bump typer from 0.27.2 to 0.27.3 ([#112](https://github.com/FreezeManny/labops/issues/112)) ([b5d91c2](https://github.com/FreezeManny/labops/commit/b5d91c25a7a56688d497f41ff0dbb808303f963a))
+* **deps:** bump urllib3 from 2.7.0 to 2.8.0 ([#108](https://github.com/FreezeManny/labops/issues/108)) ([15d801a](https://github.com/FreezeManny/labops/commit/15d801ab790eda526f3565ab81f7e84dff458e73))
+
 ## [0.11.1](https://github.com/FreezeManny/labops/compare/labops-v0.11.0...labops-v0.11.1) (2026-09-13)
 
 
