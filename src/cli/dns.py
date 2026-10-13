@@ -18,8 +18,9 @@ update` / `lxc update` run the package manager, and a DNS server installed from
 its own installer never appears there.
 """
 
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Annotated, Callable, Iterator
+from typing import Annotated, Callable
 
 import typer
 from ansible_runner import Runner
@@ -47,7 +48,7 @@ app = typer.Typer(help="Manage local DNS records", no_args_is_help=True)
 
 
 @contextmanager
-def _clean_errors() -> Iterator[None]:
+def _clean_errors() -> Generator[None]:
     """Turn the expected failures into a one-line message instead of a traceback.
 
     ``ValueError`` is a config problem (no settings.dns, no API password, an
