@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.4](https://github.com/FreezeManny/labops/compare/labops-v0.11.3...labops-v0.11.4) (2026-10-25)
+
+
+### Bug Fixes
+
+* **deps:** bump paramiko from 5.0.0 to 5.1.0 ([#118](https://github.com/FreezeManny/labops/issues/118)) ([c533a34](https://github.com/FreezeManny/labops/commit/c533a34902b238d3ea3488f107c17b11103575ca))
+
 ## [0.11.3](https://github.com/FreezeManny/labops/compare/labops-v0.11.2...labops-v0.11.3) (2026-10-18)
 
 
