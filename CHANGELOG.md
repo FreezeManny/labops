@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.5](https://github.com/FreezeManny/labops/compare/labops-v0.11.4...labops-v0.11.5) (2026-10-25)
+
+
+### Bug Fixes
+
+* **deps:** bump certifi from 2026.7.22 to 2026.10.19 ([#121](https://github.com/FreezeManny/labops/issues/121)) ([392227a](https://github.com/FreezeManny/labops/commit/392227a8ba5cb31f0b2ac405e4e169d6acb03486))
+
 ## [0.11.4](https://github.com/FreezeManny/labops/compare/labops-v0.11.3...labops-v0.11.4) (2026-10-25)
 
 
