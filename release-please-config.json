@@ -2,6 +2,9 @@
     "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
     "release-type": "simple",
     "include-v-in-tag": true,
+    "label": "autorelease: pending",
+    "release-label": "autorelease: tagged",
+    "snapshot-label": "autorelease: snapshot",
     "packages": {
         ".": {
             "package-name": "labops",
