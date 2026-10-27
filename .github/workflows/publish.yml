@@ -20,6 +20,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      issues: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v7
@@ -43,3 +45,14 @@ jobs:
       # environment stand in for an API token.
       - name: Publish
         run: uv publish
+
+      - name: Label release PR as published
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh label create "autorelease: published" --color "ededed" --force --repo "$REPO"
+          for pr in $(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[].number'); do
+            gh pr edit "$pr" --repo "$REPO" --remove-label "autorelease: tagged" --add-label "autorelease: published"
+          done
