@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/FreezeManny/labops/compare/labops-v0.11.5...labops-v0.12.0) (2026-10-27)
+
+
+### Features
+
+* added removal of old images on update ([#125](https://github.com/FreezeManny/labops/issues/125)) ([154a1d2](https://github.com/FreezeManny/labops/commit/154a1d286ac25609b93f661436f7a5f2ff7df15e))
+
 ## [0.11.5](https://github.com/FreezeManny/labops/compare/labops-v0.11.4...labops-v0.11.5) (2026-10-25)
 
 
