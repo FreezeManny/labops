@@ -19,3 +19,23 @@
         recreate: auto
         wait: true
       become: true
+      register: compose_result
+
+    - name: List images of stack services
+      ansible.builtin.command:
+        argv: [docker, image, ls, --all, --quiet, --filter, "reference={{ item }}"]
+      loop: "{{ compose_result.images | default([]) | map(attribute='Repository') | select | unique | list }}"
+      become: true
+      register: image_list
+      changed_when: false
+      check_mode: false
+
+    - name: Remove older images of stack services
+      # Without --force, docker refuses to remove images still used by a container.
+      ansible.builtin.command:
+        argv: [docker, image, rm, "{{ item }}"]
+      loop: "{{ image_list.results | map(attribute='stdout_lines') | flatten | unique | list }}"
+      become: true
+      register: image_rm
+      changed_when: "'Deleted:' in image_rm.stdout or 'Untagged:' in image_rm.stdout"
+      failed_when: image_rm.rc != 0 and 'image is being used' not in image_rm.stderr and 'must force' not in image_rm.stderr
