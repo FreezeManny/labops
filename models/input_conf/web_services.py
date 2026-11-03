@@ -68,11 +68,35 @@ def _expand_shorthand(v: object) -> object:
           nas: 8080
 
     means the same as the long form with ``proxy_name`` and ``port`` spelled
-    out. The two forms are per block, not per entry: reach for the list as soon
-    as one service needs `access`, `https`, or no `proxy_name` at all.
+    out. Inside a list, a single-pair entry is shorthand too, and may be mixed
+    with long-form entries:
+
+    .. code-block:: yaml
+
+        web_services:
+          - monitoring: 3000
+          - proxy_name: nas
+            port: 8080
+            https: true
+
+    Reach for the long form as soon as one service needs `access`, `https`, or
+    no `proxy_name` at all. (Names equal to a WebService field, such as `port`,
+    cannot use the shorthand.)
     """
     if isinstance(v, dict):
         return [{"proxy_name": name, "port": port} for name, port in v.items()]
+    if isinstance(v, list):
+        fields = set(WebService.model_fields)
+        return [
+            (
+                {"proxy_name": next(iter(item)), "port": next(iter(item.values()))}
+                if isinstance(item, dict)
+                and len(item) == 1
+                and next(iter(item)) not in fields
+                else item
+            )
+            for item in v
+        ]
     return v
 
 
@@ -82,7 +106,9 @@ WebServiceEntries = Annotated[
         _expand_shorthand,
         # Without this the schema would advertise only the list, and an editor
         # would flag the shorthand as invalid while labops accepts it.
-        json_schema_input_type=Union[List[WebService], Dict[str, int]],
+        json_schema_input_type=Union[
+            List[Union[WebService, Dict[str, int]]], Dict[str, int]
+        ],
     ),
 ]
 

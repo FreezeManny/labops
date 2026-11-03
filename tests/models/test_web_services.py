@@ -156,3 +156,16 @@ def test_shorthand_duplicate_ports_still_rejected() -> None:
                 "web_services": {"nas": 8080, "media": 8080},
             }
         )
+
+
+def test_shorthand_list_entries_mix_with_long_form() -> None:
+    ws = WebServices.model_validate(
+        [{"monitoring": 3000}, {"proxy_name": "nas", "port": 8080, "https": True}]
+    )
+    assert (ws[0].proxy_name, ws[0].port) == ("monitoring", 3000)
+    assert (ws[1].proxy_name, ws[1].port, ws[1].https) == ("nas", 8080, True)
+
+
+def test_long_form_single_field_entry_is_not_shorthand() -> None:
+    with pytest.raises(ValidationError):
+        WebServices.model_validate([{"port": 3000}, {"proxy_name": "x"}])
