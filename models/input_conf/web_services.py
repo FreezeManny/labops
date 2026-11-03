@@ -106,7 +106,9 @@ WebServiceEntries = Annotated[
         _expand_shorthand,
         # Without this the schema would advertise only the list, and an editor
         # would flag the shorthand as invalid while labops accepts it.
-        json_schema_input_type=Union[List[Union[WebService, Dict[str, int]]], Dict[str, int]],
+        json_schema_input_type=Union[
+            List[Union[WebService, Dict[str, int]]], Dict[str, int]
+        ],
     ),
 ]
 
