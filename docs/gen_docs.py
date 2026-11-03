@@ -169,9 +169,23 @@ web_services:
     port: 80
 ```
 
-The choice is per block, not per entry — one `web_services` is either a map or a
-list. Use the list as soon as a service in that block needs `access`, `https`,
-or no `proxy_name` at all.
+Inside a list, a single `name: port` entry is shorthand too, and can be mixed
+with long-form entries:
+
+```yaml
+web_services:
+  - monitoring: 3000
+  - proxy_name: proxmox
+    port: 8006
+    https: true
+    access: vpn
+  - port: 9100            # tracked only, not routed
+```
+
+The map form is all-or-nothing for a block. In a list, choose per entry: use the
+long form as soon as a service needs `access`, `https`, or no `proxy_name` at
+all. A service named after a key (`port`, `proxy_name`, `access`, `https`) cannot
+use the shorthand.
 """,
         ["WebService"],
     ),
