@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/FreezeManny/labops/compare/labops-v0.12.0...labops-v0.13.0) (2026-11-03)
+
+
+### Features
+
+* short proxy names ([#129](https://github.com/FreezeManny/labops/issues/129)) ([2552ddc](https://github.com/FreezeManny/labops/commit/2552ddcc00b5ed374f60d17bb6838efa533e11db))
+
 ## [0.12.0](https://github.com/FreezeManny/labops/compare/labops-v0.11.5...labops-v0.12.0) (2026-10-27)
 
 
