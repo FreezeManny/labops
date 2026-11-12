@@ -8,7 +8,7 @@ on:
   # re-runs the workflow. Including it re-checks an unchanged title on every
   # push, but that's cheap, and it's the only way each new commit gets its own
   # passing check.
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - edited
