@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.13.2](https://github.com/FreezeManny/labops/compare/labops-v0.13.1...labops-v0.13.2) (2026-11-16)
+
+
+### Bug Fixes
+
+* **deps:** bump pydantic from 2.14.2 to 2.14.3 ([#140](https://github.com/FreezeManny/labops/issues/140)) ([8a1de66](https://github.com/FreezeManny/labops/commit/8a1de66eda5dd44642e42d9eb79fb1375f1419d1))
+* **deps:** bump typer from 0.27.3 to 0.29.1 ([#139](https://github.com/FreezeManny/labops/issues/139)) ([5ebfe43](https://github.com/FreezeManny/labops/commit/5ebfe43413604cf1a5e6ce7b24f89f9ff1159f9e))
+
 ## [0.13.1](https://github.com/FreezeManny/labops/compare/labops-v0.13.0...labops-v0.13.1) (2026-11-12)
 
 
