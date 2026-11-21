@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.13.3](https://github.com/FreezeManny/labops/compare/labops-v0.13.2...labops-v0.13.3) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** bump typer from 0.29.1 to 0.29.2 ([#144](https://github.com/FreezeManny/labops/issues/144)) ([0891b98](https://github.com/FreezeManny/labops/commit/0891b9879c79b0e313ab85d1d5f123f289b3f44f))
+* **deps:** bump wcmatch from 11.0 to 11.2 ([#142](https://github.com/FreezeManny/labops/issues/142)) ([30a9877](https://github.com/FreezeManny/labops/commit/30a98776c887c302925b945fda5cf0cad9db7475))
+
 ## [0.13.2](https://github.com/FreezeManny/labops/compare/labops-v0.13.1...labops-v0.13.2) (2026-11-16)
 
 
