@@ -72,4 +72,4 @@ python = ".venv"
 [tool.ty.rules]
 unresolved-reference = "error"
 invalid-assignment = "error"
-call-non-callable = "error"
+not-callable = "error"
